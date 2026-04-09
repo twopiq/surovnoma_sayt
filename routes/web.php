@@ -30,6 +30,8 @@ Route::middleware(['auth', 'approved'])->group(function () {
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
     Route::prefix('notifications')->name('notifications.')->group(function () {
         Route::post('/read-all', [NotificationController::class, 'markAllRead'])->name('read-all');
+        Route::post('/clear-all', [NotificationController::class, 'destroyAll'])->name('clear-all');
+        Route::delete('/{notification}', [NotificationController::class, 'destroy'])->name('destroy');
         Route::get('/{notification}', [NotificationController::class, 'show'])->name('show');
     });
 

@@ -14,6 +14,7 @@ class TicketStatusNotification extends Notification
         protected string $title,
         protected string $body,
         protected ?string $url = null,
+        protected array $meta = [],
     ) {
     }
 
@@ -28,6 +29,7 @@ class TicketStatusNotification extends Notification
             'title' => $this->title,
             'body' => $this->body,
             'url' => $this->url,
+            ...$this->meta,
         ];
     }
 

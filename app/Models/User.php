@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Str;
 use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
@@ -23,6 +24,7 @@ class User extends Authenticatable
 
     protected $fillable = [
         'name',
+        'login',
         'email',
         'phone',
         'job_title',
@@ -47,6 +49,21 @@ class User extends Authenticatable
             'availability_status' => AvailabilityStatus::class,
             'password' => 'hashed',
         ];
+    }
+
+    protected static function booted(): void
+    {
+        static::creating(function (User $user): void {
+            if (! $user->login) {
+                $user->login = static::generateUniqueLogin($user->name);
+            }
+        });
+
+        static::updating(function (User $user): void {
+            if ($user->isDirty('login')) {
+                $user->login = $user->getOriginal('login');
+            }
+        });
     }
 
     public function department(): BelongsTo
@@ -79,6 +96,30 @@ class User extends Authenticatable
         $roleValue = $role instanceof UserRole ? $role->value : $role;
 
         return $this->hasRole($roleValue);
+    }
+
+    public static function generateUniqueLogin(string $name, ?int $ignoreUserId = null): string
+    {
+        $base = Str::of($name)
+            ->ascii()
+            ->lower()
+            ->replaceMatches('/[^a-z0-9]+/', '.')
+            ->trim('.')
+            ->value();
+
+        $base = $base !== '' ? $base : 'user';
+        $candidate = $base;
+        $suffix = 1;
+
+        while (static::query()
+            ->when($ignoreUserId, fn ($query) => $query->whereKeyNot($ignoreUserId))
+            ->where('login', $candidate)
+            ->exists()) {
+            $candidate = "{$base}{$suffix}";
+            $suffix++;
+        }
+
+        return $candidate;
     }
 
     protected function displayRole(): Attribute

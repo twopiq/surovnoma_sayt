@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Auth;
 
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -21,11 +22,17 @@ class RegistrationTest extends TestCase
         $response = $this->post('/register', [
             'name' => 'Test User',
             'email' => 'test@example.com',
-            'password' => 'password',
-            'password_confirmation' => 'password',
+            'phone' => '+998 91 234 56 78',
+            'password' => 'Password123!',
+            'password_confirmation' => 'Password123!',
         ]);
 
-        $this->assertAuthenticated();
         $response->assertRedirect(route('pending-approval', absolute: false));
+        $this->assertDatabaseHas(User::class, [
+            'email' => 'test@example.com',
+            'name' => 'Test User',
+            'phone' => '+998 91 234 56 78',
+            'login' => 'test.user',
+        ]);
     }
 }

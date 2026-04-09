@@ -6,9 +6,11 @@ use App\Enums\TicketStatus;
 use App\Models\Ticket;
 use App\Models\User;
 use App\Notifications\TicketStatusNotification;
+use Carbon\Carbon;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Artisan;
 use Tests\TestCase;
 
 class NotificationAndAttachmentTest extends TestCase
@@ -95,6 +97,50 @@ class NotificationAndAttachmentTest extends TestCase
             ->assertRedirect();
 
         $this->assertSame(0, $user->fresh()->unreadNotifications()->count());
+    }
+
+    public function test_notifications_can_be_deleted_individually_and_in_bulk(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+
+        $user = User::query()->where('email', 'requester@rtt.local')->firstOrFail();
+        $this->actingAs($user);
+
+        $user->notify(new TicketStatusNotification('Birinchi', 'Birinchi matn', '/tickets/1'));
+        $user->notify(new TicketStatusNotification('Ikkinchi', 'Ikkinchi matn', '/tickets/2'));
+
+        $notification = $user->fresh()->notifications()->latest()->firstOrFail();
+
+        $this->delete(route('notifications.destroy', $notification->id))
+            ->assertRedirect()
+            ->assertSessionHas('notifications_open', true);
+
+        $this->assertSame(1, $user->fresh()->notifications()->count());
+
+        $this->post(route('notifications.clear-all'))
+            ->assertRedirect()
+            ->assertSessionHas('notifications_open', true);
+
+        $this->assertSame(0, $user->fresh()->notifications()->count());
+    }
+
+    public function test_old_notifications_are_purged_after_midnight(): void
+    {
+        Carbon::setTestNow('2026-04-09 23:55:00');
+        $this->seed(DatabaseSeeder::class);
+
+        $user = User::query()->where('email', 'requester@rtt.local')->firstOrFail();
+        $user->notify(new TicketStatusNotification('Eski', 'Eski bildirishnoma', '/tickets/1'));
+
+        Carbon::setTestNow('2026-04-10 00:01:00');
+        $user->notify(new TicketStatusNotification('Yangi', 'Yangi bildirishnoma', '/tickets/2'));
+
+        Artisan::call('notifications:purge-expired');
+
+        $this->assertSame(1, $user->fresh()->notifications()->count());
+        $this->assertSame('Yangi', $user->fresh()->notifications()->first()->data['title']);
+
+        Carbon::setTestNow();
     }
 
     public function test_executor_claim_button_changes_with_status_and_can_reaccept_returned_ticket(): void

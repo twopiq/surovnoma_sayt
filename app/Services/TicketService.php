@@ -104,6 +104,7 @@ class TicketService
                 'status' => TicketStatus::Assigned,
                 'external_status' => ExternalStatus::InProgress,
                 'deadline_at' => $deadline,
+                'metadata' => array_merge($ticket->metadata ?? [], ['deadline_notifications' => []]),
             ])->save();
 
             TicketAssignment::create([

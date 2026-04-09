@@ -52,6 +52,13 @@ Backup fayllar joyi:
 - restore vaqtida tizim avtomatik `pre-restore-...sqlite` safety-backup ham yaratadi
 - hozirgi kod `sqlite` baza uchun ishlaydi
 
+<!--
+.tools\php\8.3\php.exe artisan db:backup --label=manual
+.tools\php\8.3\php.exe artisan db:backup-list
+.tools\php\8.3\php.exe artisan db:restore latest --force
+.tools\php\8.3\php.exe artisan db:restore scheduled-20260406-120000.sqlite --force
+-->
+
 Frontend assetlar uchun:
 
 ```powershell

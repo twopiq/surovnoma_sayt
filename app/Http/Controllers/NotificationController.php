@@ -24,6 +24,20 @@ class NotificationController extends Controller
             'read_at' => now(),
         ]);
 
-        return back();
+        return back()->with('notifications_open', true);
+    }
+
+    public function destroy(Request $request, string $notification): RedirectResponse
+    {
+        $request->user()->notifications()->findOrFail($notification)->delete();
+
+        return back()->with('notifications_open', true);
+    }
+
+    public function destroyAll(Request $request): RedirectResponse
+    {
+        $request->user()->notifications()->delete();
+
+        return back()->with('notifications_open', true);
     }
 }

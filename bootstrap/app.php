@@ -13,12 +13,18 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withSchedule(function (Schedule $schedule) {
-        if (! config('database-backup.enabled', true)) {
-            return;
+        if (config('database-backup.enabled', true)) {
+            $schedule->command('db:backup --label=scheduled')
+                ->everySixHours()
+                ->withoutOverlapping();
         }
 
-        $schedule->command('db:backup --label=scheduled')
-            ->everySixHours()
+        $schedule->command('tickets:send-deadline-alerts')
+            ->everyTenMinutes()
+            ->withoutOverlapping();
+
+        $schedule->command('notifications:purge-expired')
+            ->dailyAt('00:00')
             ->withoutOverlapping();
     })
     ->withMiddleware(function (Middleware $middleware) {

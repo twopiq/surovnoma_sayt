@@ -23,10 +23,13 @@ class AuthenticatedSessionController extends Controller
         $request->session()->regenerate();
 
         if (! $request->user()->isApproved()) {
+            $pendingUser = $request->user();
+
             Auth::guard('web')->logout();
             $request->session()->invalidate();
             $request->session()->regenerateToken();
-            $request->session()->put('pending_approval_email', $request->input('email'));
+            $request->session()->put('pending_approval_email', $pendingUser->email);
+            $request->session()->put('pending_approval_rejected', ! $pendingUser->is_active && $pendingUser->approved_at === null);
 
             return redirect()->route('pending-approval');
         }

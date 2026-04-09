@@ -1,8 +1,14 @@
 <x-guest-layout>
-    <div class="rounded-2xl bg-cyan-50 p-5">
-        <h1 class="font-['Space_Grotesk'] text-2xl font-bold text-slate-900">Hisob tekshirilmoqda</h1>
+    <div class="rounded-2xl {{ $isRejected ? 'bg-rose-50' : 'bg-cyan-50' }} p-5">
+        <h1 class="font-['Space_Grotesk'] text-2xl font-bold text-slate-900">
+            {{ $isRejected ? "So'rov rad etildi" : 'Hisob tekshirilmoqda' }}
+        </h1>
         <p class="mt-3 text-sm text-slate-600">
-            {{ $email ? $email.' uchun' : 'Hisobingiz uchun' }} admin tasdig‘i kutilmoqda. Tasdiq berilgach tizimga kirishingiz mumkin bo‘ladi.
+            @if ($isRejected)
+                {{ $email ? $email.' uchun' : 'Hisobingiz uchun' }} yuborilgan ro'yxatdan o'tish so'rovi admin tomonidan rad etildi. Ma'lumotlarni tekshirib, qayta ro'yxatdan o'ting.
+            @else
+                {{ $email ? $email.' uchun' : 'Hisobingiz uchun' }} admin tasdig'i kutilmoqda. Tasdiq berilgach tizimga kirishingiz mumkin bo'ladi.
+            @endif
         </p>
     </div>
 

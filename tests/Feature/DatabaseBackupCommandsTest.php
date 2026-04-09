@@ -14,12 +14,24 @@ class DatabaseBackupCommandsTest extends TestCase
 
     protected string $backupPath;
 
+    protected string $originalDefaultConnection;
+
+    protected mixed $originalSqliteDatabase;
+
+    protected mixed $originalBackupPath;
+
+    protected mixed $originalBackupKeep;
+
     protected function setUp(): void
     {
         parent::setUp();
 
         $this->databasePath = database_path('testing-backup.sqlite');
         $this->backupPath = storage_path('app/testing-backups');
+        $this->originalDefaultConnection = (string) config('database.default');
+        $this->originalSqliteDatabase = config('database.connections.sqlite.database');
+        $this->originalBackupPath = config('database-backup.path');
+        $this->originalBackupKeep = config('database-backup.keep');
 
         File::delete($this->databasePath);
         File::deleteDirectory($this->backupPath);
@@ -46,6 +58,11 @@ class DatabaseBackupCommandsTest extends TestCase
     protected function tearDown(): void
     {
         DB::purge('sqlite');
+        config()->set('database.default', $this->originalDefaultConnection);
+        config()->set('database.connections.sqlite.database', $this->originalSqliteDatabase);
+        config()->set('database-backup.path', $this->originalBackupPath);
+        config()->set('database-backup.keep', $this->originalBackupKeep);
+        DB::purge($this->originalDefaultConnection);
         File::delete($this->databasePath);
         File::deleteDirectory($this->backupPath);
 

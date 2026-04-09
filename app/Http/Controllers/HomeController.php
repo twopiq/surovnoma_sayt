@@ -21,8 +21,13 @@ class HomeController extends Controller
 
     public function pendingApproval(): View
     {
+        $user = auth()->user();
+
         return view('auth.pending-approval', [
-            'email' => auth()->user()?->email ?? session('pending_approval_email'),
+            'email' => $user?->email ?? session('pending_approval_email'),
+            'isRejected' => $user
+                ? (! $user->is_active && $user->approved_at === null)
+                : (bool) session('pending_approval_rejected', false),
         ]);
     }
 }

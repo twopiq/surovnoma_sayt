@@ -1,0 +1,5 @@
+Reference,Requester,Priority,Status,Department,Executor,Deadline
+RTT-20260407-0001,Test,medium,in_progress,"LMS xizmatlari",Bajaruvchi,"2026-04-09 10:38:00"
+RTT-20260406-0001,"Requester User",high,assigned,"LMS xizmatlari",Bajaruvchi,"2026-04-07 17:30:00"
+RTT-20260406-0002,"Dilshod Qodirov",urgent,assigned,"Texnik qo‘llab-quvvatlash",Bajaruvchi,"2026-04-07 14:30:00"
+RTT-20260406-0003,"Guest foydalanuvchi",medium,rejected,"Veb platforma",Bajaruvchi,"2026-04-09 10:37:00"

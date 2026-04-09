@@ -43,6 +43,23 @@ class ProfileTest extends TestCase
         $this->assertNull($user->email_verified_at);
     }
 
+    public function test_profile_name_requires_name_and_surname(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this
+            ->actingAs($user)
+            ->from('/profile')
+            ->patch('/profile', [
+                'name' => 'Singleword',
+                'email' => $user->email,
+            ]);
+
+        $response
+            ->assertSessionHasErrors('name')
+            ->assertRedirect('/profile');
+    }
+
     public function test_email_verification_status_is_unchanged_when_the_email_address_is_unchanged(): void
     {
         $user = User::factory()->create();
