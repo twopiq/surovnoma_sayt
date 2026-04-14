@@ -1,4 +1,5 @@
 @php($user = auth()->user())
+@php($executorArchiveSource = request()->routeIs('executor.tickets.show') && request('source') === 'archive')
 <nav x-data="{ open: false }" class="relative z-[90] overflow-visible border-b border-slate-200/80 bg-white/92 backdrop-blur">
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div class="flex h-16 justify-between gap-6 overflow-visible">
@@ -19,12 +20,14 @@
                         <x-nav-link :href="route('operator.tickets.index')" :active="request()->routeIs('operator.tickets.*')">Operator paneli</x-nav-link>
                     @endrole
                     @role('executor')
-                        <x-nav-link :href="route('executor.tickets.index')" :active="request()->routeIs('executor.tickets.*')">Mening vazifalarim</x-nav-link>
+                        <x-nav-link :href="route('executor.tickets.index')" :active="request()->routeIs('executor.tickets.index') || (request()->routeIs('executor.tickets.show') && ! $executorArchiveSource)">Mening vazifalarim</x-nav-link>
+                        <x-nav-link :href="route('executor.tickets.archive')" :active="request()->routeIs('executor.tickets.archive') || $executorArchiveSource">Arxiv</x-nav-link>
                     @endrole
                     @role('manager')
-                        <x-nav-link :href="route('manager.dashboard')" :active="request()->routeIs('manager.dashboard')">Dashboard</x-nav-link>
+                        <x-nav-link :href="route('manager.dashboard')" :active="request()->routeIs('manager.dashboard*')">Dashboard</x-nav-link>
                     @endrole
                     @role('admin')
+                        <x-nav-link :href="route('manager.dashboard')" :active="request()->routeIs('manager.dashboard*')">Dashboard</x-nav-link>
                         <x-nav-link :href="route('admin.dispatch.index')" :active="request()->routeIs('admin.dispatch.*')">Dispetcher</x-nav-link>
                         <x-nav-link :href="route('admin.users.index')" :active="request()->routeIs('admin.users.*')">Foydalanuvchilar</x-nav-link>
                         <x-nav-link :href="route('admin.departments.index')" :active="request()->routeIs('admin.departments.*')">Bo‘limlar</x-nav-link>
@@ -81,12 +84,14 @@
                 <x-responsive-nav-link :href="route('operator.tickets.index')" :active="request()->routeIs('operator.tickets.*')">Operator paneli</x-responsive-nav-link>
             @endrole
             @role('executor')
-                <x-responsive-nav-link :href="route('executor.tickets.index')" :active="request()->routeIs('executor.tickets.*')">Mening vazifalarim</x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('executor.tickets.index')" :active="request()->routeIs('executor.tickets.index') || (request()->routeIs('executor.tickets.show') && ! $executorArchiveSource)">Mening vazifalarim</x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('executor.tickets.archive')" :active="request()->routeIs('executor.tickets.archive') || $executorArchiveSource">Arxiv</x-responsive-nav-link>
             @endrole
             @role('manager')
-                <x-responsive-nav-link :href="route('manager.dashboard')" :active="request()->routeIs('manager.dashboard')">Dashboard</x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('manager.dashboard')" :active="request()->routeIs('manager.dashboard*')">Dashboard</x-responsive-nav-link>
             @endrole
             @role('admin')
+                <x-responsive-nav-link :href="route('manager.dashboard')" :active="request()->routeIs('manager.dashboard*')">Dashboard</x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('admin.dispatch.index')" :active="request()->routeIs('admin.dispatch.*')">Dispetcher</x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('admin.users.index')" :active="request()->routeIs('admin.users.*')">Foydalanuvchilar</x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('admin.departments.index')" :active="request()->routeIs('admin.departments.*')">Bo‘limlar</x-responsive-nav-link>

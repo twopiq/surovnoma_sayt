@@ -1,6 +1,9 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-['Space_Grotesk'] text-2xl font-bold">Dispetcher kartochkasi</h2>
+        <div class="flex items-center gap-3">
+            <a href="{{ route('admin.dispatch.index') }}" class="rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100">Ortga qaytish</a>
+            <h2 class="font-['Space_Grotesk'] text-2xl font-bold">Dispetcher kartochkasi</h2>
+        </div>
     </x-slot>
 
     <div class="mx-auto grid max-w-7xl gap-6 px-4 pt-8 lg:grid-cols-[1.35fr_0.95fr] sm:px-6 lg:px-8">
@@ -45,13 +48,16 @@
                         @endforeach
                     </select>
                     <select name="assigned_executor_id" class="block w-full rounded-md border-slate-300 shadow-sm">
-                        <option value="">Ijrochi</option>
+                        <option value="" @selected($ticket->assigned_executor_id === null)>Ijrochi tanlanmagan, hamma ko'rsin</option>
                         @foreach ($executors as $executor)
                             <option value="{{ $executor->id }}" @selected($ticket->assigned_executor_id === $executor->id)>
                                 {{ $executor->name }} - {{ $availabilityLabels[$executor->availability_status->value] ?? $executor->availability_status->value }}
                             </option>
                         @endforeach
                     </select>
+                    <p class="text-xs text-slate-400">
+                        Agar ijrochi murojaatni bajara olmasa, bu maydonni bo'sh qoldirib saqlang. Shunda murojaat yana barcha ijrochilar ko'ra oladigan umumiy ro'yxatga qaytadi.
+                    </p>
                     <select name="category_id" class="block w-full rounded-md border-slate-300 shadow-sm">
                         <option value="">Kategoriya</option>
                         @foreach ($categories as $category)

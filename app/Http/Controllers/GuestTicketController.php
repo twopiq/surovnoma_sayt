@@ -22,15 +22,19 @@ class GuestTicketController extends Controller
     public function store(Request $request): View
     {
         $data = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['nullable', 'email', 'max:255'],
-            'phone' => ['nullable', 'string', 'max:30'],
+            'name' => ['required', 'string', 'max:255', 'regex:/^\S+(?:\s+\S+)+$/'],
+            'email' => ['required', 'string', 'lowercase', 'email', 'max:255'],
+            'phone' => ['required', 'regex:/^\+998 \d{2} \d{3} \d{2} \d{2}$/'],
             'department' => ['nullable', 'string', 'max:255'],
             'job_title' => ['nullable', 'string', 'max:255'],
             'description' => ['required', 'string', 'min:30'],
             'attachments' => ['nullable', 'array', 'max:5'],
             'attachments.*' => ['nullable', 'file', 'max:5120', 'mimes:jpg,jpeg,png,pdf,doc,docx'],
         ], [
+            'name.regex' => "F.I.Sh. kamida ism va familiyadan iborat bo'lishi kerak.",
+            'email.required' => 'Email manzilini kiriting.',
+            'phone.required' => 'Telefon raqamini kiriting.',
+            'phone.regex' => "Telefon raqami +998 99 999 99 99 ko'rinishida bo'lishi va 9 ta raqamdan iborat bo'lishi kerak.",
             'attachments.max' => "Ko'pi bilan 5 ta fayl yuklash mumkin.",
             'attachments.*.mimes' => "Fayl formati noto'g'ri. Faqat JPG, JPEG, PNG, PDF, DOC va DOCX formatlariga ruxsat beriladi.",
             'attachments.*.max' => 'Har bir fayl hajmi 5 MB dan oshmasligi kerak.',

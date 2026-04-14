@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\AvailabilityStatus;
+use App\Enums\TicketStatus;
 use App\Enums\UserRole;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -19,6 +20,8 @@ class User extends Authenticatable
     use HasFactory;
     use HasRoles;
     use Notifiable;
+
+    public const EXECUTOR_MAX_WORKLOAD_UNITS = 30;
 
     protected string $guard_name = 'web';
 
@@ -86,6 +89,11 @@ class User extends Authenticatable
         return $this->hasMany(Ticket::class, 'assigned_executor_id');
     }
 
+    public function activeExecutorTickets(): HasMany
+    {
+        return $this->assignedTickets()->where('status', TicketStatus::InProgress->value);
+    }
+
     public function isApproved(): bool
     {
         return $this->approved_at !== null && $this->is_active;
@@ -96,6 +104,30 @@ class User extends Authenticatable
         $roleValue = $role instanceof UserRole ? $role->value : $role;
 
         return $this->hasRole($roleValue);
+    }
+
+    public function currentExecutorWorkloadUnits(): int
+    {
+        return $this->activeExecutorTickets()
+            ->get(['priority'])
+            ->sum(fn (Ticket $ticket) => $ticket->priority->workloadUnits());
+    }
+
+    public function remainingExecutorWorkloadUnits(): int
+    {
+        return max(0, self::EXECUTOR_MAX_WORKLOAD_UNITS - $this->currentExecutorWorkloadUnits());
+    }
+
+    public function executorWorkloadSummary(): array
+    {
+        $tickets = $this->activeExecutorTickets()->get(['priority']);
+
+        return [
+            'used_units' => $tickets->sum(fn (Ticket $ticket) => $ticket->priority->workloadUnits()),
+            'max_units' => self::EXECUTOR_MAX_WORKLOAD_UNITS,
+            'remaining_units' => max(0, self::EXECUTOR_MAX_WORKLOAD_UNITS - $tickets->sum(fn (Ticket $ticket) => $ticket->priority->workloadUnits())),
+            'counts' => $tickets->countBy(fn (Ticket $ticket) => $ticket->priority->value)->all(),
+        ];
     }
 
     public static function generateUniqueLogin(string $name, ?int $ignoreUserId = null): string

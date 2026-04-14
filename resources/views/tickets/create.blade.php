@@ -1,6 +1,9 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-['Space_Grotesk'] text-2xl font-bold text-slate-900">Yangi murojaat</h2>
+        <div class="flex items-center gap-3">
+            <a href="{{ route('tickets.index') }}" class="rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100">Ortga qaytish</a>
+            <h2 class="font-['Space_Grotesk'] text-2xl font-bold text-slate-900">Yangi murojaat</h2>
+        </div>
     </x-slot>
 
     <div class="mx-auto max-w-4xl px-4 pt-8 sm:px-6 lg:px-8">

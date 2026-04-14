@@ -6,7 +6,7 @@
         </div>
         <div class="text-right text-sm">
             <div class="font-semibold text-cyan-700">{{ $ticket->priority->label() }}</div>
-            <div class="text-slate-500">{{ $ticket->status->label() }}</div>
+            <x-ticket-status-badge :status="$ticket->status" class="mt-2" />
         </div>
     </div>
     <div class="mt-4 flex flex-wrap gap-4 text-sm text-slate-500">

@@ -12,7 +12,7 @@
                         <div class="mt-1 text-slate-500">{{ \Illuminate\Support\Str::limit($ticket->requester_name, 24) }}</div>
                     </a>
                 @empty
-                    <div class="rounded-xl border border-dashed border-slate-200 p-4 text-sm text-slate-400">Bo‘sh</div>
+                    <div class="rounded-xl border border-dashed border-slate-200 p-4 text-sm text-slate-400">Bo'sh</div>
                 @endforelse
             </div>
         </div>

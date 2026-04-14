@@ -89,3 +89,15 @@ docker compose exec app php artisan migrate:fresh --seed
 ```powershell
 .tools\php\8.3\php.exe artisan test
 ```
+
+## Xatolik sahifalarini ko'rish
+
+Lokal server ishlab turganda:
+
+- `404 Sahifa topilmadi`: http://127.0.0.1:8000/_errors/404
+- `403 Ruxsat cheklangan`: http://127.0.0.1:8000/_errors/403
+- `413 Fayl hajmi katta`: http://127.0.0.1:8000/_errors/413
+- `419 Session muddati tugadi`: http://127.0.0.1:8000/_errors/419
+- `429 Juda ko'p so'rov`: http://127.0.0.1:8000/_errors/429
+- `500 Server xatoligi`: http://127.0.0.1:8000/_errors/500
+- `503 Xizmat mavjud emas`: http://127.0.0.1:8000/_errors/503

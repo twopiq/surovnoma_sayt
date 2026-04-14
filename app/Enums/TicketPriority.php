@@ -13,9 +13,19 @@ enum TicketPriority: string
     {
         return match ($this) {
             self::Low => 'Past',
-            self::Medium => 'O‘rta',
+            self::Medium => "O'rta",
             self::High => 'Yuqori',
             self::Urgent => 'Shoshilinch',
+        };
+    }
+
+    public function workloadUnits(): int
+    {
+        return match ($this) {
+            self::Low => 6,
+            self::Medium => 10,
+            self::High => 15,
+            self::Urgent => 24,
         };
     }
 }

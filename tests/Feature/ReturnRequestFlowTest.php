@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Enums\TicketPriority;
 use App\Enums\TicketStatus;
+use App\Enums\UserRole;
 use App\Models\Category;
 use App\Models\Department;
 use App\Models\Ticket;
@@ -101,5 +102,47 @@ class ReturnRequestFlowTest extends TestCase
         $this->get(route('guest.tickets.show', $ticket))
             ->assertOk()
             ->assertSee('Home');
+    }
+
+    public function test_admin_can_clear_executor_assignment_and_return_ticket_to_common_pool(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+
+        $admin = User::query()->where('email', 'admin@rtt.local')->firstOrFail();
+        $executor = User::query()->where('email', 'executor@rtt.local')->firstOrFail();
+        $ticket = Ticket::query()->where('assigned_executor_id', $executor->id)->firstOrFail();
+
+        $secondExecutor = User::factory()->create([
+            'name' => 'Second Executor',
+            'email' => 'executor2@example.test',
+            'approved_at' => now(),
+            'is_active' => true,
+        ]);
+        $secondExecutor->assignRole(UserRole::Executor->value);
+
+        $departmentId = Department::query()->firstOrFail()->id;
+        $categoryId = Category::query()->firstOrFail()->id;
+
+        $response = $this->actingAs($admin)->post(route('admin.dispatch.assign', $ticket), [
+            'assigned_department_id' => $departmentId,
+            'assigned_executor_id' => null,
+            'category_id' => $categoryId,
+            'priority' => TicketPriority::Medium->value,
+            'note' => "Ijrochi bo'shatildi.",
+        ]);
+
+        $response
+            ->assertRedirect()
+            ->assertSessionHas('status', 'Murojaat taqsimlandi.');
+
+        $ticket->refresh();
+
+        $this->assertNull($ticket->assigned_executor_id);
+        $this->assertSame(TicketStatus::New, $ticket->status);
+
+        $this->actingAs($secondExecutor)
+            ->get(route('executor.tickets.show', $ticket))
+            ->assertOk()
+            ->assertSee('Bajarishga olish');
     }
 }

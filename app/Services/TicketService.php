@@ -21,6 +21,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class TicketService
 {
@@ -95,14 +96,17 @@ class TicketService
             $fromStatus = $ticket->status;
             $fromExternalStatus = $ticket->external_status;
 
+            $toStatus = $executorId ? TicketStatus::Assigned : TicketStatus::New;
+            $toExternalStatus = $executorId ? ExternalStatus::InProgress : ExternalStatus::Accepted;
+
             $ticket->forceFill([
                 'assigned_department_id' => $departmentId,
                 'assigned_executor_id' => $executorId,
                 'category_id' => $category?->id,
                 'sla_profile_id' => $slaProfile?->id,
                 'priority' => $priority,
-                'status' => TicketStatus::Assigned,
-                'external_status' => ExternalStatus::InProgress,
+                'status' => $toStatus,
+                'external_status' => $toExternalStatus,
                 'deadline_at' => $deadline,
                 'metadata' => array_merge($ticket->metadata ?? [], ['deadline_notifications' => []]),
             ])->save();
@@ -119,7 +123,7 @@ class TicketService
 
             $this->resolvePendingReturnRequests($ticket, $admin);
 
-            $this->recordHistory($ticket, $admin, $fromStatus, TicketStatus::Assigned, $fromExternalStatus, ExternalStatus::InProgress, $note);
+            $this->recordHistory($ticket, $admin, $fromStatus, $toStatus, $fromExternalStatus, $toExternalStatus, $note);
             $this->auditService->log($admin->id, 'ticket.assigned', 'Murojaat taqsimlandi', $ticket, [
                 'executor_id' => $executorId,
                 'department_id' => $departmentId,
@@ -141,6 +145,50 @@ class TicketService
     public function markInProgress(Ticket $ticket, User $executor, ?string $note = null): Ticket
     {
         return $this->transition($ticket, $executor, TicketStatus::InProgress, ExternalStatus::InProgress, $note, 'ticket.in_progress', 'Ijrochi ishni boshladi');
+    }
+
+    /**
+     * @return array{allowed: bool, message: ?string}
+     */
+    public function evaluateExecutorClaim(Ticket $ticket, User $executor): array
+    {
+        if (! $ticket->canExecutorClaimBy($executor)) {
+            return [
+                'allowed' => false,
+                'message' => "Bu murojaatni hozir qabul qilib bo'lmaydi.",
+            ];
+        }
+
+        if ($ticket->priority->workloadUnits() > $executor->remainingExecutorWorkloadUnits()) {
+            return [
+                'allowed' => false,
+                'message' => "Joriy yuklama limiti oshib ketadi. Bir vaqtning o'zida ko'pi bilan 1 ta shoshilinch va 1 ta past, yoki 2 ta yuqori, yoki 3 ta o'rta, yoki 5 ta past topshiriqni olish mumkin.",
+            ];
+        }
+
+        return [
+            'allowed' => true,
+            'message' => null,
+        ];
+    }
+
+    public function claimForExecutor(Ticket $ticket, User $executor, ?string $note = null): Ticket
+    {
+        $evaluation = $this->evaluateExecutorClaim($ticket->fresh(), $executor);
+
+        if (! $evaluation['allowed']) {
+            throw ValidationException::withMessages([
+                'claim' => $evaluation['message'],
+            ]);
+        }
+
+        return DB::transaction(function () use ($ticket, $executor, $note): Ticket {
+            $ticket->forceFill([
+                'assigned_executor_id' => $executor->id,
+            ])->save();
+
+            return $this->markInProgress($ticket->fresh(), $executor, $note);
+        });
     }
 
     public function complete(Ticket $ticket, User $executor, array $proofs, ?string $note = null): Ticket

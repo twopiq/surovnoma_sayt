@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\Enums\ExternalStatus;
+use App\Enums\TicketPriority;
 use App\Enums\TicketStatus;
 use App\Models\Ticket;
 use App\Models\User;
@@ -42,7 +44,7 @@ class NotificationAndAttachmentTest extends TestCase
         $response = $this->post(route('guest.store'), [
             'name' => 'Guest User',
             'email' => 'guest@example.test',
-            'phone' => '+998901112233',
+            'phone' => '+998 90 111 22 33',
             'department' => 'Kafedra',
             'job_title' => 'Mutaxassis',
             'description' => 'Bu guest forma uchun yaratilgan va yuborishga yetadigan uzun tavsif matni hisoblanadi.',
@@ -62,6 +64,8 @@ class NotificationAndAttachmentTest extends TestCase
 
         $response = $this->from(route('guest.create'))->post(route('guest.store'), [
             'name' => 'Guest User',
+            'email' => 'guest@example.test',
+            'phone' => '+998 90 111 22 33',
             'description' => "Bu guest forma uchun notog'ri formatni tekshirishga yetadigan uzun tavsif matni hisoblanadi.",
             'attachments' => [
                 UploadedFile::fake()->create('evidence.txt', 10, 'text/plain'),
@@ -188,5 +192,165 @@ class NotificationAndAttachmentTest extends TestCase
             ->assertSessionHas('status', 'Murojaat qayta qabul qilindi.');
 
         $this->assertSame(TicketStatus::InProgress, $ticket->fresh()->status);
+    }
+
+    public function test_executor_can_see_and_claim_unassigned_ticket(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+
+        $executor = User::query()->where('email', 'executor@rtt.local')->firstOrFail();
+
+        $ticket = Ticket::create([
+            'reference' => 'RTT-TEST-UNASSIGNED',
+            'channel' => 'operator',
+            'requester_name' => 'Test User',
+            'requester_email' => 'free@example.test',
+            'description' => 'Bu ijrochi uchun bo\'sh murojaatni test qilishga yetadigan tavsif matni.',
+            'priority' => TicketPriority::Low,
+            'status' => TicketStatus::Assigned,
+            'external_status' => ExternalStatus::InProgress,
+        ]);
+
+        $this->actingAs($executor)
+            ->get(route('executor.tickets.index'))
+            ->assertOk()
+            ->assertSee("Bo'sh murojaatlar", false)
+            ->assertSee('RTT-TEST-UNASSIGNED');
+
+        $this->actingAs($executor)
+            ->get(route('executor.tickets.show', $ticket))
+            ->assertOk()
+            ->assertSee('Bajarishga olish');
+
+        $this->actingAs($executor)
+            ->post(route('executor.tickets.start', $ticket))
+            ->assertSessionHas('status', 'Murojaat qabul qilindi.');
+
+        $ticket->refresh();
+
+        $this->assertSame($executor->id, $ticket->assigned_executor_id);
+        $this->assertSame(TicketStatus::InProgress, $ticket->status);
+    }
+
+    public function test_executor_complete_redirects_to_index_and_disables_repeat_complete(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+
+        $executor = User::query()->where('email', 'executor@rtt.local')->firstOrFail();
+        $ticket = Ticket::query()->where('assigned_executor_id', $executor->id)->firstOrFail();
+
+        $this->actingAs($executor)
+            ->post(route('executor.tickets.start', $ticket))
+            ->assertSessionHas('status', 'Murojaat qabul qilindi.');
+
+        $response = $this->actingAs($executor)->post(route('executor.tickets.complete', $ticket), [
+            'note' => 'Ish bajarildi.',
+            'proofs' => [
+                UploadedFile::fake()->create('proof.pdf', 100, 'application/pdf'),
+            ],
+        ]);
+
+        $response
+            ->assertRedirect(route('executor.tickets.index'))
+            ->assertSessionHas('status', 'Murojaat bajarildi deb yuborildi.');
+
+        $ticket->refresh();
+
+        $this->assertSame(TicketStatus::Completed, $ticket->status);
+
+        $this->actingAs($executor)
+            ->get(route('executor.tickets.show', $ticket))
+            ->assertOk()
+            ->assertSee('Murojaat allaqachon bajarildi deb yuborilgan.')
+            ->assertSee('cursor-not-allowed bg-slate-300 text-slate-600', false)
+            ->assertDontSee("Adminga qaytarish");
+
+        $this->actingAs($executor)
+            ->get(route('executor.tickets.archive'))
+            ->assertOk()
+            ->assertSee($ticket->reference);
+
+        $this->actingAs($executor)
+            ->get(route('executor.tickets.index'))
+            ->assertOk()
+            ->assertDontSee('Moodle kursida yakuniy test ochilmayapti va baholash bo‘limi bo‘sh chiqmoqda.');
+    }
+
+    public function test_executor_cannot_claim_ticket_beyond_workload_limit(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+
+        $executor = User::query()->where('email', 'executor@rtt.local')->firstOrFail();
+
+        foreach (range(1, 5) as $index) {
+            Ticket::create([
+                'reference' => sprintf('RTT-LOAD-%02d', $index),
+                'channel' => 'operator',
+                'requester_name' => 'Load User',
+                'requester_email' => "load{$index}@example.test",
+                'description' => 'Bu ijrochi yuklama limitini tekshirish uchun yaratilgan test murojaati.',
+                'priority' => TicketPriority::Low,
+                'status' => TicketStatus::InProgress,
+                'external_status' => ExternalStatus::InProgress,
+                'assigned_executor_id' => $executor->id,
+            ]);
+        }
+
+        $availableTicket = Ticket::create([
+            'reference' => 'RTT-LOAD-FULL',
+            'channel' => 'operator',
+            'requester_name' => 'Overflow User',
+            'requester_email' => 'overflow@example.test',
+            'description' => 'Bu ortiqcha yuklama bo\'lganda qabul qilinmasligi kerak bo\'lgan murojaat.',
+            'priority' => TicketPriority::Low,
+            'status' => TicketStatus::Assigned,
+            'external_status' => ExternalStatus::InProgress,
+        ]);
+
+        $this->actingAs($executor)
+            ->post(route('executor.tickets.start', $availableTicket))
+            ->assertSessionHasErrors([
+                'claim' => "Joriy yuklama limiti oshib ketadi. Bir vaqtning o'zida ko'pi bilan 1 ta shoshilinch va 1 ta past, yoki 2 ta yuqori, yoki 3 ta o'rta, yoki 5 ta past topshiriqni olish mumkin.",
+            ]);
+
+        $availableTicket->refresh();
+
+        $this->assertNull($availableTicket->assigned_executor_id);
+        $this->assertSame(TicketStatus::Assigned, $availableTicket->status);
+    }
+
+    public function test_executor_archive_detail_back_button_returns_to_archive(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+
+        $executor = User::query()->where('email', 'executor@rtt.local')->firstOrFail();
+        $ticket = Ticket::query()->where('assigned_executor_id', $executor->id)->firstOrFail();
+
+        $this->actingAs($executor)
+            ->post(route('executor.tickets.start', $ticket))
+            ->assertSessionHas('status', 'Murojaat qabul qilindi.');
+
+        $this->actingAs($executor)
+            ->post(route('executor.tickets.complete', $ticket), [
+                'note' => 'Arxiv testi uchun bajarildi.',
+                'proofs' => [
+                    UploadedFile::fake()->create('archive-proof.pdf', 100, 'application/pdf'),
+                ],
+            ])
+            ->assertRedirect(route('executor.tickets.index'));
+
+        $this->actingAs($executor)
+            ->get(route('executor.tickets.archive'))
+            ->assertOk()
+            ->assertSee(route('executor.tickets.show', ['ticket' => $ticket, 'source' => 'archive']), false);
+
+        $this->actingAs($executor)
+            ->get(route('executor.tickets.show', ['ticket' => $ticket, 'source' => 'archive']))
+            ->assertOk()
+            ->assertSee(route('executor.tickets.archive'), false)
+            ->assertDontSee('>Arxiv</a>', false)
+            ->assertSee('<span class="inline-flex items-center px-1 pt-1 border-b-2 border-indigo-400 text-sm font-medium leading-5 text-gray-900 focus:outline-none focus:border-indigo-700 transition duration-150 ease-in-out cursor-default" aria-current="page">', false)
+            ->assertSee('Arxiv', false)
+            ->assertSee('href="'.route('executor.tickets.index').'"', false);
     }
 }

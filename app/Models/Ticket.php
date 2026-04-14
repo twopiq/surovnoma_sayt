@@ -134,7 +134,15 @@ class Ticket extends Model
         }
 
         if ($user->hasSystemRole(UserRole::Executor)) {
-            return $query->where('assigned_executor_id', $user->id);
+            return $query->where(function ($innerQuery) use ($user) {
+                $innerQuery
+                    ->where('assigned_executor_id', $user->id)
+                    ->orWhere(function ($availableQuery) {
+                        $availableQuery
+                            ->whereNull('assigned_executor_id')
+                            ->whereIn('status', [TicketStatus::New->value, TicketStatus::Assigned->value, TicketStatus::Returned->value]);
+                    });
+            });
         }
 
         if ($user->hasSystemRole(UserRole::Operator)) {
@@ -153,13 +161,39 @@ class Ticket extends Model
 
     public function canExecutorClaim(): bool
     {
-        return in_array($this->status, [TicketStatus::Assigned, TicketStatus::Returned], true);
+        return in_array($this->status, [TicketStatus::New, TicketStatus::Assigned, TicketStatus::Returned], true);
+    }
+
+    public function canExecutorAccess(User $user): bool
+    {
+        if ($this->assigned_executor_id === $user->id) {
+            return true;
+        }
+
+        return $this->assigned_executor_id === null
+            && in_array($this->status, [TicketStatus::New, TicketStatus::Assigned, TicketStatus::Returned], true);
+    }
+
+    public function canExecutorClaimBy(User $user): bool
+    {
+        if (! $this->canExecutorClaim()) {
+            return false;
+        }
+
+        return $this->assigned_executor_id === null || $this->assigned_executor_id === $user->id;
+    }
+
+    public function canExecutorCompleteBy(User $user): bool
+    {
+        return $this->assigned_executor_id === $user->id
+            && $this->status === TicketStatus::InProgress;
     }
 
     public function executorClaimLabel(): string
     {
         return match ($this->status) {
-            TicketStatus::Assigned => 'Qabul qilish',
+            TicketStatus::New => 'Bajarishga olish',
+            TicketStatus::Assigned => $this->assigned_executor_id === null ? 'Bajarishga olish' : 'Qabul qilish',
             TicketStatus::Returned => 'Qayta qabul qilish',
             TicketStatus::InProgress => 'Qabul qilindi',
             TicketStatus::Completed => 'Bajarilgan',

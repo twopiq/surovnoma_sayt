@@ -7,6 +7,7 @@ use App\Models\Ticket;
 use App\Services\TicketService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class ExecutorTicketController extends Controller
@@ -17,41 +18,96 @@ class ExecutorTicketController extends Controller
 
     public function index(): View
     {
-        $tickets = Ticket::query()
-            ->where('assigned_executor_id', auth()->id())
-            ->latest('deadline_at')
-            ->paginate(12);
+        $executor = auth()->user();
 
-        return view('executor.index', compact('tickets'));
+        $myTickets = Ticket::query()
+            ->with(['assignedExecutor', 'requester'])
+            ->where('assigned_executor_id', $executor->id)
+            ->whereNotIn('status', [
+                TicketStatus::Completed->value,
+                TicketStatus::Closed->value,
+                TicketStatus::Rejected->value,
+            ])
+            ->latest('deadline_at')
+            ->paginate(12, ['*'], 'my_page');
+
+        $availableTickets = Ticket::query()
+            ->with(['assignedExecutor', 'requester'])
+            ->whereNull('assigned_executor_id')
+            ->whereIn('status', [TicketStatus::New->value, TicketStatus::Assigned->value, TicketStatus::Returned->value])
+            ->latest('deadline_at')
+            ->paginate(12, ['*'], 'available_page');
+
+        return view('executor.index', [
+            'myTickets' => $myTickets,
+            'availableTickets' => $availableTickets,
+            'workloadSummary' => $executor->executorWorkloadSummary(),
+        ]);
+    }
+
+    public function archive(): View
+    {
+        $tickets = Ticket::query()
+            ->with(['assignedExecutor', 'requester'])
+            ->where('assigned_executor_id', auth()->id())
+            ->whereIn('status', [
+                TicketStatus::Completed->value,
+                TicketStatus::Closed->value,
+            ])
+            ->latest('completed_at')
+            ->paginate(15);
+
+        return view('executor.archive', compact('tickets'));
     }
 
     public function show(Ticket $ticket): View
     {
-        abort_unless($ticket->assigned_executor_id === auth()->id(), 403);
+        $executor = auth()->user();
+
+        abort_unless($ticket->canExecutorAccess($executor), 403);
 
         $ticket->load(['comments.user', 'attachments', 'requester', 'assignedDepartment', 'category', 'returnRequests']);
 
-        return view('executor.show', compact('ticket'));
+        return view('executor.show', [
+            'ticket' => $ticket,
+            'claimEvaluation' => $this->ticketService->evaluateExecutorClaim($ticket, $executor),
+        ]);
     }
 
     public function start(Ticket $ticket): RedirectResponse
     {
-        abort_unless($ticket->assigned_executor_id === auth()->id(), 403);
+        $executor = auth()->user();
 
-        if (! $ticket->canExecutorClaim()) {
-            return back()->with('status', "Bu murojaatni hozir qayta qabul qilib bo'lmaydi.");
+        abort_unless($ticket->canExecutorAccess($executor), 403);
+
+        if (! $ticket->canExecutorClaimBy($executor)) {
+            return back()->withErrors([
+                'claim' => "Bu murojaatni hozir qabul qilib bo'lmaydi.",
+            ]);
         }
 
         $wasReturned = $ticket->status === TicketStatus::Returned;
 
-        $this->ticketService->markInProgress($ticket, auth()->user());
+        try {
+            $this->ticketService->claimForExecutor($ticket, $executor);
+        } catch (ValidationException $exception) {
+            return back()->withErrors($exception->errors());
+        }
 
         return back()->with('status', $wasReturned ? 'Murojaat qayta qabul qilindi.' : 'Murojaat qabul qilindi.');
     }
 
     public function complete(Request $request, Ticket $ticket): RedirectResponse
     {
-        abort_unless($ticket->assigned_executor_id === auth()->id(), 403);
+        $executor = auth()->user();
+
+        abort_unless($ticket->assigned_executor_id === $executor->id, 403);
+
+        if (! $ticket->canExecutorCompleteBy($executor)) {
+            return back()->withErrors([
+                'complete' => "Bu murojaatni hozir bajarildi deb yuborib bo'lmaydi.",
+            ]);
+        }
 
         $data = $request->validate([
             'note' => ['nullable', 'string'],
@@ -64,9 +120,11 @@ class ExecutorTicketController extends Controller
             'proofs.*.max' => 'Har bir fayl hajmi 5 MB dan oshmasligi kerak.',
         ]);
 
-        $this->ticketService->complete($ticket, auth()->user(), $request->file('proofs', []), $data['note'] ?? null);
+        $this->ticketService->complete($ticket, $executor, $request->file('proofs', []), $data['note'] ?? null);
 
-        return back()->with('status', 'Murojaat bajarildi deb yuborildi.');
+        return redirect()
+            ->route('executor.tickets.index')
+            ->with('status', 'Murojaat bajarildi deb yuborildi.');
     }
 
     public function requestReturn(Request $request, Ticket $ticket): RedirectResponse

@@ -17,6 +17,24 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/pending-approval', [HomeController::class, 'pendingApproval'])->name('pending-approval');
+Route::get('/_errors/{code}', function (string $code) {
+    $views = [
+        '403' => 'errors.403',
+        '404' => 'errors.404',
+        '413' => 'errors.post-too-large',
+        '419' => 'errors.419',
+        '429' => 'errors.429',
+        '500' => 'errors.500',
+        '503' => 'errors.503',
+    ];
+
+    abort_unless(array_key_exists($code, $views), 404);
+
+    return response()->view($views[$code], [
+        'maxSize' => '25 MB',
+        'serverLimit' => ini_get('post_max_size') ?: '32M',
+    ], (int) $code);
+})->whereNumber('code')->name('errors.preview');
 
 Route::prefix('guest')->name('guest.')->group(function () {
     Route::get('/create', [GuestTicketController::class, 'create'])->name('create');
@@ -56,6 +74,7 @@ Route::middleware(['auth', 'approved'])->group(function () {
 
     Route::prefix('executor/tickets')->name('executor.tickets.')->middleware('role:executor')->group(function () {
         Route::get('/', [ExecutorTicketController::class, 'index'])->name('index');
+        Route::get('/archive', [ExecutorTicketController::class, 'archive'])->name('archive');
         Route::get('/{ticket}', [ExecutorTicketController::class, 'show'])->name('show');
         Route::post('/{ticket}/start', [ExecutorTicketController::class, 'start'])->name('start');
         Route::post('/{ticket}/complete', [ExecutorTicketController::class, 'complete'])->name('complete');
@@ -63,9 +82,11 @@ Route::middleware(['auth', 'approved'])->group(function () {
         Route::post('/{ticket}/comment', [ExecutorTicketController::class, 'comment'])->name('comment');
     });
 
-    Route::get('/manager/dashboard', ManagerDashboardController::class)
-        ->middleware('role:manager')
-        ->name('manager.dashboard');
+    Route::middleware('role:admin|manager')->group(function () {
+        Route::get('/manager/dashboard', ManagerDashboardController::class)->name('manager.dashboard');
+        Route::get('/manager/dashboard/export/{stat}/{format}', [ManagerDashboardController::class, 'export'])
+            ->name('manager.dashboard.export');
+    });
 
     Route::prefix('admin')->name('admin.')->middleware('role:admin')->group(function () {
         Route::get('/dispatch', [DispatchController::class, 'index'])->name('dispatch.index');
