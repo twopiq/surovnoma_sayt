@@ -12,7 +12,7 @@ class DashboardController extends Controller
         $user = auth()->user();
 
         if ($user->hasSystemRole(UserRole::Admin)) {
-            return redirect()->route('admin.dispatch.index');
+            return redirect()->route('manager.dashboard');
         }
 
         if ($user->hasSystemRole(UserRole::Executor)) {

@@ -20,7 +20,7 @@ return new class extends Migration
             $table->foreignId('assigned_department_id')->nullable()->constrained('departments')->nullOnDelete();
             $table->foreignId('assigned_executor_id')->nullable()->constrained('users')->nullOnDelete();
             $table->foreignId('category_id')->nullable()->constrained('categories')->nullOnDelete();
-            $table->foreignId('sla_profile_id')->nullable()->constrained('sla_profiles')->nullOnDelete();
+            $table->foreignId('sla_profile_id')->nullable();
             $table->string('requester_name');
             $table->string('requester_email')->nullable();
             $table->string('requester_phone', 30)->nullable();
