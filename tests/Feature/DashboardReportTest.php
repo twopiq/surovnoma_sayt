@@ -35,8 +35,10 @@ class DashboardReportTest extends TestCase
         $response = $this->actingAs($manager)->get(route('manager.dashboard'));
 
         $response->assertOk();
-        $response->assertSee('Yakunlangan ishlar');
-        $response->assertSee($currentMonthTicket->reference);
+        $response->assertSee('Oylik hisobot');
+        $response->assertSee('Tanlangan ishlar');
+        $response->assertSee('Faol ishlar kesimi');
+        $response->assertSee('1');
         $response->assertDontSee($previousMonthTicket->reference);
     }
 
@@ -50,10 +52,10 @@ class DashboardReportTest extends TestCase
         $response = $this->actingAs($admin)->get(route('manager.dashboard'));
 
         $response->assertOk();
-        $response->assertSee('Yakunlangan ishlar');
+        $response->assertSee('Oylik hisobot');
     }
 
-    public function test_dashboard_completed_work_report_can_be_exported_as_csv_and_json(): void
+    public function test_dashboard_completed_work_report_can_be_exported_as_excel(): void
     {
         $this->seed(DatabaseSeeder::class);
 
@@ -65,24 +67,13 @@ class DashboardReportTest extends TestCase
             'completed_at' => now(),
         ])->save();
 
-        $csvResponse = $this->actingAs($manager)->get(route('manager.dashboard.export', [
-            'stat' => 'all',
-            'format' => 'csv',
+        $excelResponse = $this->actingAs($manager)->get(route('manager.dashboard.export', [
+            'stat' => 'selected',
             'month' => now()->format('Y-m'),
         ]));
 
-        $csvResponse->assertOk();
-        $this->assertStringContainsString($ticket->reference, $csvResponse->streamedContent());
-
-        $jsonResponse = $this->actingAs($manager)->get(route('manager.dashboard.export', [
-            'stat' => 'all',
-            'format' => 'json',
-            'month' => now()->format('Y-m'),
-        ]));
-
-        $jsonResponse->assertOk();
-        $jsonResponse->assertJsonFragment([
-            'reference' => $ticket->reference,
-        ]);
+        $excelResponse->assertOk();
+        $excelResponse->assertHeader('content-type', 'application/vnd.ms-excel; charset=UTF-8');
+        $this->assertStringContainsString($ticket->reference, $excelResponse->streamedContent());
     }
 }

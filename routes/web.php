@@ -84,7 +84,7 @@ Route::middleware(['auth', 'approved'])->group(function () {
 
     Route::middleware('role:admin|manager')->group(function () {
         Route::get('/manager/dashboard', ManagerDashboardController::class)->name('manager.dashboard');
-        Route::get('/manager/dashboard/export/{stat}/{format}', [ManagerDashboardController::class, 'export'])
+        Route::get('/manager/dashboard/export/{stat}', [ManagerDashboardController::class, 'export'])
             ->name('manager.dashboard.export');
     });
 

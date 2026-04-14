@@ -5,10 +5,12 @@ namespace App\Http\Controllers;
 use App\Enums\TicketPriority;
 use App\Enums\TicketStatus;
 use App\Models\Ticket;
+use App\Models\TicketStatusHistory;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
@@ -20,103 +22,93 @@ class ManagerDashboardController extends Controller
     {
         [$start, $end, $monthValue, $monthLabel] = $this->reportPeriod($request);
         $filters = $this->reportFilters($request);
+        $completedQuery = $this->applyBreakdownFilters($this->completedTicketsQuery($start, $end), $filters);
+        $completedCount = (clone $completedQuery)->count();
+        $onTimeCount = $this->applyStatFilter(clone $completedQuery, 'on_time')->count();
+        $complaintsCount = $this->complaintTicketsQuery($start, $end)->count();
+        $averageRating = $this->averageRating($completedCount, $onTimeCount);
 
         $stats = collect($this->statMeta())->map(function (array $meta, string $stat) use ($start, $end, $monthValue, $filters): array {
             return [
                 ...$meta,
-                'value' => $this->applyStatFilter(
-                    $this->applyBreakdownFilters($this->completedTicketsQuery($start, $end), $filters),
-                    $stat,
-                )->count(),
-                'csv_url' => route('manager.dashboard.export', [
+                'value' => match ($stat) {
+                    'rating' => number_format($this->averageRating(
+                        $this->applyBreakdownFilters($this->completedTicketsQuery($start, $end), $filters)->count(),
+                        $this->applyStatFilter(
+                            $this->applyBreakdownFilters($this->completedTicketsQuery($start, $end), $filters),
+                            'on_time',
+                        )->count(),
+                    ), 1),
+                    'complaints' => $this->complaintTicketsQuery($start, $end)->count(),
+                    default => $this->applyBreakdownFilters($this->completedTicketsQuery($start, $end), $filters)->count(),
+                },
+                'excel_url' => route('manager.dashboard.export', [
                     'stat' => $stat,
-                    'format' => 'csv',
-                    'month' => $monthValue,
-                    ...$filters,
-                ]),
-                'json_url' => route('manager.dashboard.export', [
-                    'stat' => $stat,
-                    'format' => 'json',
                     'month' => $monthValue,
                     ...$filters,
                 ]),
             ];
         })->all();
 
-        $byPriorityCounts = (clone $this->applyBreakdownFilters($this->completedTicketsQuery($start, $end), $filters))
-            ->selectRaw('priority, count(*) as aggregate')
-            ->groupBy('priority')
-            ->pluck('aggregate', 'priority');
+        $employeeResults = (clone $completedQuery)
+            ->select('assigned_executor_id')
+            ->selectRaw('count(*) as total')
+            ->with('assignedExecutor:id,name')
+            ->groupBy('assigned_executor_id')
+            ->orderByDesc('total')
+            ->limit(8)
+            ->get()
+            ->map(fn (Ticket $ticket): array => [
+                'label' => $ticket->assignedExecutor?->name ?? 'Biriktirilmagan',
+                'value' => (int) $ticket->total,
+            ]);
 
-        $byPriority = collect(TicketPriority::cases())->map(fn (TicketPriority $priority): array => [
-            'label' => $priority->label(),
-            'value' => $priority->value,
-            'count' => (int) ($byPriorityCounts[$priority->value] ?? 0),
-            'csv_url' => route('manager.dashboard.export', [
-                'stat' => 'all',
-                'format' => 'csv',
-                'month' => $monthValue,
-                ...$filters,
-                'priority' => $priority->value,
-            ]),
-            'json_url' => route('manager.dashboard.export', [
-                'stat' => 'all',
-                'format' => 'json',
-                'month' => $monthValue,
-                ...$filters,
-                'priority' => $priority->value,
-            ]),
+        $employeeMax = max(1, (int) $employeeResults->max('value'));
+
+        $monthlyIndicators = collect([
+            ['label' => 'Yakunlangan', 'value' => $completedCount, 'hex' => '#14b8a6'],
+            ['label' => 'Shikoyatlar', 'value' => $complaintsCount, 'hex' => '#f43f5e'],
+            ['label' => 'Reyting x10', 'value' => (int) round($averageRating * 10), 'hex' => '#8b5cf6'],
         ]);
 
-        $completedTickets = $this->applyBreakdownFilters($this->completedTicketsQuery($start, $end), $filters)
-            ->with(['assignedDepartment', 'assignedExecutor', 'requester', 'category'])
-            ->latest('completed_at')
-            ->paginate(12)
-            ->withQueryString();
+        $indicatorMax = max(1, (int) $monthlyIndicators->max('value'));
+        $activeWorkload = $this->activeWorkloadByExecutor();
+        $activeWorkloadMax = max(1, (int) $activeWorkload->max('value'));
 
         return view('manager.dashboard', [
             'monthValue' => $monthValue,
             'monthLabel' => $monthLabel,
             'stats' => $stats,
-            'byPriority' => $byPriority,
-            'completedTickets' => $completedTickets,
+            'employeeResults' => $employeeResults,
+            'employeeMax' => $employeeMax,
+            'monthlyIndicators' => $monthlyIndicators,
+            'indicatorMax' => $indicatorMax,
+            'activeWorkload' => $activeWorkload,
+            'activeWorkloadMax' => $activeWorkloadMax,
             'activeFilters' => $filters,
         ]);
     }
 
-    public function export(Request $request, string $stat, string $format): StreamedResponse|JsonResponse
+    public function export(Request $request, string $stat): StreamedResponse
     {
         abort_unless(array_key_exists($stat, $this->statMeta()), 404);
-        abort_unless(in_array($format, ['csv', 'json'], true), 404);
 
         [$start, $end, $monthValue, $monthLabel] = $this->reportPeriod($request);
         $filters = $this->reportFilters($request);
-        $query = $this->applyStatFilter(
-            $this->applyBreakdownFilters(
-                $this->completedTicketsQuery($start, $end)
-                    ->with(['assignedDepartment', 'assignedExecutor', 'requester', 'category'])
-                    ->latest('completed_at'),
-                $filters,
-            ),
-            $stat,
-        );
+        $query = $this->reportTicketsForStat($stat, $start, $end, $filters)
+            ->with(['assignedDepartment', 'assignedExecutor', 'requester', 'category'])
+            ->latest('updated_at');
 
         $filename = 'yakunlangan-ishlar-'.$stat.'-'.$monthValue;
 
-        if ($format === 'json') {
-            return response()->json([
-                'report' => 'Yakunlangan ishlar',
-                'period' => $monthLabel,
-                'stat' => $this->statMeta()[$stat]['label'],
-                'filters' => $filters,
-                'data' => $query->get()->map(fn (Ticket $ticket): array => $this->ticketRow($ticket))->values(),
-            ]);
-        }
+        return Response::streamDownload(function () use ($query, $monthLabel, $stat): void {
+            echo "\xEF\xBB\xBF";
+            echo '<html><head><meta charset="UTF-8"></head><body>';
+            echo '<table border="1">';
+            echo '<tr><th colspan="12">'.e($this->statMeta()[$stat]['label']).' - '.e($monthLabel).'</th></tr>';
+            echo '<tr>';
 
-        return Response::streamDownload(function () use ($query): void {
-            $handle = fopen('php://output', 'wb');
-            fwrite($handle, "\xEF\xBB\xBF");
-            fputcsv($handle, [
+            foreach ([
                 'Raqam',
                 'Sarlavha',
                 'Murojaatchi',
@@ -129,15 +121,25 @@ class ManagerDashboardController extends Controller
                 'Yakunlangan vaqt',
                 'Muddat',
                 'SLA natija',
-            ]);
-
-            foreach ($query->cursor() as $ticket) {
-                fputcsv($handle, $this->ticketRow($ticket));
+            ] as $heading) {
+                echo '<th>'.e($heading).'</th>';
             }
 
-            fclose($handle);
-        }, $filename.'.csv', [
-            'Content-Type' => 'text/csv; charset=UTF-8',
+            echo '</tr>';
+
+            foreach ($query->cursor() as $ticket) {
+                echo '<tr>';
+
+                foreach ($this->ticketRow($ticket) as $value) {
+                    echo '<td>'.e((string) $value).'</td>';
+                }
+
+                echo '</tr>';
+            }
+
+            echo '</table></body></html>';
+        }, $filename.'.xls', [
+            'Content-Type' => 'application/vnd.ms-excel; charset=UTF-8',
         ]);
     }
 
@@ -199,6 +201,52 @@ class ManagerDashboardController extends Controller
         };
     }
 
+    protected function complaintTicketsQuery(Carbon $start, Carbon $end): Builder
+    {
+        return Ticket::query()->whereIn('id', TicketStatusHistory::query()
+            ->select('ticket_id')
+            ->whereIn('to_status', [TicketStatus::Returned->value, TicketStatus::Rejected->value])
+            ->whereBetween('created_at', [$start, $end]));
+    }
+
+    protected function reportTicketsForStat(string $stat, Carbon $start, Carbon $end, array $filters): Builder
+    {
+        if ($stat === 'complaints') {
+            return $this->complaintTicketsQuery($start, $end);
+        }
+
+        return $this->applyBreakdownFilters($this->completedTicketsQuery($start, $end), $filters);
+    }
+
+    protected function averageRating(int $completedCount, int $onTimeCount): float
+    {
+        if ($completedCount === 0) {
+            return 0.0;
+        }
+
+        return round(($onTimeCount / $completedCount) * 5, 1);
+    }
+
+    protected function activeWorkloadByExecutor(): Collection
+    {
+        return User::query()
+            ->role('executor')
+            ->select(['id', 'name'])
+            ->withCount(['assignedTickets as active_tickets_count' => function (Builder $query): void {
+                $query->whereIn('status', [
+                    TicketStatus::Assigned->value,
+                    TicketStatus::InProgress->value,
+                    TicketStatus::Returned->value,
+                ]);
+            }])
+            ->orderBy('name')
+            ->get()
+            ->map(fn (User $user): array => [
+                'label' => $user->name,
+                'value' => (int) $user->active_tickets_count,
+            ]);
+    }
+
     protected function ticketRow(Ticket $ticket): array
     {
         return [
@@ -220,25 +268,23 @@ class ManagerDashboardController extends Controller
     protected function statMeta(): array
     {
         return [
-            'all' => [
-                'label' => 'Jami yakunlangan',
-                'description' => 'Tanlangan oyda ijrochi tomonidan yakunlangan ishlar.',
+            'selected' => [
+                'label' => 'Tanlangan ishlar',
+                'description' => 'Tanlangan oyda yakunlangan ishlar.',
+                'accent' => 'bg-emerald-100 text-emerald-700',
+                'icon' => 'check',
             ],
-            'on_time' => [
-                'label' => 'Muddatida yakunlangan',
-                'description' => 'SLA muddati ichida yoki muddatsiz yakunlangan ishlar.',
+            'rating' => [
+                'label' => "O'rtacha reyting",
+                'description' => 'SLA asosida 5 ballik baho.',
+                'accent' => 'bg-orange-100 text-orange-700',
+                'icon' => 'star',
             ],
-            'overdue' => [
-                'label' => 'Muddatdan kechikkan',
-                'description' => 'Belgilangan muddatdan keyin yakunlangan ishlar.',
-            ],
-            'waiting_close' => [
-                'label' => 'Yopishga tayyor',
-                'description' => 'Ijrochi bajargan, admin yopishini kutayotgan ishlar.',
-            ],
-            'closed' => [
-                'label' => 'Yopilgan',
-                'description' => 'Admin tomonidan yopilgan yakunlangan ishlar.',
+            'complaints' => [
+                'label' => 'Shikoyatlar',
+                'description' => 'Qaytarilgan yoki rad etilgan murojaatlar.',
+                'accent' => 'bg-rose-100 text-rose-700',
+                'icon' => 'alert',
             ],
         ];
     }
