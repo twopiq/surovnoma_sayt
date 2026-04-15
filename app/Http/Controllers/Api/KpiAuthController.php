@@ -62,6 +62,7 @@ class KpiAuthController extends Controller
         return response()
             ->json([
                 'user' => $this->userPayload($user),
+                'token' => $token,
             ])
             ->withCookie($this->makeCookie($token, $minutes, $request));
     }
@@ -90,7 +91,7 @@ class KpiAuthController extends Controller
 
     private function userFromRequest(Request $request): ?User
     {
-        $token = $request->cookie(self::COOKIE_NAME);
+        $token = $this->tokenFromRequest($request);
 
         if (! $token) {
             return null;
@@ -115,6 +116,13 @@ class KpiAuthController extends Controller
     {
         return $user->isApproved()
             && $user->hasRole(UserRole::Admin->value);
+    }
+
+    private function tokenFromRequest(Request $request): ?string
+    {
+        $bearerToken = $request->bearerToken();
+
+        return $bearerToken ?: $request->cookie(self::COOKIE_NAME);
     }
 
     private function userPayload(User $user): array

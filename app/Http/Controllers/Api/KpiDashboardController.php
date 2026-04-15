@@ -223,7 +223,7 @@ class KpiDashboardController extends Controller
 
     private function userFromRequest(Request $request): ?User
     {
-        $token = $request->cookie(self::COOKIE_NAME);
+        $token = $this->tokenFromRequest($request);
 
         if (! $token) {
             return null;
@@ -251,6 +251,13 @@ class KpiDashboardController extends Controller
         return Ticket::query()
             ->whereIn('status', array_map(fn (TicketStatus $status): string => $status->value, $statuses))
             ->count();
+    }
+
+    private function tokenFromRequest(Request $request): ?string
+    {
+        $bearerToken = $request->bearerToken();
+
+        return $bearerToken ?: $request->cookie(self::COOKIE_NAME);
     }
 
     private function averageRating(int $completed, int $onTime): float
