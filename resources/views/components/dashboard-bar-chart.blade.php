@@ -5,12 +5,14 @@
     'emptyText' => "Ma'lumot yo'q.",
     'minWidth' => 760,
     'height' => 320,
+    'slotSize' => 72,
+    'fit' => false,
 ])
 
 @php
     $items = collect($items);
     $maxValue = max(1, (int) ($max ?? $items->max('value')));
-    $width = max((int) $minWidth, max(1, $items->count()) * 96);
+    $width = max((int) $minWidth, max(1, $items->count()) * (int) $slotSize);
     $height = (int) $height;
     $plotLeft = 48;
     $plotTop = 24;
@@ -27,11 +29,13 @@
         {{ $emptyText }}
     </div>
 @else
-    <div {{ $attributes->merge(['class' => 'h-full overflow-x-auto']) }}>
+    <div {{ $attributes->merge(['class' => $fit ? 'h-full overflow-hidden' : 'h-full overflow-x-auto']) }}>
         <svg
             viewBox="0 0 {{ $width }} {{ $height }}"
             class="h-full min-h-64 w-full"
-            style="min-width: {{ $width }}px;"
+            @unless ($fit)
+                style="min-width: {{ $width }}px;"
+            @endunless
             role="img"
             aria-label="Dashboard chart"
         >

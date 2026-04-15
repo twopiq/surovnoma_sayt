@@ -61,36 +61,39 @@
                 @endforeach
             </div>
 
-            <div class="grid gap-4 xl:grid-cols-5">
-                <section class="rounded-lg bg-white p-5 shadow-sm ring-1 ring-slate-200/80 xl:col-span-3">
+            <div style="display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 1rem; width: 100%;">
+                <section style="min-width: 0; border-radius: 0.5rem; background: #ffffff; padding: 1.25rem; box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08); outline: 1px solid rgba(226, 232, 240, 0.8);">
                     <div>
-                        <h3 class="font-['Space_Grotesk'] text-lg font-bold text-slate-950">Xodimlar natijasi</h3>
-                        <p class="mt-1 text-sm text-slate-500">Topshiriqlarni yakunlash bo'yicha taqsimot</p>
+                        <h3 style="font-family: 'Space Grotesk', sans-serif; font-size: 1.125rem; font-weight: 700; line-height: 1.75rem; color: #020617;">Xodimlar natijasi</h3>
+                        <p style="margin-top: 0.25rem; font-size: 0.875rem; line-height: 1.25rem; color: #64748b;">Topshiriqlarni yakunlash bo'yicha taqsimot</p>
                     </div>
 
-                    <div class="mt-6 h-72 rounded-lg bg-gradient-to-b from-slate-50 to-white p-3 ring-1 ring-slate-100">
+                    <div style="margin-top: 1.5rem; height: 18rem; border-radius: 0.5rem; background: linear-gradient(to bottom, #f8fafc, #ffffff); padding: 0.75rem; outline: 1px solid #f1f5f9;">
                         <x-dashboard-bar-chart
                             :items="$employeeResults"
                             :max="$employeeMax"
                             accent="#3b82f6"
                             empty-text="Bu oy yakunlangan ishlar hali yo'q."
-                            :min-width="760"
+                            :min-width="560"
+                            :slot-size="70"
+                            :fit="true"
                         />
                     </div>
                 </section>
 
-                <section class="rounded-lg bg-white p-5 shadow-sm ring-1 ring-slate-200/80 xl:col-span-2">
+                <section style="min-width: 0; border-radius: 0.5rem; background: #ffffff; padding: 1.25rem; box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08); outline: 1px solid rgba(226, 232, 240, 0.8);">
                     <div>
-                        <h3 class="font-['Space_Grotesk'] text-lg font-bold text-slate-950">Oylik ko'rsatkichlar</h3>
-                        <p class="mt-1 text-sm text-slate-500">Asosiy indikatorlar taqsimoti</p>
+                        <h3 style="font-family: 'Space Grotesk', sans-serif; font-size: 1.125rem; font-weight: 700; line-height: 1.75rem; color: #020617;">Oylik ko'rsatkichlar</h3>
+                        <p style="margin-top: 0.25rem; font-size: 0.875rem; line-height: 1.25rem; color: #64748b;">Asosiy indikatorlar taqsimoti</p>
                     </div>
 
-                    <div class="mt-6 h-72 rounded-lg bg-gradient-to-b from-slate-50 to-white p-3 ring-1 ring-slate-100">
+                    <div style="margin-top: 1.5rem; height: 18rem; border-radius: 0.5rem; background: linear-gradient(to bottom, #f8fafc, #ffffff); padding: 0.75rem; outline: 1px solid #f1f5f9;">
                         <x-dashboard-bar-chart
                             :items="$monthlyIndicators"
                             :max="$indicatorMax"
                             accent="#8b5cf6"
-                            :min-width="430"
+                            :min-width="320"
+                            :slot-size="80"
                         />
                     </div>
                 </section>
@@ -110,6 +113,7 @@
                         empty-text="Ijrochilar ro'yxati hali mavjud emas."
                         :min-width="920"
                         :height="360"
+                        :slot-size="86"
                     />
                 </div>
             </section>
