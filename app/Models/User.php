@@ -33,6 +33,11 @@ class User extends Authenticatable
         'job_title',
         'department_id',
         'availability_status',
+        'telegram_chat_id',
+        'telegram_username',
+        'telegram_link_token',
+        'telegram_linked_at',
+        'telegram_notifications_enabled',
         'is_active',
         'approved_at',
         'password',
@@ -48,6 +53,8 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'approved_at' => 'datetime',
+            'telegram_linked_at' => 'datetime',
+            'telegram_notifications_enabled' => 'boolean',
             'is_active' => 'boolean',
             'availability_status' => AvailabilityStatus::class,
             'password' => 'hashed',
@@ -128,6 +135,15 @@ class User extends Authenticatable
             'remaining_units' => max(0, self::EXECUTOR_MAX_WORKLOAD_UNITS - $tickets->sum(fn (Ticket $ticket) => $ticket->priority->workloadUnits())),
             'counts' => $tickets->countBy(fn (Ticket $ticket) => $ticket->priority->value)->all(),
         ];
+    }
+
+    public function routeNotificationForTelegram(mixed $notification = null): ?string
+    {
+        if ($this->telegram_notifications_enabled === false) {
+            return null;
+        }
+
+        return $this->telegram_chat_id;
     }
 
     public static function generateUniqueLogin(string $name, ?int $ignoreUserId = null): string

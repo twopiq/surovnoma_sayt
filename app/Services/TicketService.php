@@ -34,11 +34,16 @@ class TicketService
     public function create(array $attributes, ?User $actor = null, array $attachments = []): array
     {
         return DB::transaction(function () use ($attributes, $actor, $attachments): array {
+            $category = isset($attributes['category_id'])
+                ? Category::query()->find($attributes['category_id'])
+                : null;
+
             $ticket = Ticket::create([
                 'reference' => $this->nextReference(),
                 'channel' => $attributes['channel'],
                 'requester_id' => $attributes['requester_id'] ?? null,
                 'operator_id' => $attributes['operator_id'] ?? null,
+                'category_id' => $category?->id,
                 'requester_name' => $attributes['requester_name'],
                 'requester_email' => $attributes['requester_email'] ?? null,
                 'requester_phone' => $attributes['requester_phone'] ?? null,
@@ -46,7 +51,7 @@ class TicketService
                 'requester_job_title' => $attributes['requester_job_title'] ?? null,
                 'title' => $attributes['title'] ?? null,
                 'description' => $attributes['description'],
-                'priority' => TicketPriority::Medium,
+                'priority' => $attributes['priority'] ?? $category?->default_priority ?? TicketPriority::Medium,
                 'status' => TicketStatus::New,
                 'external_status' => ExternalStatus::Accepted,
             ]);

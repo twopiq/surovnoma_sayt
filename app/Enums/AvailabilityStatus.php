@@ -15,7 +15,7 @@ enum AvailabilityStatus: string
             self::Active => 'Faol',
             self::Busy => 'Band',
             self::Offline => 'Ishda emas',
-            self::Vacation => 'Taʼtil',
+            self::Vacation => "Ta'til",
         };
     }
 }

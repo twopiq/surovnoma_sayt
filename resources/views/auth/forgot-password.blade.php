@@ -16,7 +16,11 @@
             <x-input-error :messages="$errors->get('email')" class="mt-2" />
         </div>
 
-        <div class="flex items-center justify-end mt-4">
+        <div class="mt-4 flex flex-wrap items-center justify-between gap-4">
+            <a href="{{ route('login') }}" class="text-sm text-slate-500 underline hover:text-slate-700">
+                Kirish sahifasiga qaytish
+            </a>
+
             <x-primary-button>
                 {{ __('Email Password Reset Link') }}
             </x-primary-button>

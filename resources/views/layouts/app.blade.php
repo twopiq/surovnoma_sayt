@@ -10,25 +10,32 @@
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600;space-grotesk:500,700&display=swap" rel="stylesheet" />
 
+        <script>
+            document.documentElement.dataset.theme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        </script>
         @vite(['resources/css/app.css', 'resources/js/app.js'])
         @livewireStyles
     </head>
-    <body class="app-shell-bg font-sans antialiased text-slate-900">
+    <body class="bg-slate-50 font-sans antialiased text-slate-900">
         <div class="min-h-screen">
             @include('layouts.navigation')
 
-            @isset($header)
-                <header class="border-b border-slate-200/80 bg-white/80 backdrop-blur">
-                    <div class="mx-auto max-w-7xl px-4 py-5 sm:px-6 lg:px-8">
-                        {{ $header }}
-                    </div>
-                </header>
-            @endisset
+            <div class="min-w-0 lg:pl-64">
+                @isset($header)
+                    <header class="border-b border-slate-200/80 bg-white/90 backdrop-blur">
+                        <div class="mx-auto max-w-7xl px-4 py-5 sm:px-6 lg:px-8">
+                            {{ $header }}
+                        </div>
+                    </header>
+                @endisset
 
-            <main class="pb-12">
-                @include('partials.flash')
-                {{ $slot }}
-            </main>
+                <main class="min-h-screen app-shell-bg pb-12">
+                    @include('partials.flash')
+                    {{ $slot }}
+                </main>
+            </div>
+
+            @include('partials.notification-toasts')
         </div>
 
         @livewireScripts

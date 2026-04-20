@@ -41,6 +41,8 @@ class ApprovalFlowTest extends TestCase
         ]);
 
         $response->assertRedirect(route('pending-approval'));
+        $this->assertGuest();
+        $response->assertSessionHas('pending_approval_email', 'new@example.test');
 
         $user = User::query()->where('email', 'new@example.test')->firstOrFail();
 
@@ -150,5 +152,22 @@ class ApprovalFlowTest extends TestCase
             ->get(route('pending-approval'))
             ->assertOk()
             ->assertSee("So'rov rad etildi");
+    }
+
+    public function test_pending_approval_page_can_log_user_out_to_login(): void
+    {
+        Role::findOrCreate(UserRole::Requester->value, 'web');
+
+        $user = User::factory()->create([
+            'approved_at' => null,
+            'is_active' => false,
+        ]);
+        $user->assignRole(UserRole::Requester->value);
+
+        $this->actingAs($user)
+            ->post(route('logout'), ['redirect' => 'login'])
+            ->assertRedirect(route('login'));
+
+        $this->assertGuest();
     }
 }

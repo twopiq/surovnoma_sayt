@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Enums\AvailabilityStatus;
 use App\Enums\TicketPriority;
+use App\Enums\TicketStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Department;
@@ -21,24 +22,32 @@ class DispatchController extends Controller
     {
     }
 
-    public function index(Request $request): View
+    public function index(): View
     {
-        $query = Ticket::query()->with(['assignedDepartment', 'assignedExecutor', 'requester'])->latest();
+        return view('admin.dispatch.index');
+    }
 
-        if ($request->filled('status')) {
-            $query->where('status', $request->string('status'));
-        }
+    public function tickets(Request $request): View
+    {
+        $query = $this->filteredTicketQuery($request, $this->activeStatuses())->latest();
 
-        if ($request->filled('priority')) {
-            $query->where('priority', $request->string('priority'));
-        }
-
-        if ($request->boolean('overdue')) {
-            $query->whereNotNull('deadline_at')->where('deadline_at', '<', now())->whereNotIn('status', ['closed', 'rejected']);
-        }
-
-        return view('admin.dispatch.index', [
+        return view('admin.dispatch.tickets', [
             'tickets' => $query->paginate(15)->withQueryString(),
+            'statuses' => $this->activeStatuses(),
+            'priorities' => TicketPriority::cases(),
+        ]);
+    }
+
+    public function archive(Request $request): View
+    {
+        $query = $this->filteredTicketQuery($request, $this->archiveStatuses(), allowOverdueFilter: false)
+            ->latest('completed_at')
+            ->latest();
+
+        return view('admin.dispatch.archive', [
+            'tickets' => $query->paginate(15)->withQueryString(),
+            'statuses' => $this->archiveStatuses(),
+            'priorities' => TicketPriority::cases(),
         ]);
     }
 
@@ -50,6 +59,7 @@ class DispatchController extends Controller
             'requester',
             'assignedDepartment',
             'assignedExecutor',
+            'category',
             'assignments',
             'histories.user',
             'returnRequests.executor',
@@ -119,19 +129,18 @@ class DispatchController extends Controller
 
         $this->ticketService->close($ticket, auth()->user(), $data['note'] ?? null);
 
-        return back()->with('status', 'Murojaat yopildi.');
+        return redirect()->route('admin.dispatch.archive')->with('status', 'Murojaat yopildi va arxivga joylandi.');
     }
 
     public function exportCsv(Request $request)
     {
-        $query = Ticket::query()->with(['assignedDepartment', 'assignedExecutor', 'requester'])->latest();
-
-        if ($request->filled('status')) {
-            $query->where('status', $request->string('status'));
-        }
-
-        if ($request->filled('priority')) {
-            $query->where('priority', $request->string('priority'));
+        if ($request->boolean('archive')) {
+            $query = $this->filteredTicketQuery($request, $this->archiveStatuses(), allowOverdueFilter: false)
+                ->latest('completed_at')
+                ->latest();
+        } else {
+            $query = $this->filteredTicketQuery($request, $this->activeStatuses())
+                ->latest();
         }
 
         $headers = [
@@ -141,12 +150,13 @@ class DispatchController extends Controller
 
         $callback = function () use ($query): void {
             $handle = fopen('php://output', 'wb');
-            fputcsv($handle, ['Reference', 'Requester', 'Priority', 'Status', 'Department', 'Executor', 'Deadline']);
+            fputcsv($handle, ['Reference', 'Requester', 'Category', 'Priority', 'Status', 'Department', 'Executor', 'Deadline']);
 
             foreach ($query->cursor() as $ticket) {
                 fputcsv($handle, [
                     $ticket->reference,
                     $ticket->requester_name,
+                    $ticket->category?->name,
                     $ticket->priority->value,
                     $ticket->status->value,
                     $ticket->assignedDepartment?->name,
@@ -159,6 +169,53 @@ class DispatchController extends Controller
         };
 
         return Response::stream($callback, 200, $headers);
+    }
+
+    private function filteredTicketQuery(Request $request, array $allowedStatuses, bool $allowOverdueFilter = true)
+    {
+        $allowedStatusValues = array_map(fn (TicketStatus $status): string => $status->value, $allowedStatuses);
+
+        $query = Ticket::query()
+            ->with(['assignedDepartment', 'assignedExecutor', 'requester', 'category'])
+            ->whereIn('status', $allowedStatusValues);
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->string('status'));
+        }
+
+        if ($request->filled('priority')) {
+            $query->where('priority', $request->string('priority'));
+        }
+
+        if ($allowOverdueFilter && $request->boolean('overdue')) {
+            $query->whereNotNull('deadline_at')
+                ->where('deadline_at', '<', now())
+                ->whereNotIn('status', [
+                    TicketStatus::Closed->value,
+                    TicketStatus::Rejected->value,
+                ]);
+        }
+
+        return $query;
+    }
+
+    private function activeStatuses(): array
+    {
+        return [
+            TicketStatus::New,
+            TicketStatus::Assigned,
+            TicketStatus::InProgress,
+            TicketStatus::Returned,
+            TicketStatus::Rejected,
+        ];
+    }
+
+    private function archiveStatuses(): array
+    {
+        return [
+            TicketStatus::Completed,
+            TicketStatus::Closed,
+        ];
     }
 
     public function comment(Request $request, Ticket $ticket)

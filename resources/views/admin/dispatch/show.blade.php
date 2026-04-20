@@ -1,7 +1,15 @@
 <x-app-layout>
     <x-slot name="header">
+        @php
+            $backUrl = match (request('source')) {
+                'archive' => route('admin.dispatch.archive'),
+                'board' => route('admin.dispatch.index'),
+                default => route('admin.dispatch.tickets'),
+            };
+        @endphp
+
         <div class="flex items-center gap-3">
-            <a href="{{ route('admin.dispatch.index') }}" class="rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100">Ortga qaytish</a>
+            <a href="{{ $backUrl }}" class="rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100">Ortga qaytish</a>
             <h2 class="font-['Space_Grotesk'] text-2xl font-bold">Dispetcher kartochkasi</h2>
         </div>
     </x-slot>
@@ -15,7 +23,15 @@
                     @foreach ($ticket->histories as $history)
                         <div class="rounded-xl bg-slate-50 p-3 text-sm">
                             <div class="font-semibold text-slate-700">{{ $history->user?->name ?? 'Tizim' }}</div>
-                            <div class="text-slate-600">{{ $history->from_status?->label() ?? 'Boshlanish' }} -> {{ $history->to_status->label() }}</div>
+                            <div class="text-slate-600">
+                                @if ($history->from_status)
+                                    <span class="font-semibold" style="{{ $history->from_status->textStyle() }}">{{ $history->from_status->label() }}</span>
+                                @else
+                                    <span class="font-semibold text-slate-400">Boshlanish</span>
+                                @endif
+                                <span class="px-1 text-slate-400">-&gt;</span>
+                                <span class="font-semibold" style="{{ $history->to_status->textStyle() }}">{{ $history->to_status->label() }}</span>
+                            </div>
                             @if ($history->note)
                                 <div class="mt-1 text-slate-500">{{ $history->note }}</div>
                             @endif
@@ -42,7 +58,7 @@
                 <h3 class="font-semibold">Taqsimlash</h3>
                 <div class="mt-4 space-y-4">
                     <select name="assigned_department_id" class="block w-full rounded-md border-slate-300 shadow-sm">
-                        <option value="">Bo‘lim</option>
+                        <option value="">Mas'ul bo'lim</option>
                         @foreach ($departments as $department)
                             <option value="{{ $department->id }}" @selected($ticket->assigned_department_id === $department->id)>{{ $department->name }}</option>
                         @endforeach
@@ -59,7 +75,7 @@
                         Agar ijrochi murojaatni bajara olmasa, bu maydonni bo'sh qoldirib saqlang. Shunda murojaat yana barcha ijrochilar ko'ra oladigan umumiy ro'yxatga qaytadi.
                     </p>
                     <select name="category_id" class="block w-full rounded-md border-slate-300 shadow-sm">
-                        <option value="">Kategoriya</option>
+                        <option value="">Muammo kategoriyasi</option>
                         @foreach ($categories as $category)
                             <option value="{{ $category->id }}" @selected($ticket->category_id === $category->id)>{{ $category->name }}</option>
                         @endforeach

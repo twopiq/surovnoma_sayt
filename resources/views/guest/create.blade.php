@@ -20,49 +20,7 @@
                 <x-text-input id="name" name="name" class="mt-1 block w-full" :value="old('name')" required />
                 <x-input-error :messages="$errors->get('name')" class="mt-2" />
             </div>
-            <div x-data="{
-                    digits: @js(preg_replace('/\D+/', '', (string) old('phone', '')) ? substr(preg_replace('/\D+/', '', (string) old('phone', '')), -9) : ''),
-                    format() {
-                        this.digits = this.digits.replace(/\D/g, '').slice(0, 9);
-                    },
-                    formatted() {
-                        const groups = [2, 3, 2, 2];
-                        let cursor = 0;
-                        const parts = [];
-
-                        for (const size of groups) {
-                            const chunk = this.digits.slice(cursor, cursor + size);
-                            if (!chunk) break;
-                            parts.push(chunk);
-                            cursor += size;
-                        }
-
-                        return parts.join(' ');
-                    },
-                    fullPhone() {
-                        return this.digits ? `+998 ${this.formatted()}` : '';
-                    }
-                }">
-                <x-input-label for="phone_display" value="Telefon" />
-                <input type="hidden" name="phone" :value="fullPhone()">
-                <div class="mt-1 flex rounded-md border border-slate-300 bg-white shadow-sm focus-within:border-cyan-500 focus-within:ring-1 focus-within:ring-cyan-500">
-                    <span class="inline-flex items-center rounded-l-md border-r border-slate-300 bg-slate-50 px-3 text-sm font-semibold text-slate-600">+998</span>
-                    <input
-                        id="phone_display"
-                        :value="formatted()"
-                        @input="digits = $event.target.value.replace(/\D/g, '').slice(0, 9)"
-                        type="text"
-                        inputmode="numeric"
-                        autocomplete="tel-national"
-                        placeholder="99 999 99 99"
-                        maxlength="12"
-                        class="block w-full rounded-r-md border-0 bg-transparent px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:ring-0"
-                        required
-                    >
-                </div>
-                <p class="mt-2 text-xs text-slate-400">Namuna: +998 99 999 99 99</p>
-                <x-input-error :messages="$errors->get('phone')" class="mt-2" />
-            </div>
+            <x-phone-input id="phone_display" name="phone" :value="old('phone')" required />
         </div>
         <div class="grid gap-4 sm:grid-cols-2">
             <div>
@@ -71,7 +29,7 @@
                 <x-input-error :messages="$errors->get('email')" class="mt-2" />
             </div>
             <div>
-                <x-input-label for="department" value="Bo'lim" />
+                <x-input-label for="department" value="Ishlaydigan bo'lim" />
                 <x-text-input id="department" name="department" class="mt-1 block w-full" :value="old('department')" />
                 <x-input-error :messages="$errors->get('department')" class="mt-2" />
             </div>
@@ -82,18 +40,27 @@
             <x-input-error :messages="$errors->get('job_title')" class="mt-2" />
         </div>
         <div>
+            <x-input-label for="category_id" value="Muammo kategoriyasi" />
+            <select id="category_id" name="category_id" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-cyan-500 focus:ring-cyan-500" required>
+                <option value="">Tanlang</option>
+                @foreach ($categories as $category)
+                    <option value="{{ $category->id }}" @selected(old('category_id') == $category->id)>{{ $category->name }}</option>
+                @endforeach
+            </select>
+            <x-input-error :messages="$errors->get('category_id')" class="mt-2" />
+        </div>
+        <div>
             <x-input-label for="description" value="Tavsif" />
             <textarea id="description" name="description" rows="6" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-cyan-500 focus:ring-cyan-500" required>{{ old('description') }}</textarea>
             <x-input-error :messages="$errors->get('description')" class="mt-2" />
         </div>
         <div>
             <x-input-label for="attachments" value="Fayllar" />
-            <input id="attachments" type="file" name="attachments[]" multiple class="mt-1 block w-full text-sm text-slate-500" />
-            <p class="mt-2 text-xs text-slate-400">5 tagacha, har biri 5 MB, JPG/JPEG/PNG/PDF/DOC/DOCX.</p>
+            <x-file-upload-input id="attachments" name="attachments[]" class="mt-1" />
             <x-input-error :messages="$errors->get('attachments')" class="mt-2" />
             <x-input-error :messages="$errors->get('attachments.*')" class="mt-2" />
         </div>
-        <div class="flex justify-between">
+        <div style="align-items: center;" class="flex justify-between">
             <a href="{{ route('home') }}" class="text-sm text-slate-500 underline">Asosiy ekran</a>
             <a href="{{ route('guest.track') }}" class="text-sm text-slate-500 underline">Avvalgi murojaatni kuzatish</a>
             <x-primary-button class="bg-cyan-700 hover:bg-cyan-800">Yuborish</x-primary-button>

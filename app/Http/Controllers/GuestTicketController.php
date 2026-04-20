@@ -2,10 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Category;
 use App\Models\Ticket;
 use App\Services\TicketService;
+use App\Support\TicketFileUpload;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class GuestTicketController extends Controller
@@ -16,7 +19,9 @@ class GuestTicketController extends Controller
 
     public function create(): View
     {
-        return view('guest.create');
+        return view('guest.create', [
+            'categories' => Category::query()->where('is_active', true)->orderBy('name')->get(),
+        ]);
     }
 
     public function store(Request $request): View
@@ -27,21 +32,21 @@ class GuestTicketController extends Controller
             'phone' => ['required', 'regex:/^\+998 \d{2} \d{3} \d{2} \d{2}$/'],
             'department' => ['nullable', 'string', 'max:255'],
             'job_title' => ['nullable', 'string', 'max:255'],
+            'category_id' => ['required', Rule::exists('categories', 'id')->where('is_active', true)],
             'description' => ['required', 'string', 'min:30'],
-            'attachments' => ['nullable', 'array', 'max:5'],
-            'attachments.*' => ['nullable', 'file', 'max:5120', 'mimes:jpg,jpeg,png,pdf,doc,docx'],
-        ], [
+            ...TicketFileUpload::optionalRules('attachments'),
+        ], array_merge([
             'name.regex' => "F.I.Sh. kamida ism va familiyadan iborat bo'lishi kerak.",
             'email.required' => 'Email manzilini kiriting.',
             'phone.required' => 'Telefon raqamini kiriting.',
             'phone.regex' => "Telefon raqami +998 99 999 99 99 ko'rinishida bo'lishi va 9 ta raqamdan iborat bo'lishi kerak.",
-            'attachments.max' => "Ko'pi bilan 5 ta fayl yuklash mumkin.",
-            'attachments.*.mimes' => "Fayl formati noto'g'ri. Faqat JPG, JPEG, PNG, PDF, DOC va DOCX formatlariga ruxsat beriladi.",
-            'attachments.*.max' => 'Har bir fayl hajmi 5 MB dan oshmasligi kerak.',
-        ]);
+            'category_id.required' => 'Muammo kategoriyasini tanlang.',
+            'category_id.exists' => "Tanlangan kategoriya topilmadi yoki faol emas.",
+        ], TicketFileUpload::messages('attachments')));
 
         [$ticket, $trackingCode] = $this->ticketService->create([
             'channel' => 'guest',
+            'category_id' => $data['category_id'],
             'requester_name' => $data['name'],
             'requester_email' => $data['email'] ?? null,
             'requester_phone' => $data['phone'] ?? null,
@@ -49,6 +54,8 @@ class GuestTicketController extends Controller
             'requester_job_title' => $data['job_title'] ?? null,
             'description' => $data['description'],
         ], null, $request->file('attachments', []));
+
+        session()->put("guest_ticket_access.{$ticket->id}", true);
 
         return view('guest.created', compact('ticket', 'trackingCode'));
     }
@@ -85,6 +92,7 @@ class GuestTicketController extends Controller
         $ticket->load([
             'comments' => fn ($query) => $query->where('is_public', true)->latest(),
             'attachments',
+            'category',
         ]);
 
         return view('guest.show', compact('ticket'));

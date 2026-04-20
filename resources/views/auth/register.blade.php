@@ -18,49 +18,7 @@
         </div>
 
         <div class="grid gap-4 sm:grid-cols-2">
-            <div x-data="{
-                    digits: @js(preg_replace('/\D+/', '', (string) old('phone', '')) ? substr(preg_replace('/\D+/', '', (string) old('phone', '')), -9) : ''),
-                    format() {
-                        this.digits = this.digits.replace(/\D/g, '').slice(0, 9);
-                    },
-                    formatted() {
-                        const groups = [2, 3, 2, 2];
-                        let cursor = 0;
-                        const parts = [];
-
-                        for (const size of groups) {
-                            const chunk = this.digits.slice(cursor, cursor + size);
-                            if (!chunk) break;
-                            parts.push(chunk);
-                            cursor += size;
-                        }
-
-                        return parts.join(' ');
-                    },
-                    fullPhone() {
-                        return this.digits ? `+998 ${this.formatted()}` : '';
-                    }
-                }">
-                <x-input-label for="phone_display" value="Telefon" />
-                <input type="hidden" name="phone" :value="fullPhone()">
-                <div class="mt-1 flex rounded-md border border-slate-300 bg-white shadow-sm focus-within:border-cyan-500 focus-within:ring-1 focus-within:ring-cyan-500">
-                    <span class="inline-flex items-center rounded-l-md border-r border-slate-300 bg-slate-50 px-3 text-sm font-semibold text-slate-600">+998</span>
-                    <input
-                        id="phone_display"
-                        :value="formatted()"
-                        @input="digits = $event.target.value.replace(/\D/g, '').slice(0, 9)"
-                        type="text"
-                        inputmode="numeric"
-                        autocomplete="tel-national"
-                        placeholder="99 999 99 99"
-                        maxlength="12"
-                        class="block w-full rounded-r-md border-0 bg-transparent px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:ring-0"
-                        required
-                    >
-                </div>
-                <p class="mt-2 text-xs text-slate-400">Namuna: +998 99 999 99 99</p>
-                <x-input-error :messages="$errors->get('phone')" class="mt-2" />
-            </div>
+            <x-phone-input id="phone_display" name="phone" :value="old('phone')" required />
             <div>
                 <x-input-label for="job_title" value="Lavozim" />
                 <x-text-input id="job_title" class="mt-1 block w-full" type="text" name="job_title" :value="old('job_title')" />
@@ -69,7 +27,7 @@
         </div>
 
         <div>
-            <x-input-label for="department_id" value="Bo'lim" />
+            <x-input-label for="department_id" value="Ishlaydigan bo'lim" />
             <select id="department_id" name="department_id" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-cyan-500 focus:ring-cyan-500">
                 <option value="">Tanlang</option>
                 @foreach ($departments as $department)

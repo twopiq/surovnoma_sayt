@@ -2,10 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Category;
 use App\Models\Ticket;
 use App\Services\TicketService;
+use App\Support\TicketFileUpload;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class TicketController extends Controller
@@ -17,6 +20,7 @@ class TicketController extends Controller
     public function index(): View
     {
         $tickets = Ticket::query()
+            ->with('category')
             ->visibleTo(auth()->user())
             ->latest()
             ->paginate(12);
@@ -26,23 +30,25 @@ class TicketController extends Controller
 
     public function create(): View
     {
-        return view('tickets.create');
+        return view('tickets.create', [
+            'categories' => Category::query()->where('is_active', true)->orderBy('name')->get(),
+        ]);
     }
 
     public function store(Request $request): RedirectResponse
     {
         $data = $request->validate([
+            'category_id' => ['required', Rule::exists('categories', 'id')->where('is_active', true)],
             'description' => ['required', 'string', 'min:30'],
-            'attachments' => ['nullable', 'array', 'max:5'],
-            'attachments.*' => ['nullable', 'file', 'max:5120', 'mimes:jpg,jpeg,png,pdf,doc,docx'],
-        ], [
-            'attachments.max' => "Ko'pi bilan 5 ta fayl yuklash mumkin.",
-            'attachments.*.mimes' => "Fayl formati noto'g'ri. Faqat JPG, JPEG, PNG, PDF, DOC va DOCX formatlariga ruxsat beriladi.",
-            'attachments.*.max' => 'Har bir fayl hajmi 5 MB dan oshmasligi kerak.',
-        ]);
+            ...TicketFileUpload::optionalRules('attachments'),
+        ], array_merge([
+            'category_id.required' => 'Muammo kategoriyasini tanlang.',
+            'category_id.exists' => "Tanlangan kategoriya topilmadi yoki faol emas.",
+        ], TicketFileUpload::messages('attachments')));
 
         [$ticket] = $this->ticketService->create([
             'channel' => 'requester',
+            'category_id' => $data['category_id'],
             'requester_id' => auth()->id(),
             'requester_name' => auth()->user()->name,
             'requester_email' => auth()->user()->email,
@@ -62,6 +68,7 @@ class TicketController extends Controller
         $ticket->load([
             'comments' => fn ($query) => $query->where('is_public', true)->latest(),
             'attachments',
+            'category',
         ]);
 
         return view('tickets.show', compact('ticket'));

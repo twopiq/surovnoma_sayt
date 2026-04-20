@@ -10,7 +10,15 @@ class DispatchBoard extends Component
 {
     public function render()
     {
-        $grouped = collect(TicketStatus::cases())
+        $statuses = [
+            TicketStatus::New,
+            TicketStatus::Assigned,
+            TicketStatus::InProgress,
+            TicketStatus::Returned,
+            TicketStatus::Rejected,
+        ];
+
+        $grouped = collect($statuses)
             ->mapWithKeys(fn (TicketStatus $status) => [
                 $status->value => Ticket::query()
                     ->where('status', $status->value)
@@ -20,7 +28,7 @@ class DispatchBoard extends Component
             ]);
 
         return view('livewire.admin.dispatch-board', [
-            'statuses' => TicketStatus::cases(),
+            'statuses' => $statuses,
             'grouped' => $grouped,
         ]);
     }

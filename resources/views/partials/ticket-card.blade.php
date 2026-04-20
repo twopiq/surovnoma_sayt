@@ -11,6 +11,12 @@
     </div>
     <div class="mt-4 flex flex-wrap gap-4 text-sm text-slate-500">
         <span>Murojaatchi: {{ $ticket->requester_name }}</span>
+        @if ($ticket->requester_department)
+            <span>Ishlaydigan bo'lim: {{ $ticket->requester_department }}</span>
+        @endif
+        @if ($ticket->category)
+            <span>Kategoriya: {{ $ticket->category->name }}</span>
+        @endif
         @if ($ticket->deadline_at)
             <span>Deadline: {{ $ticket->deadline_at->format('d.m.Y H:i') }}</span>
         @endif

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\DepartmentController;
 use App\Http\Controllers\Admin\DispatchController;
 use App\Http\Controllers\Admin\SlaSettingsController;
@@ -13,6 +14,7 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OperatorTicketController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\TicketController;
+use App\Support\TicketFileUpload;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
@@ -31,7 +33,9 @@ Route::get('/_errors/{code}', function (string $code) {
     abort_unless(array_key_exists($code, $views), 404);
 
     return response()->view($views[$code], [
-        'maxSize' => '25 MB',
+        'maxSize' => TicketFileUpload::maxTotalSizeLabel(),
+        'maxFileSize' => TicketFileUpload::maxFileSizeLabel(),
+        'maxFiles' => TicketFileUpload::MAX_FILES,
         'serverLimit' => ini_get('post_max_size') ?: '32M',
     ], (int) $code);
 })->whereNumber('code')->name('errors.preview');
@@ -45,8 +49,16 @@ Route::prefix('guest')->name('guest.')->group(function () {
 });
 
 Route::middleware(['auth', 'approved'])->group(function () {
+    Route::view('/app/home', 'app.home')->name('app.home');
+    Route::view('/app/dashboard', 'app.dashboard')->name('app.dashboard');
+    Route::get('/app/settings', [ProfileController::class, 'settings'])->name('app.settings');
+    Route::patch('/app/settings/email', [ProfileController::class, 'updateEmail'])->name('settings.email.update');
+    Route::post('/app/settings/telegram/link-token', [ProfileController::class, 'regenerateTelegramLink'])->name('settings.telegram.regenerate');
+    Route::delete('/app/settings/telegram', [ProfileController::class, 'disconnectTelegram'])->name('settings.telegram.disconnect');
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
     Route::prefix('notifications')->name('notifications.')->group(function () {
+        Route::get('/', [NotificationController::class, 'index'])->name('index');
+        Route::get('/feed', [NotificationController::class, 'feed'])->name('feed');
         Route::post('/read-all', [NotificationController::class, 'markAllRead'])->name('read-all');
         Route::post('/clear-all', [NotificationController::class, 'destroyAll'])->name('clear-all');
         Route::delete('/{notification}', [NotificationController::class, 'destroy'])->name('destroy');
@@ -90,6 +102,8 @@ Route::middleware(['auth', 'approved'])->group(function () {
 
     Route::prefix('admin')->name('admin.')->middleware('role:admin')->group(function () {
         Route::get('/dispatch', [DispatchController::class, 'index'])->name('dispatch.index');
+        Route::get('/dispatch/tickets', [DispatchController::class, 'tickets'])->name('dispatch.tickets');
+        Route::get('/dispatch/archive', [DispatchController::class, 'archive'])->name('dispatch.archive');
         Route::get('/dispatch/export/csv', [DispatchController::class, 'exportCsv'])->name('dispatch.export');
         Route::get('/dispatch/{ticket}', [DispatchController::class, 'show'])->name('dispatch.show');
         Route::post('/dispatch/{ticket}/assign', [DispatchController::class, 'assign'])->name('dispatch.assign');
@@ -98,11 +112,17 @@ Route::middleware(['auth', 'approved'])->group(function () {
         Route::post('/dispatch/{ticket}/comment', [DispatchController::class, 'comment'])->name('dispatch.comment');
 
         Route::get('/users', [UserApprovalController::class, 'index'])->name('users.index');
+        Route::get('/users/list', [UserApprovalController::class, 'list'])->name('users.list');
+        Route::get('/users/profile', [UserApprovalController::class, 'profile'])->name('users.profile');
         Route::patch('/users/{user}', [UserApprovalController::class, 'update'])->name('users.update');
 
         Route::get('/departments', [DepartmentController::class, 'index'])->name('departments.index');
         Route::post('/departments', [DepartmentController::class, 'store'])->name('departments.store');
         Route::patch('/departments/{department}', [DepartmentController::class, 'update'])->name('departments.update');
+
+        Route::get('/categories', [CategoryController::class, 'index'])->name('categories.index');
+        Route::post('/categories', [CategoryController::class, 'store'])->name('categories.store');
+        Route::patch('/categories/{category}', [CategoryController::class, 'update'])->name('categories.update');
 
         Route::get('/settings/sla', [SlaSettingsController::class, 'index'])->name('sla.index');
         Route::post('/settings/sla/bootstrap-defaults', [SlaSettingsController::class, 'bootstrapDefaults'])->name('sla.bootstrap');

@@ -22,6 +22,8 @@ class ManagerDashboardController extends Controller
     {
         [$start, $end, $monthValue, $monthLabel] = $this->reportPeriod($request);
         $filters = $this->reportFilters($request);
+        $completionChartOptions = $this->completionChartOptions($request);
+        [$completionChartItems, $completionChartMeta] = $this->completionChart($completionChartOptions, $filters);
         $completedQuery = $this->applyBreakdownFilters($this->completedTicketsQuery($start, $end), $filters);
         $completedCount = (clone $completedQuery)->count();
         $onTimeCount = $this->applyStatFilter(clone $completedQuery, 'on_time')->count();
@@ -74,17 +76,25 @@ class ManagerDashboardController extends Controller
         $indicatorMax = max(1, (int) $monthlyIndicators->max('value'));
         $activeWorkload = $this->activeWorkloadByExecutor();
         $activeWorkloadMax = max(1, (int) $activeWorkload->max('value'));
+        $topExecutorWorkload = $this->topExecutorWorkload();
+        $executors = User::query()->role('executor')->select(['id', 'name'])->orderBy('name')->get();
 
         return view('manager.dashboard', [
             'monthValue' => $monthValue,
             'monthLabel' => $monthLabel,
             'stats' => $stats,
+            'completionChartItems' => $completionChartItems,
+            'completionChartMax' => max(1, (int) $completionChartItems->max('value')),
+            'completionChartMeta' => $completionChartMeta,
+            'completionChartOptions' => $completionChartOptions,
+            'executors' => $executors,
             'employeeResults' => $employeeResults,
             'employeeMax' => $employeeMax,
             'monthlyIndicators' => $monthlyIndicators,
             'indicatorMax' => $indicatorMax,
             'activeWorkload' => $activeWorkload,
             'activeWorkloadMax' => $activeWorkloadMax,
+            'topExecutorWorkload' => $topExecutorWorkload,
             'activeFilters' => $filters,
         ]);
     }
@@ -173,6 +183,26 @@ class ManagerDashboardController extends Controller
         ], fn (?string $value): bool => $value !== null && $value !== '');
     }
 
+    /**
+     * @return array{period: string, scope: string, executor_id: ?int, date: Carbon}
+     */
+    protected function completionChartOptions(Request $request): array
+    {
+        $validated = $request->validate([
+            'chart_period' => ['nullable', Rule::in(['day', 'week', 'month', 'year'])],
+            'chart_scope' => ['nullable', Rule::in(['total', 'employees'])],
+            'chart_executor_id' => ['nullable', 'integer', 'exists:users,id'],
+            'chart_date' => ['nullable', 'date'],
+        ]);
+
+        return [
+            'period' => $validated['chart_period'] ?? 'month',
+            'scope' => $validated['chart_scope'] ?? 'total',
+            'executor_id' => ($validated['chart_executor_id'] ?? null) ? (int) $validated['chart_executor_id'] : null,
+            'date' => isset($validated['chart_date']) ? Carbon::parse($validated['chart_date']) : now(),
+        ];
+    }
+
     protected function completedTicketsQuery(Carbon $start, Carbon $end): Builder
     {
         return Ticket::query()
@@ -245,6 +275,167 @@ class ManagerDashboardController extends Controller
                 'label' => $user->name,
                 'value' => (int) $user->active_tickets_count,
             ]);
+    }
+
+    protected function topExecutorWorkload(): Collection
+    {
+        return User::query()
+            ->role('executor')
+            ->select(['id', 'name', 'email', 'phone'])
+            ->with(['assignedTickets' => function ($query): void {
+                $query
+                    ->select(['id', 'assigned_executor_id', 'priority', 'status'])
+                    ->whereIn('status', [
+                        TicketStatus::Assigned->value,
+                        TicketStatus::InProgress->value,
+                        TicketStatus::Returned->value,
+                    ]);
+            }])
+            ->get()
+            ->map(function (User $user): array {
+                $activeTickets = $user->assignedTickets;
+
+                return [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'phone' => $user->phone,
+                    'active_count' => $activeTickets->count(),
+                    'workload_units' => $activeTickets->sum(fn (Ticket $ticket): int => $ticket->priority->workloadUnits()),
+                ];
+            })
+            ->sortByDesc('workload_units')
+            ->take(5)
+            ->values();
+    }
+
+    protected function completionChart(array $options, array $filters): array
+    {
+        [$start, $end, $buckets] = $this->completionChartPeriod($options['period'], $options['date']);
+
+        $tickets = $this->applyBreakdownFilters($this->completedTicketsQuery($start, $end), $filters)
+            ->with('assignedExecutor:id,name')
+            ->when($options['executor_id'], fn (Builder $query, int $executorId): Builder => $query->where('assigned_executor_id', $executorId))
+            ->get(['id', 'assigned_executor_id', 'completed_at']);
+
+        if ($options['scope'] === 'employees') {
+            $counts = $tickets
+                ->groupBy('assigned_executor_id')
+                ->map(fn (Collection $group): int => $group->count());
+
+            $items = User::query()
+                ->role('executor')
+                ->select(['id', 'name'])
+                ->orderBy('name')
+                ->get()
+                ->when($options['executor_id'], fn (Collection $executors): Collection => $executors->where('id', $options['executor_id'])->values())
+                ->map(fn (User $user): array => [
+                    'label' => $user->name,
+                    'value' => (int) ($counts[$user->id] ?? 0),
+                ])
+                ->sortByDesc('value')
+                ->values();
+        } else {
+            $counts = $tickets
+                ->groupBy(fn (Ticket $ticket): string => $this->completionBucketKey($ticket->completed_at, $options['period']))
+                ->map(fn (Collection $group): int => $group->count());
+
+            $items = $buckets->map(fn (array $bucket): array => [
+                'label' => $bucket['label'],
+                'value' => (int) ($counts[$bucket['key']] ?? 0),
+            ]);
+        }
+
+        $executorName = $options['executor_id']
+            ? User::query()->whereKey($options['executor_id'])->value('name')
+            : null;
+
+        return [
+            $items,
+            [
+                'period_label' => $this->completionPeriodLabel($options['period']),
+                'scope_label' => $options['scope'] === 'employees' ? 'Xodimlar kesimida' : 'Butun bajaruvchilar kesimida',
+                'executor_label' => $executorName ?: 'Barcha bajaruvchilar',
+                'range_label' => $start->format('d.m.Y').' - '.$end->format('d.m.Y'),
+            ],
+        ];
+    }
+
+    protected function completionChartPeriod(string $period, Carbon $date): array
+    {
+        return match ($period) {
+            'day' => $this->dayBuckets($date),
+            'week' => $this->weekBuckets($date),
+            'year' => $this->yearBuckets($date),
+            default => $this->monthBuckets($date),
+        };
+    }
+
+    protected function dayBuckets(Carbon $date): array
+    {
+        $start = $date->copy()->startOfDay();
+        $end = $date->copy()->endOfDay();
+        $buckets = collect(range(0, 23))->map(fn (int $hour): array => [
+            'key' => $start->copy()->addHours($hour)->format('Y-m-d H'),
+            'label' => str_pad((string) $hour, 2, '0', STR_PAD_LEFT),
+        ]);
+
+        return [$start, $end, $buckets];
+    }
+
+    protected function weekBuckets(Carbon $date): array
+    {
+        $start = $date->copy()->startOfWeek();
+        $end = $date->copy()->endOfWeek();
+        $buckets = collect(range(0, 6))->map(fn (int $day): array => [
+            'key' => $start->copy()->addDays($day)->format('Y-m-d'),
+            'label' => $start->copy()->addDays($day)->format('d.m'),
+        ]);
+
+        return [$start, $end, $buckets];
+    }
+
+    protected function monthBuckets(Carbon $date): array
+    {
+        $start = $date->copy()->startOfMonth();
+        $end = $date->copy()->endOfMonth();
+        $buckets = collect(range(1, $start->daysInMonth))->map(fn (int $day): array => [
+            'key' => $start->copy()->day($day)->format('Y-m-d'),
+            'label' => str_pad((string) $day, 2, '0', STR_PAD_LEFT),
+        ]);
+
+        return [$start, $end, $buckets];
+    }
+
+    protected function yearBuckets(Carbon $date): array
+    {
+        $start = $date->copy()->startOfYear();
+        $end = $date->copy()->endOfYear();
+        $buckets = collect(range(1, 12))->map(fn (int $month): array => [
+            'key' => $start->copy()->month($month)->format('Y-m'),
+            'label' => $start->copy()->month($month)->format('M'),
+        ]);
+
+        return [$start, $end, $buckets];
+    }
+
+    protected function completionBucketKey(?Carbon $completedAt, string $period): string
+    {
+        return match ($period) {
+            'day' => $completedAt?->format('Y-m-d H') ?? '',
+            'year' => $completedAt?->format('Y-m') ?? '',
+            default => $completedAt?->format('Y-m-d') ?? '',
+        };
+    }
+
+    protected function completionPeriodLabel(string $period): string
+    {
+        return match ($period) {
+            'day' => 'Kunlik',
+            'week' => 'Haftalik',
+            'year' => 'Yillik',
+            default => 'Oylik',
+        };
     }
 
     protected function ticketRow(Ticket $ticket): array

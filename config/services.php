@@ -35,4 +35,12 @@ return [
         ],
     ],
 
+    'telegram_bot' => [
+        'token' => env('TELEGRAM_BOT_TOKEN'),
+        'username' => env('TELEGRAM_BOT_USERNAME'),
+        'webhook_url' => env('TELEGRAM_WEBHOOK_URL'),
+        'webhook_secret' => env('TELEGRAM_WEBHOOK_SECRET'),
+        'verify_ssl' => env('TELEGRAM_VERIFY_SSL', true),
+    ],
+
 ];

@@ -16,19 +16,27 @@
             @endif
             <div class="grid gap-4 sm:grid-cols-2">
                 <x-text-input name="name" :value="old('name')" placeholder="F.I.Sh." />
-                <x-text-input name="phone" :value="old('phone')" placeholder="Telefon" />
+                <x-phone-input id="operator_phone_display" name="phone" :value="old('phone')" label="Telefon" :hint="null" />
                 <x-text-input name="email" :value="old('email')" placeholder="Email" />
-                <x-text-input name="department" :value="old('department')" placeholder="Bo'lim" />
+                <x-text-input name="department" :value="old('department')" placeholder="Ishlaydigan bo'lim" />
             </div>
             <div>
                 <x-text-input name="job_title" :value="old('job_title')" placeholder="Lavozim" />
             </div>
             <div>
+                <select id="category_id" name="category_id" class="block w-full rounded-md border-slate-300 shadow-sm focus:border-cyan-500 focus:ring-cyan-500" required>
+                    <option value="">Muammo kategoriyasini tanlang</option>
+                    @foreach ($categories as $category)
+                        <option value="{{ $category->id }}" @selected(old('category_id') == $category->id)>{{ $category->name }}</option>
+                    @endforeach
+                </select>
+                <x-input-error :messages="$errors->get('category_id')" class="mt-2" />
+            </div>
+            <div>
                 <textarea name="description" rows="7" class="block w-full rounded-md border-slate-300 shadow-sm focus:border-cyan-500 focus:ring-cyan-500" placeholder="Muammo tavsifi">{{ old('description') }}</textarea>
             </div>
             <div>
-                <input type="file" name="attachments[]" multiple class="block w-full text-sm text-slate-500" />
-                <p class="mt-2 text-xs text-slate-400">5 tagacha, har biri 5 MB, JPG/JPEG/PNG/PDF/DOC/DOCX.</p>
+                <x-file-upload-input id="attachments" name="attachments[]" />
                 <x-input-error :messages="$errors->get('attachments')" class="mt-2" />
                 <x-input-error :messages="$errors->get('attachments.*')" class="mt-2" />
             </div>

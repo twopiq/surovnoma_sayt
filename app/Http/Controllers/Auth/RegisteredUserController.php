@@ -10,7 +10,6 @@ use App\Notifications\TicketStatusNotification;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
 use Illuminate\Validation\ValidationException;
@@ -69,7 +68,8 @@ class RegisteredUserController extends Controller
 
         event(new Registered($user));
 
-        Auth::login($user);
+        $request->session()->put('pending_approval_email', $user->email);
+        $request->session()->put('pending_approval_rejected', false);
 
         return redirect(route('pending-approval', absolute: false));
     }

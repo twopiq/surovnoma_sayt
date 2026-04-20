@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\TicketStatus;
 use App\Models\Ticket;
 use App\Services\TicketService;
+use App\Support\TicketFileUpload;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -21,7 +22,7 @@ class ExecutorTicketController extends Controller
         $executor = auth()->user();
 
         $myTickets = Ticket::query()
-            ->with(['assignedExecutor', 'requester'])
+            ->with(['assignedExecutor', 'requester', 'category'])
             ->where('assigned_executor_id', $executor->id)
             ->whereNotIn('status', [
                 TicketStatus::Completed->value,
@@ -32,7 +33,7 @@ class ExecutorTicketController extends Controller
             ->paginate(12, ['*'], 'my_page');
 
         $availableTickets = Ticket::query()
-            ->with(['assignedExecutor', 'requester'])
+            ->with(['assignedExecutor', 'requester', 'category'])
             ->whereNull('assigned_executor_id')
             ->whereIn('status', [TicketStatus::New->value, TicketStatus::Assigned->value, TicketStatus::Returned->value])
             ->latest('deadline_at')
@@ -48,7 +49,7 @@ class ExecutorTicketController extends Controller
     public function archive(): View
     {
         $tickets = Ticket::query()
-            ->with(['assignedExecutor', 'requester'])
+            ->with(['assignedExecutor', 'requester', 'category'])
             ->where('assigned_executor_id', auth()->id())
             ->whereIn('status', [
                 TicketStatus::Completed->value,
@@ -111,14 +112,8 @@ class ExecutorTicketController extends Controller
 
         $data = $request->validate([
             'note' => ['nullable', 'string'],
-            'proofs' => ['required', 'array', 'min:1'],
-            'proofs.*' => ['file', 'max:5120', 'mimes:jpg,jpeg,png,pdf,doc,docx'],
-        ], [
-            'proofs.required' => 'Kamida bitta tasdiqlovchi fayl yuklash kerak.',
-            'proofs.min' => 'Kamida bitta tasdiqlovchi fayl yuklash kerak.',
-            'proofs.*.mimes' => "Fayl formati noto'g'ri. Faqat JPG, JPEG, PNG, PDF, DOC va DOCX formatlariga ruxsat beriladi.",
-            'proofs.*.max' => 'Har bir fayl hajmi 5 MB dan oshmasligi kerak.',
-        ]);
+            ...TicketFileUpload::requiredRules('proofs'),
+        ], TicketFileUpload::messages('proofs'));
 
         $this->ticketService->complete($ticket, $executor, $request->file('proofs', []), $data['note'] ?? null);
 

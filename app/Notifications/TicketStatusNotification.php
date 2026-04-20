@@ -2,6 +2,8 @@
 
 namespace App\Notifications;
 
+use App\TelegramBot\TelegramMessage;
+use App\TelegramBot\TelegramNotificationChannel;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
@@ -20,7 +22,21 @@ class TicketStatusNotification extends Notification
 
     public function via(object $notifiable): array
     {
-        return ['database'];
+        $channels = ['database'];
+
+        $token = config('services.telegram_bot.token');
+
+        if (
+            is_string($token)
+            && $token !== ''
+            && method_exists($notifiable, 'routeNotificationForTelegram')
+            && $notifiable->routeNotificationForTelegram()
+            && $notifiable->telegram_notifications_enabled !== false
+        ) {
+            $channels[] = TelegramNotificationChannel::class;
+        }
+
+        return $channels;
     }
 
     public function toArray(object $notifiable): array
@@ -38,5 +54,14 @@ class TicketStatusNotification extends Notification
         return (new MailMessage)
             ->subject($this->title)
             ->line($this->body);
+    }
+
+    public function toTelegram(object $notifiable): TelegramMessage
+    {
+        return new TelegramMessage(
+            $this->title,
+            $this->body,
+            $this->url,
+        );
     }
 }

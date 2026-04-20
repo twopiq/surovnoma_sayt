@@ -13,7 +13,24 @@
     </div>
 
     <div class="mt-6 flex items-center justify-between">
-        <a href="{{ route('login') }}" class="text-sm text-slate-500 underline hover:text-slate-700">Kirish sahifasiga qaytish</a>
-        <a href="{{ route('home') }}" class="rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white">Bosh sahifa</a>
+        @auth
+            <form method="POST" action="{{ route('logout') }}">
+                @csrf
+                <input type="hidden" name="redirect" value="login">
+                <button type="submit" class="text-sm text-slate-500 underline hover:text-slate-700">Kirish sahifasiga qaytish</button>
+            </form>
+        @else
+            <a href="{{ route('login') }}" class="text-sm text-slate-500 underline hover:text-slate-700">Kirish sahifasiga qaytish</a>
+        @endauth
+
+        @auth
+            <form method="POST" action="{{ route('logout') }}">
+                @csrf
+                <input type="hidden" name="redirect" value="home">
+                <button type="submit" class="rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white">Bosh sahifa</button>
+            </form>
+        @else
+            <a href="{{ route('home') }}" class="rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white">Bosh sahifa</a>
+        @endauth
     </div>
 </x-guest-layout>

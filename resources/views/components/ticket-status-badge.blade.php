@@ -8,6 +8,6 @@
     };
 @endphp
 
-<span {{ $attributes->merge(['class' => "inline-flex items-center rounded-full font-semibold ring-1 {$sizeClasses} {$status->badgeClasses()}"]) }}>
+<span {{ $attributes->merge(['class' => "inline-flex items-center rounded-full font-semibold ring-1 {$sizeClasses}", 'style' => $status->badgeStyle()]) }}>
     {{ $status->label() }}
 </span>

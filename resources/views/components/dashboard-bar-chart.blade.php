@@ -25,7 +25,7 @@
 @endphp
 
 @if ($items->isEmpty())
-    <div class="flex h-full min-h-64 items-center justify-center rounded-lg bg-slate-50 text-sm text-slate-500">
+    <div class="theme-soft-panel flex h-full min-h-64 items-center justify-center rounded-lg border text-sm theme-muted">
         {{ $emptyText }}
     </div>
 @else
@@ -51,12 +51,12 @@
                     $y = $plotBottom - (($plotHeight / 5) * $step);
                     $value = round(($maxValue / 5) * $step, 1);
                 @endphp
-                <line x1="{{ $plotLeft }}" y1="{{ $y }}" x2="{{ $plotRight }}" y2="{{ $y }}" stroke="#e2e8f0" stroke-width="1" />
-                <text x="{{ $plotLeft - 10 }}" y="{{ $y + 4 }}" text-anchor="end" class="fill-slate-400 text-[11px] font-medium">{{ $value }}</text>
+                <line x1="{{ $plotLeft }}" y1="{{ $y }}" x2="{{ $plotRight }}" y2="{{ $y }}" stroke="var(--line)" stroke-width="1" />
+                <text x="{{ $plotLeft - 10 }}" y="{{ $y + 4 }}" text-anchor="end" fill="var(--muted)" class="text-[11px] font-medium">{{ $value }}</text>
             @endfor
 
-            <line x1="{{ $plotLeft }}" y1="{{ $plotTop }}" x2="{{ $plotLeft }}" y2="{{ $plotBottom }}" stroke="#cbd5e1" stroke-width="1" />
-            <line x1="{{ $plotLeft }}" y1="{{ $plotBottom }}" x2="{{ $plotRight }}" y2="{{ $plotBottom }}" stroke="#cbd5e1" stroke-width="1" />
+            <line x1="{{ $plotLeft }}" y1="{{ $plotTop }}" x2="{{ $plotLeft }}" y2="{{ $plotBottom }}" stroke="var(--line)" stroke-width="1" />
+            <line x1="{{ $plotLeft }}" y1="{{ $plotBottom }}" x2="{{ $plotRight }}" y2="{{ $plotBottom }}" stroke="var(--line)" stroke-width="1" />
 
             @foreach ($items as $index => $item)
                 @php
@@ -81,18 +81,19 @@
                         <title>{{ $label }}: {{ $value }}</title>
                     </rect>
                 @else
-                    <circle cx="{{ $x + ($barWidth / 2) }}" cy="{{ $plotBottom }}" r="2" fill="#cbd5e1">
+                    <circle cx="{{ $x + ($barWidth / 2) }}" cy="{{ $plotBottom }}" r="2" fill="var(--line)">
                         <title>{{ $label }}: 0</title>
                     </circle>
                 @endif
 
-                <text x="{{ $x + ($barWidth / 2) }}" y="{{ $y - 8 }}" text-anchor="middle" class="fill-slate-600 text-[11px] font-semibold">{{ $value }}</text>
+                <text x="{{ $x + ($barWidth / 2) }}" y="{{ $y - 8 }}" text-anchor="middle" fill="var(--text)" class="text-[11px] font-semibold">{{ $value }}</text>
                 <text
                     x="{{ $x + ($barWidth / 2) }}"
                     y="{{ $plotBottom + 22 }}"
                     text-anchor="end"
                     transform="rotate(-15 {{ $x + ($barWidth / 2) }} {{ $plotBottom + 22 }})"
-                    class="fill-slate-500 text-[11px] font-medium"
+                    fill="var(--muted)"
+                    class="text-[11px] font-medium"
                 >{{ \Illuminate\Support\Str::limit($label, 18) }}</text>
             @endforeach
         </svg>

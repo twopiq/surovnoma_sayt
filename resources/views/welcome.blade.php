@@ -6,54 +6,86 @@
         <title>RTT Markazi Elektron Murojaatlar Tizimi</title>
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600;space-grotesk:500,700&display=swap" rel="stylesheet" />
+        <script>
+            document.documentElement.dataset.theme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        </script>
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body class="landing-shell-bg text-slate-900">
-        <div class="mx-auto flex min-h-screen max-w-7xl flex-col px-4 py-8 sm:px-6 lg:px-8">
-            <header class="flex items-center justify-between rounded-full bg-white/10 px-5 py-3 text-white backdrop-blur">
-                <div class="flex items-center gap-3">
-                    <x-application-logo class="h-10 w-10 fill-current text-cyan-200" />
-                    <div>
-                        <div class="font-['Space_Grotesk'] text-sm font-bold uppercase tracking-[0.24em]">RTT Markazi</div>
-                        <div class="text-sm text-cyan-50/80">Elektron murojaatlar boshqaruvi</div>
+        <div class="theme-hero min-h-screen">
+            <div class="mx-auto flex min-h-screen max-w-7xl flex-col px-4 py-6 sm:px-6 lg:px-8">
+                <header class="theme-panel flex items-center justify-between rounded-lg border px-5 py-3 shadow-sm">
+                    <a href="{{ route('home') }}" class="flex items-center gap-3">
+                        <x-application-logo class="h-10 w-10 fill-current text-emerald-700" />
+                        <div>
+                            <div class="font-['Space_Grotesk'] text-sm font-bold uppercase tracking-[0.18em] theme-ink">RTT Markazi</div>
+                            <div class="text-sm theme-muted">Elektron murojaatlar boshqaruvi</div>
+                        </div>
+                    </a>
+                    <div class="flex flex-wrap items-center justify-end gap-3">
+                        <x-theme-toggle />
+                        <a href="{{ route('guest.create') }}" class="theme-secondary rounded-md border px-4 py-2 text-sm font-semibold transition">Guest forma</a>
+                        <a href="{{ route('login') }}" class="theme-primary rounded-md px-4 py-2 text-sm font-semibold transition">Kirish</a>
                     </div>
+                </header>
+
+                <div class="grid flex-1 items-center gap-10 py-10 lg:grid-cols-[1fr_0.9fr]">
+                    <section>
+                        <p class="inline-flex rounded-md border px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] theme-secondary">Murojaatlar markazi</p>
+                        <h1 class="mt-6 max-w-3xl font-['Space_Grotesk'] text-4xl font-bold leading-tight theme-ink sm:text-5xl">
+                            Murojaat yuboring, javob jarayonini kuzating, natijani yo'qotmang.
+                        </h1>
+                        <p class="mt-6 max-w-2xl text-lg leading-8 theme-muted">
+                            Xodimlar, operatorlar, ijrochilar va rahbariyat uchun yagona tartibli murojaat muhiti. Har bir murojaat Ticket ID bilan saqlanadi va holati aniq ko'rinadi.
+                        </p>
+
+                        <div class="mt-8 flex flex-wrap gap-3">
+                            <a href="{{ route('register') }}" class="theme-primary rounded-md px-5 py-3 text-sm font-semibold shadow-sm transition">Akkaunt yaratish</a>
+                            <a href="{{ route('guest.track') }}" class="theme-secondary rounded-md border px-5 py-3 text-sm font-semibold transition">Guest kuzatuvi</a>
+                        </div>
+                    </section>
+
+                    <section class="space-y-4">
+                        <div class="theme-panel rounded-lg border p-6 shadow-sm">
+                            <div class="flex items-start justify-between gap-4">
+                                <div>
+                                    <div class="text-sm font-semibold theme-muted">Bugungi ish ritmi</div>
+                                    <div class="mt-2 font-['Space_Grotesk'] text-3xl font-bold theme-ink">Aniq navbat</div>
+                                </div>
+                                <div class="rounded-md px-3 py-2 text-sm font-bold theme-primary">RTT</div>
+                            </div>
+                            <div class="mt-6 space-y-3">
+                                <div class="theme-soft-panel rounded-md border p-4">
+                                    <div class="text-sm font-semibold theme-ink">1. Murojaat qabul qilinadi</div>
+                                    <div class="mt-1 text-sm theme-muted">Ticket ID va tracking code yaratiladi.</div>
+                                </div>
+                                <div class="theme-soft-panel rounded-md border p-4">
+                                    <div class="text-sm font-semibold theme-ink">2. Kategoriya bo'yicha ajratiladi</div>
+                                    <div class="mt-1 text-sm theme-muted">Muammo turi bo'limdan alohida ko'rinadi.</div>
+                                </div>
+                                <div class="theme-soft-panel rounded-md border p-4">
+                                    <div class="text-sm font-semibold theme-ink">3. Ijrochi bajarilganini tasdiqlaydi</div>
+                                    <div class="mt-1 text-sm theme-muted">Holat va izohlar kuzatuv sahifasida saqlanadi.</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="grid gap-4 sm:grid-cols-3">
+                            <div class="theme-panel rounded-lg border p-5 shadow-sm">
+                                <div class="text-sm theme-muted">Jami murojaatlar</div>
+                                <div class="mt-2 font-['Space_Grotesk'] text-3xl font-bold theme-ink">{{ $stats['tickets'] }}</div>
+                            </div>
+                            <div class="theme-panel rounded-lg border p-5 shadow-sm">
+                                <div class="text-sm theme-muted">Faol xodimlar</div>
+                                <div class="mt-2 font-['Space_Grotesk'] text-3xl font-bold theme-ink">{{ $stats['staff'] }}</div>
+                            </div>
+                            <div class="theme-panel rounded-lg border p-5 shadow-sm">
+                                <div class="text-sm theme-muted">Yopilmagan</div>
+                                <div class="mt-2 font-['Space_Grotesk'] text-3xl font-bold theme-ink">{{ $stats['open'] }}</div>
+                            </div>
+                        </div>
+                    </section>
                 </div>
-                <div class="flex gap-3">
-                    <a href="{{ route('guest.create') }}" class="rounded-full border border-white/30 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/10">Guest forma</a>
-                    <a href="{{ route('login') }}" class="rounded-full bg-white px-4 py-2 text-sm font-semibold text-slate-900 transition hover:bg-cyan-50">Kirish</a>
-                </div>
-            </header>
-
-            <div class="grid flex-1 items-center gap-12 py-12 lg:grid-cols-[1.1fr_0.9fr]">
-                <section class="text-white">
-                    <span class="inline-flex rounded-full border border-cyan-300/30 bg-cyan-300/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-cyan-100">Laravel MVP</span>
-                    <h1 class="mt-6 max-w-3xl font-['Space_Grotesk'] text-4xl font-bold leading-tight sm:text-5xl">
-                        Murojaatlarni yo‘qolmaydigan, kuzatiladigan va SLA bo‘yicha boshqariladigan yagona tizim.
-                    </h1>
-                    <p class="mt-6 max-w-2xl text-lg text-cyan-50/85">
-                        Institut xodimlari, operatorlar, ijrochilar va rahbariyat uchun yagona raqamli dispetcherlik muhiti.
-                    </p>
-
-                    <div class="mt-8 flex flex-wrap gap-3">
-                        <a href="{{ route('register') }}" class="rounded-full bg-cyan-300 px-5 py-3 text-sm font-semibold text-slate-950 shadow-lg shadow-cyan-900/20 transition hover:bg-cyan-200">Ro‘yxatdan o‘tish</a>
-                        <a href="{{ route('guest.track') }}" class="rounded-full border border-white/25 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/10">Guest kuzatuvi</a>
-                    </div>
-                </section>
-
-                <section class="grid gap-4 sm:grid-cols-3 lg:grid-cols-1">
-                    <div class="rounded-3xl bg-white p-6 shadow-xl shadow-slate-300/30">
-                        <div class="text-sm text-slate-500">Jami murojaatlar</div>
-                        <div class="mt-2 font-['Space_Grotesk'] text-4xl font-bold text-slate-900">{{ $stats['tickets'] }}</div>
-                    </div>
-                    <div class="rounded-3xl bg-white p-6 shadow-xl shadow-slate-300/30">
-                        <div class="text-sm text-slate-500">Faol xodimlar</div>
-                        <div class="mt-2 font-['Space_Grotesk'] text-4xl font-bold text-slate-900">{{ $stats['staff'] }}</div>
-                    </div>
-                    <div class="rounded-3xl bg-slate-900 p-6 text-white shadow-xl shadow-slate-400/20">
-                        <div class="text-sm text-slate-300">Yopilmagan murojaatlar</div>
-                        <div class="mt-2 font-['Space_Grotesk'] text-4xl font-bold">{{ $stats['open'] }}</div>
-                    </div>
-                </section>
             </div>
         </div>
     </body>

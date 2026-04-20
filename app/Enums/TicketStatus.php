@@ -28,39 +28,89 @@ enum TicketStatus: string
     public function badgeClasses(): string
     {
         return match ($this) {
-            self::New => 'bg-sky-100 text-sky-800 ring-sky-200',
-            self::Assigned => 'bg-indigo-100 text-indigo-800 ring-indigo-200',
-            self::InProgress => 'bg-amber-100 text-amber-800 ring-amber-200',
-            self::Returned => 'bg-orange-100 text-orange-800 ring-orange-200',
-            self::Completed => 'bg-emerald-100 text-emerald-800 ring-emerald-200',
-            self::Closed => 'bg-slate-200 text-slate-800 ring-slate-300',
-            self::Rejected => 'bg-rose-100 text-rose-800 ring-rose-200',
+            self::New, self::Closed => 'bg-slate-100 text-slate-800 ring-slate-300',
+            self::Assigned => 'bg-yellow-100 text-yellow-900 ring-yellow-300',
+            self::InProgress => 'bg-orange-100 text-orange-900 ring-orange-300',
+            self::Returned, self::Rejected => 'bg-red-100 text-red-800 ring-red-300',
+            self::Completed => 'bg-emerald-100 text-emerald-900 ring-emerald-300',
         };
     }
 
     public function textClasses(): string
     {
         return match ($this) {
-            self::New => 'text-sky-700',
-            self::Assigned => 'text-indigo-700',
-            self::InProgress => 'text-amber-700',
-            self::Returned => 'text-orange-700',
-            self::Completed => 'text-emerald-700',
-            self::Closed => 'text-slate-700',
-            self::Rejected => 'text-rose-700',
+            self::New, self::Closed => 'text-slate-500',
+            self::Assigned => 'text-yellow-500',
+            self::InProgress => 'text-orange-500',
+            self::Returned, self::Rejected => 'text-red-600',
+            self::Completed => 'text-emerald-500',
         };
     }
 
     public function boardClasses(): string
     {
         return match ($this) {
-            self::New => 'border-sky-200 bg-sky-50/70',
-            self::Assigned => 'border-indigo-200 bg-indigo-50/70',
-            self::InProgress => 'border-amber-200 bg-amber-50/70',
-            self::Returned => 'border-orange-200 bg-orange-50/70',
+            self::New, self::Closed => 'border-slate-300 bg-slate-100/80',
+            self::Assigned => 'border-yellow-200 bg-yellow-50/70',
+            self::InProgress => 'border-orange-200 bg-orange-50/70',
+            self::Returned, self::Rejected => 'border-red-200 bg-red-50/70',
             self::Completed => 'border-emerald-200 bg-emerald-50/70',
-            self::Closed => 'border-slate-300 bg-slate-100/80',
-            self::Rejected => 'border-rose-200 bg-rose-50/70',
         };
+    }
+
+    public function paletteColor(): string
+    {
+        return match ($this) {
+            self::New, self::Closed => '#8F8F8F',
+            self::Assigned => '#FFE900',
+            self::InProgress => '#FDA13F',
+            self::Returned, self::Rejected => '#E53D00',
+            self::Completed => '#40F99B',
+        };
+    }
+
+    public function paletteSoftColor(): string
+    {
+        return match ($this) {
+            self::New, self::Closed => '#8F8F8F26',
+            self::Assigned => '#FFE90033',
+            self::InProgress => '#FDA13F2E',
+            self::Returned, self::Rejected => '#E53D0026',
+            self::Completed => '#40F99B26',
+        };
+    }
+
+    public function paletteRingColor(): string
+    {
+        return match ($this) {
+            self::New, self::Closed => '#8F8F8F80',
+            self::Assigned => '#FFE90099',
+            self::InProgress => '#FDA13F99',
+            self::Returned, self::Rejected => '#E53D0080',
+            self::Completed => '#40F99B80',
+        };
+    }
+
+    public function paletteForegroundColor(): string
+    {
+        return match ($this) {
+            self::Returned, self::Rejected => '#FFFFFF',
+            default => '#07120F',
+        };
+    }
+
+    public function badgeStyle(): string
+    {
+        return "background-color: {$this->paletteColor()}; color: {$this->paletteForegroundColor()}; --tw-ring-color: {$this->paletteRingColor()};";
+    }
+
+    public function textStyle(): string
+    {
+        return "color: {$this->paletteColor()};";
+    }
+
+    public function boardStyle(): string
+    {
+        return "background-color: {$this->paletteSoftColor()} !important; border-color: {$this->paletteRingColor()} !important;";
     }
 }

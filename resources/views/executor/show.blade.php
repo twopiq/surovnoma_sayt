@@ -80,7 +80,7 @@
                     @csrf
                     <h3 class="font-semibold">Bajarildi deb yuborish</h3>
                     <textarea name="note" rows="3" class="mt-4 block w-full rounded-md border-slate-300 shadow-sm" placeholder="Izoh" @disabled(! $canComplete)></textarea>
-                    <input type="file" name="proofs[]" multiple class="mt-4 block w-full text-sm text-slate-500" @disabled(! $canComplete) required />
+                    <x-file-upload-input id="proofs" name="proofs[]" class="mt-4" :required="true" :disabled="! $canComplete" />
                     <x-input-error :messages="$errors->get('complete')" class="mt-2" />
                     <x-input-error :messages="$errors->get('proofs')" class="mt-2" />
                     <x-input-error :messages="$errors->get('proofs.*')" class="mt-2" />

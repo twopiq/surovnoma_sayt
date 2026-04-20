@@ -19,7 +19,7 @@
             <x-text-input id="tracking_code" name="tracking_code" class="mt-1 block w-full" :value="old('tracking_code')" required />
             <x-input-error :messages="$errors->get('tracking_code')" class="mt-2" />
         </div>
-        <div class="flex justify-between">
+        <div style="align-items: center;" class="flex justify-between">
             <a href="{{ route('home') }}" class="text-sm text-slate-500 underline">Asosiy ekran</a>
             <a href="{{ route('guest.create') }}" class="text-sm text-slate-500 underline">Yangi murojaat yuborish</a>
             <x-primary-button class="bg-cyan-700 hover:bg-cyan-800">Kuzatish</x-primary-button>

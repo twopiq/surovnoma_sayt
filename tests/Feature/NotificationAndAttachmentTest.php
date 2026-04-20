@@ -5,9 +5,11 @@ namespace Tests\Feature;
 use App\Enums\ExternalStatus;
 use App\Enums\TicketPriority;
 use App\Enums\TicketStatus;
+use App\Models\Category;
 use App\Models\Ticket;
 use App\Models\User;
 use App\Notifications\TicketStatusNotification;
+use App\Support\TicketFileUpload;
 use Carbon\Carbon;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -26,6 +28,7 @@ class NotificationAndAttachmentTest extends TestCase
         $requester = User::query()->where('email', 'requester@rtt.local')->firstOrFail();
 
         $response = $this->actingAs($requester)->post(route('tickets.store'), [
+            'category_id' => $this->categoryId(),
             'description' => "Bu murojaat notog'ri formatdagi fayl xabarini tekshirish uchun yetarlicha uzun tavsifdir.",
             'attachments' => [
                 UploadedFile::fake()->create('evidence.txt', 10, 'text/plain'),
@@ -35,6 +38,97 @@ class NotificationAndAttachmentTest extends TestCase
         $response->assertSessionHasErrors([
             'attachments.0' => "Fayl formati noto'g'ri. Faqat JPG, JPEG, PNG, PDF, DOC va DOCX formatlariga ruxsat beriladi.",
         ]);
+    }
+
+    public function test_all_ticket_upload_forms_reject_more_than_five_files(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+
+        $requester = User::query()->where('email', 'requester@rtt.local')->firstOrFail();
+        $operator = User::query()->where('email', 'operator@rtt.local')->firstOrFail();
+        $executor = User::query()->where('email', 'executor@rtt.local')->firstOrFail();
+        $ticket = Ticket::query()->where('assigned_executor_id', $executor->id)->firstOrFail();
+
+        $this->actingAs($requester)->from(route('tickets.create'))->post(route('tickets.store'), [
+            'category_id' => $this->categoryId(),
+            'description' => "Bu requester fayl soni limitini tekshirish uchun yetarlicha uzun tavsifdir.",
+            'attachments' => $this->fakePdfFiles(6),
+        ])->assertRedirect(route('tickets.create'))
+            ->assertSessionHasErrors([
+                'attachments' => TicketFileUpload::tooManyFilesMessage(),
+            ]);
+
+        $this->actingAs($operator)->from(route('operator.tickets.create'))->post(route('operator.tickets.store'), [
+            'name' => 'Test Operator',
+            'email' => 'operator-form@example.test',
+            'phone' => '+998 90 111 22 33',
+            'department' => 'Kafedra',
+            'job_title' => 'Mutaxassis',
+            'category_id' => $this->categoryId(),
+            'description' => "Bu operator fayl soni limitini tekshirish uchun yetarlicha uzun tavsifdir.",
+            'attachments' => $this->fakePdfFiles(6),
+        ])->assertRedirect(route('operator.tickets.create'))
+            ->assertSessionHasErrors([
+                'attachments' => TicketFileUpload::tooManyFilesMessage(),
+            ]);
+
+        $this->from(route('guest.create'))->post(route('guest.store'), [
+            'name' => 'Guest User',
+            'email' => 'guest-limit@example.test',
+            'phone' => '+998 90 111 22 33',
+            'category_id' => $this->categoryId(),
+            'description' => 'Bu guest fayl soni limitini tekshirish uchun yetarlicha uzun tavsif matni hisoblanadi.',
+            'attachments' => $this->fakePdfFiles(6),
+        ])->assertRedirect(route('guest.create'))
+            ->assertSessionHasErrors([
+                'attachments' => TicketFileUpload::tooManyFilesMessage(),
+            ]);
+
+        $this->actingAs($executor)
+            ->post(route('executor.tickets.start', $ticket))
+            ->assertSessionHas('status', 'Murojaat qabul qilindi.');
+
+        $this->actingAs($executor)->from(route('executor.tickets.show', $ticket))->post(route('executor.tickets.complete', $ticket), [
+            'note' => 'Fayl soni limiti testi.',
+            'proofs' => $this->fakePdfFiles(6),
+        ])->assertRedirect(route('executor.tickets.show', $ticket))
+            ->assertSessionHasErrors([
+                'proofs' => TicketFileUpload::tooManyFilesMessage(),
+            ]);
+    }
+
+    public function test_upload_forms_reject_files_larger_than_five_mb(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+
+        $requester = User::query()->where('email', 'requester@rtt.local')->firstOrFail();
+        $executor = User::query()->where('email', 'executor@rtt.local')->firstOrFail();
+        $ticket = Ticket::query()->where('assigned_executor_id', $executor->id)->firstOrFail();
+
+        $this->actingAs($requester)->from(route('tickets.create'))->post(route('tickets.store'), [
+            'category_id' => $this->categoryId(),
+            'description' => "Bu requester fayl hajmi limitini tekshirish uchun yetarlicha uzun tavsifdir.",
+            'attachments' => [
+                UploadedFile::fake()->create('large-proof.pdf', TicketFileUpload::MAX_FILE_SIZE_KB + 1, 'application/pdf'),
+            ],
+        ])->assertRedirect(route('tickets.create'))
+            ->assertSessionHasErrors([
+                'attachments.0' => TicketFileUpload::fileTooLargeMessage(),
+            ]);
+
+        $this->actingAs($executor)
+            ->post(route('executor.tickets.start', $ticket))
+            ->assertSessionHas('status', 'Murojaat qabul qilindi.');
+
+        $this->actingAs($executor)->from(route('executor.tickets.show', $ticket))->post(route('executor.tickets.complete', $ticket), [
+            'note' => 'Fayl hajmi limiti testi.',
+            'proofs' => [
+                UploadedFile::fake()->create('large-proof.pdf', TicketFileUpload::MAX_FILE_SIZE_KB + 1, 'application/pdf'),
+            ],
+        ])->assertRedirect(route('executor.tickets.show', $ticket))
+            ->assertSessionHasErrors([
+                'proofs.0' => TicketFileUpload::fileTooLargeMessage(),
+            ]);
     }
 
     public function test_guest_can_submit_ticket_and_see_tracking_code(): void
@@ -47,13 +141,20 @@ class NotificationAndAttachmentTest extends TestCase
             'phone' => '+998 90 111 22 33',
             'department' => 'Kafedra',
             'job_title' => 'Mutaxassis',
+            'category_id' => $this->categoryId(),
             'description' => 'Bu guest forma uchun yaratilgan va yuborishga yetadigan uzun tavsif matni hisoblanadi.',
         ]);
+
+        $ticket = Ticket::query()->where('requester_email', 'guest@example.test')->firstOrFail();
 
         $response
             ->assertOk()
             ->assertSee('Murojaat qabul qilindi')
-            ->assertSee('Maxfiy tracking code');
+            ->assertSee('Maxfiy tracking code')
+            ->assertSee("Ma'lumotlarni yuklab olish", false)
+            ->assertSee('download="murojaat-', false)
+            ->assertSee(route('guest.tickets.show', $ticket), false)
+            ->assertSessionHas("guest_ticket_access.{$ticket->id}", true);
 
         $this->assertDatabaseCount('tickets', 4);
     }
@@ -66,6 +167,7 @@ class NotificationAndAttachmentTest extends TestCase
             'name' => 'Guest User',
             'email' => 'guest@example.test',
             'phone' => '+998 90 111 22 33',
+            'category_id' => $this->categoryId(),
             'description' => "Bu guest forma uchun notog'ri formatni tekshirishga yetadigan uzun tavsif matni hisoblanadi.",
             'attachments' => [
                 UploadedFile::fake()->create('evidence.txt', 10, 'text/plain'),
@@ -352,5 +454,17 @@ class NotificationAndAttachmentTest extends TestCase
             ->assertSee('<span class="inline-flex items-center px-1 pt-1 border-b-2 border-indigo-400 text-sm font-medium leading-5 text-gray-900 focus:outline-none focus:border-indigo-700 transition duration-150 ease-in-out cursor-default" aria-current="page">', false)
             ->assertSee('Arxiv', false)
             ->assertSee('href="'.route('executor.tickets.index').'"', false);
+    }
+
+    private function fakePdfFiles(int $count): array
+    {
+        return collect(range(1, $count))
+            ->map(fn (int $index): UploadedFile => UploadedFile::fake()->create("proof-{$index}.pdf", 10, 'application/pdf'))
+            ->all();
+    }
+
+    private function categoryId(): int
+    {
+        return Category::query()->firstOrFail()->id;
     }
 }

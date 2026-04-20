@@ -15,14 +15,23 @@
                 </div>
             @endif
             <div>
+                <x-input-label for="category_id" value="Muammo kategoriyasi" />
+                <select id="category_id" name="category_id" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-cyan-500 focus:ring-cyan-500" required>
+                    <option value="">Tanlang</option>
+                    @foreach ($categories as $category)
+                        <option value="{{ $category->id }}" @selected(old('category_id') == $category->id)>{{ $category->name }}</option>
+                    @endforeach
+                </select>
+                <x-input-error :messages="$errors->get('category_id')" class="mt-2" />
+            </div>
+            <div>
                 <x-input-label for="description" value="Tavsif" />
                 <textarea id="description" name="description" rows="7" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-cyan-500 focus:ring-cyan-500" required>{{ old('description') }}</textarea>
                 <x-input-error :messages="$errors->get('description')" class="mt-2" />
             </div>
             <div>
                 <x-input-label for="attachments" value="Fayl biriktirish" />
-                <input id="attachments" type="file" name="attachments[]" multiple class="mt-1 block w-full text-sm text-slate-500" />
-                <p class="mt-2 text-xs text-slate-400">5 tagacha, har biri 5 MB, JPG/JPEG/PNG/PDF/DOC/DOCX.</p>
+                <x-file-upload-input id="attachments" name="attachments[]" class="mt-1" />
                 <x-input-error :messages="$errors->get('attachments')" class="mt-2" />
                 <x-input-error :messages="$errors->get('attachments.*')" class="mt-2" />
             </div>

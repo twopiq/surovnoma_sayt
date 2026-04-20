@@ -34,7 +34,7 @@ class AuthenticatedSessionController extends Controller
             return redirect()->route('pending-approval');
         }
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        return redirect()->route('app.home');
     }
 
     public function destroy(Request $request): RedirectResponse
@@ -44,6 +44,12 @@ class AuthenticatedSessionController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect('/');
+        $redirect = match ($request->input('redirect')) {
+            'login' => route('login'),
+            'home' => route('home'),
+            default => '/',
+        };
+
+        return redirect($redirect);
     }
 }

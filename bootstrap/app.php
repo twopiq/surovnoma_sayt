@@ -1,5 +1,6 @@
 <?php
 
+use App\Support\TicketFileUpload;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -41,7 +42,9 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withExceptions(function (Exceptions $exceptions) {
         $exceptions->render(function (PostTooLargeException $exception, Request $request) {
             return response()->view('errors.post-too-large', [
-                'maxSize' => '25 MB',
+                'maxSize' => TicketFileUpload::maxTotalSizeLabel(),
+                'maxFileSize' => TicketFileUpload::maxFileSizeLabel(),
+                'maxFiles' => TicketFileUpload::MAX_FILES,
                 'serverLimit' => ini_get('post_max_size') ?: '32M',
             ], 413);
         });

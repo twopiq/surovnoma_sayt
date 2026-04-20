@@ -28,6 +28,8 @@ class RegistrationTest extends TestCase
         ]);
 
         $response->assertRedirect(route('pending-approval', absolute: false));
+        $this->assertGuest();
+        $response->assertSessionHas('pending_approval_email', 'test@example.com');
         $this->assertDatabaseHas(User::class, [
             'email' => 'test@example.com',
             'name' => 'Test User',
