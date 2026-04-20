@@ -98,7 +98,11 @@ class User extends Authenticatable
 
     public function activeExecutorTickets(): HasMany
     {
-        return $this->assignedTickets()->where('status', TicketStatus::InProgress->value);
+        return $this->assignedTickets()->whereIn('status', [
+            TicketStatus::Assigned->value,
+            TicketStatus::InProgress->value,
+            TicketStatus::Returned->value,
+        ]);
     }
 
     public function isApproved(): bool
@@ -113,26 +117,31 @@ class User extends Authenticatable
         return $this->hasRole($roleValue);
     }
 
-    public function currentExecutorWorkloadUnits(): int
+    public function currentExecutorWorkloadUnits(?int $exceptTicketId = null): int
     {
         return $this->activeExecutorTickets()
+            ->when($exceptTicketId, fn ($query) => $query->whereKeyNot($exceptTicketId))
             ->get(['priority'])
             ->sum(fn (Ticket $ticket) => $ticket->priority->workloadUnits());
     }
 
-    public function remainingExecutorWorkloadUnits(): int
+    public function remainingExecutorWorkloadUnits(?int $exceptTicketId = null): int
     {
-        return max(0, self::EXECUTOR_MAX_WORKLOAD_UNITS - $this->currentExecutorWorkloadUnits());
+        return max(0, self::EXECUTOR_MAX_WORKLOAD_UNITS - $this->currentExecutorWorkloadUnits($exceptTicketId));
     }
 
-    public function executorWorkloadSummary(): array
+    public function executorWorkloadSummary(?int $exceptTicketId = null): array
     {
-        $tickets = $this->activeExecutorTickets()->get(['priority']);
+        $tickets = $this->activeExecutorTickets()
+            ->when($exceptTicketId, fn ($query) => $query->whereKeyNot($exceptTicketId))
+            ->get(['priority']);
+        $usedUnits = $tickets->sum(fn (Ticket $ticket) => $ticket->priority->workloadUnits());
 
         return [
-            'used_units' => $tickets->sum(fn (Ticket $ticket) => $ticket->priority->workloadUnits()),
+            'used_units' => $usedUnits,
             'max_units' => self::EXECUTOR_MAX_WORKLOAD_UNITS,
-            'remaining_units' => max(0, self::EXECUTOR_MAX_WORKLOAD_UNITS - $tickets->sum(fn (Ticket $ticket) => $ticket->priority->workloadUnits())),
+            'remaining_units' => max(0, self::EXECUTOR_MAX_WORKLOAD_UNITS - $usedUnits),
+            'overload_units' => max(0, $usedUnits - self::EXECUTOR_MAX_WORKLOAD_UNITS),
             'counts' => $tickets->countBy(fn (Ticket $ticket) => $ticket->priority->value)->all(),
         ];
     }

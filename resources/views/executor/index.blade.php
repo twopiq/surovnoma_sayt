@@ -13,6 +13,15 @@
                 Ishlatilgan yuklama: {{ $workloadSummary['used_units'] }}/{{ $workloadSummary['max_units'] }} birlik.
                 Qolgan yuklama: {{ $workloadSummary['remaining_units'] }} birlik.
             </p>
+            @if ($workloadSummary['overload_units'] > 0)
+                <div class="mt-4 rounded-2xl border border-orange-200 bg-orange-50 p-4 text-sm text-orange-900">
+                    <div class="font-semibold">Ortiqcha yuklama bor</div>
+                    <p class="mt-1">
+                        Sizda limitdan {{ $workloadSummary['overload_units'] }} birlik ko'p faol ish bor.
+                        Admin tomonidan tasdiqlangan ortiqcha yuklama shu yerda ko'rinadi.
+                    </p>
+                </div>
+            @endif
             <p class="mt-2 text-xs text-slate-400">
                 Limit: 1 ta shoshilinch va 1 ta past, yoki 2 ta yuqori, yoki 3 ta o'rta, yoki 5 ta past topshiriq.
             </p>

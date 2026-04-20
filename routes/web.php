@@ -104,7 +104,8 @@ Route::middleware(['auth', 'approved'])->group(function () {
         Route::get('/dispatch', [DispatchController::class, 'index'])->name('dispatch.index');
         Route::get('/dispatch/tickets', [DispatchController::class, 'tickets'])->name('dispatch.tickets');
         Route::get('/dispatch/archive', [DispatchController::class, 'archive'])->name('dispatch.archive');
-        Route::get('/dispatch/export/csv', [DispatchController::class, 'exportCsv'])->name('dispatch.export');
+        Route::get('/dispatch/export', [DispatchController::class, 'export'])->name('dispatch.export');
+        Route::get('/dispatch/status/{status}', [DispatchController::class, 'status'])->name('dispatch.status');
         Route::get('/dispatch/{ticket}', [DispatchController::class, 'show'])->name('dispatch.show');
         Route::post('/dispatch/{ticket}/assign', [DispatchController::class, 'assign'])->name('dispatch.assign');
         Route::post('/dispatch/{ticket}/reject', [DispatchController::class, 'reject'])->name('dispatch.reject');
@@ -113,6 +114,10 @@ Route::middleware(['auth', 'approved'])->group(function () {
 
         Route::get('/users', [UserApprovalController::class, 'index'])->name('users.index');
         Route::get('/users/list', [UserApprovalController::class, 'list'])->name('users.list');
+        Route::get('/users/recent', [UserApprovalController::class, 'recent'])->name('users.recent');
+        Route::get('/users/export', [UserApprovalController::class, 'export'])->name('users.export');
+        Route::get('/users/create', [UserApprovalController::class, 'create'])->name('users.create');
+        Route::post('/users', [UserApprovalController::class, 'store'])->name('users.store');
         Route::get('/users/profile', [UserApprovalController::class, 'profile'])->name('users.profile');
         Route::patch('/users/{user}', [UserApprovalController::class, 'update'])->name('users.update');
 

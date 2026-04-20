@@ -3,6 +3,7 @@
         @php
             $backUrl = match (request('source')) {
                 'archive' => route('admin.dispatch.archive'),
+                'home' => route('app.home'),
                 'board' => route('admin.dispatch.index'),
                 default => route('admin.dispatch.tickets'),
             };
@@ -60,14 +61,18 @@
                     <select name="assigned_department_id" class="block w-full rounded-md border-slate-300 shadow-sm">
                         <option value="">Mas'ul bo'lim</option>
                         @foreach ($departments as $department)
-                            <option value="{{ $department->id }}" @selected($ticket->assigned_department_id === $department->id)>{{ $department->name }}</option>
+                            <option value="{{ $department->id }}" @selected((int) old('assigned_department_id', $ticket->assigned_department_id) === $department->id)>{{ $department->name }}</option>
                         @endforeach
                     </select>
                     <select name="assigned_executor_id" class="block w-full rounded-md border-slate-300 shadow-sm">
-                        <option value="" @selected($ticket->assigned_executor_id === null)>Ijrochi tanlanmagan, hamma ko'rsin</option>
+                        <option value="" @selected(old('assigned_executor_id', $ticket->assigned_executor_id) === null)>Ijrochi tanlanmagan, hamma ko'rsin</option>
                         @foreach ($executors as $executor)
-                            <option value="{{ $executor->id }}" @selected($ticket->assigned_executor_id === $executor->id)>
+                            @php
+                                $workload = $executor->executorWorkloadSummary($ticket->id);
+                            @endphp
+                            <option value="{{ $executor->id }}" @selected((int) old('assigned_executor_id', $ticket->assigned_executor_id) === $executor->id)>
                                 {{ $executor->name }} - {{ $availabilityLabels[$executor->availability_status->value] ?? $executor->availability_status->value }}
+                                ({{ $workload['used_units'] }}/{{ $workload['max_units'] }} birlik)
                             </option>
                         @endforeach
                     </select>
@@ -77,17 +82,33 @@
                     <select name="category_id" class="block w-full rounded-md border-slate-300 shadow-sm">
                         <option value="">Muammo kategoriyasi</option>
                         @foreach ($categories as $category)
-                            <option value="{{ $category->id }}" @selected($ticket->category_id === $category->id)>{{ $category->name }}</option>
+                            <option value="{{ $category->id }}" @selected((int) old('category_id', $ticket->category_id) === $category->id)>{{ $category->name }}</option>
                         @endforeach
                     </select>
                     <select name="priority" class="block w-full rounded-md border-slate-300 shadow-sm">
                         @foreach ($priorities as $priority)
-                            <option value="{{ $priority->value }}" @selected($ticket->priority === $priority)>{{ $priority->label() }}</option>
+                            <option value="{{ $priority->value }}" @selected(old('priority', $ticket->priority->value) === $priority->value)>{{ $priority->label() }}</option>
                         @endforeach
                     </select>
-                    <textarea name="note" rows="3" class="block w-full rounded-md border-slate-300 shadow-sm" placeholder="Izoh"></textarea>
+                    <textarea name="note" rows="3" class="block w-full rounded-md border-slate-300 shadow-sm" placeholder="Izoh">{{ old('note') }}</textarea>
                 </div>
-                <button class="mt-4 rounded-full bg-cyan-700 px-4 py-2 text-sm font-semibold text-white">Saqlash</button>
+                @if (session('overload_warning'))
+                    @php($warning = session('overload_warning'))
+                    <div class="mt-4 rounded-2xl border border-orange-200 bg-orange-50 p-4 text-sm text-orange-900">
+                        <div class="font-semibold">Ijrochi yuklamasi limitdan oshadi</div>
+                        <p class="mt-1">
+                            {{ $warning['executor'] }} uchun joriy yuklama {{ $warning['used_units'] }} birlik.
+                            Bu murojaat yana {{ $warning['new_units'] }} birlik qo'shadi va jami {{ $warning['total_units'] }}/{{ $warning['max_units'] }} birlik bo'ladi.
+                            Ortiqcha yuklama: {{ $warning['overload_units'] }} birlik.
+                        </p>
+                        <input type="hidden" name="confirm_overload" value="1">
+                        <input type="hidden" name="confirmed_overload_executor_id" value="{{ old('assigned_executor_id') }}">
+                        <input type="hidden" name="confirmed_overload_priority" value="{{ old('priority') }}">
+                    </div>
+                    <button class="mt-4 rounded-full bg-orange-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-orange-700">Baribir tasdiqlash</button>
+                @else
+                    <button class="mt-4 rounded-full bg-cyan-700 px-4 py-2 text-sm font-semibold text-white">Saqlash</button>
+                @endif
             </form>
 
             <form method="POST" action="{{ route('admin.dispatch.reject', $ticket) }}" class="rounded-2xl border border-slate-200 bg-white p-6">

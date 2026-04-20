@@ -25,7 +25,7 @@ class NotificationController extends Controller
         $notifications = $request->user()
             ->unreadNotifications()
             ->latest()
-            ->take(6)
+            ->take(20)
             ->get()
             ->map(fn ($notification) => [
                 'id' => $notification->id,

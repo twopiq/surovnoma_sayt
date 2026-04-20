@@ -11,8 +11,8 @@ use App\Models\Department;
 use App\Models\Ticket;
 use App\Models\User;
 use App\Services\TicketService;
+use App\Support\TableExport;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Response;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
@@ -47,6 +47,25 @@ class DispatchController extends Controller
         return view('admin.dispatch.archive', [
             'tickets' => $query->paginate(15)->withQueryString(),
             'statuses' => $this->archiveStatuses(),
+            'priorities' => TicketPriority::cases(),
+        ]);
+    }
+
+    public function status(Request $request, string $status): View
+    {
+        $ticketStatus = collect(TicketStatus::cases())->firstWhere('value', $status);
+
+        abort_unless($ticketStatus instanceof TicketStatus, 404);
+
+        $query = Ticket::query()
+            ->with(['assignedDepartment', 'assignedExecutor', 'requester', 'category'])
+            ->where('status', $ticketStatus->value)
+            ->when($request->filled('priority'), fn ($query) => $query->where('priority', $request->string('priority')))
+            ->latest();
+
+        return view('admin.dispatch.status', [
+            'tickets' => $query->paginate(15)->withQueryString(),
+            'status' => $ticketStatus,
             'priorities' => TicketPriority::cases(),
         ]);
     }
@@ -87,9 +106,13 @@ class DispatchController extends Controller
             'category_id' => ['nullable', 'exists:categories,id'],
             'priority' => ['required', Rule::in(array_column(TicketPriority::cases(), 'value'))],
             'note' => ['nullable', 'string'],
+            'confirm_overload' => ['nullable', 'boolean'],
+            'confirmed_overload_executor_id' => ['nullable', 'integer'],
+            'confirmed_overload_priority' => ['nullable', 'string'],
         ]);
 
         $executor = isset($data['assigned_executor_id']) ? User::find($data['assigned_executor_id']) : null;
+        $priority = TicketPriority::from($data['priority']);
 
         if ($executor && $executor->availability_status === AvailabilityStatus::Vacation) {
             return back()->withErrors([
@@ -97,12 +120,35 @@ class DispatchController extends Controller
             ]);
         }
 
+        if ($executor) {
+            $usedUnits = $executor->currentExecutorWorkloadUnits($ticket->id);
+            $newUnits = $priority->workloadUnits();
+            $totalUnits = $usedUnits + $newUnits;
+
+            $isConfirmedOverload = $request->boolean('confirm_overload')
+                && (int) $request->input('confirmed_overload_executor_id') === $executor->id
+                && $request->input('confirmed_overload_priority') === $priority->value;
+
+            if ($totalUnits > User::EXECUTOR_MAX_WORKLOAD_UNITS && ! $isConfirmedOverload) {
+                return back()
+                    ->withInput()
+                    ->with('overload_warning', [
+                        'executor' => $executor->name,
+                        'used_units' => $usedUnits,
+                        'new_units' => $newUnits,
+                        'total_units' => $totalUnits,
+                        'max_units' => User::EXECUTOR_MAX_WORKLOAD_UNITS,
+                        'overload_units' => $totalUnits - User::EXECUTOR_MAX_WORKLOAD_UNITS,
+                    ]);
+            }
+        }
+
         $this->ticketService->assign(
             $ticket,
             auth()->user(),
             $data['assigned_department_id'] ?? null,
             $data['assigned_executor_id'] ?? null,
-            TicketPriority::from($data['priority']),
+            $priority,
             $data['category_id'] ?? null,
             $data['note'] ?? null,
         );
@@ -132,43 +178,45 @@ class DispatchController extends Controller
         return redirect()->route('admin.dispatch.archive')->with('status', 'Murojaat yopildi va arxivga joylandi.');
     }
 
-    public function exportCsv(Request $request)
+    public function export(Request $request)
     {
         if ($request->boolean('archive')) {
             $query = $this->filteredTicketQuery($request, $this->archiveStatuses(), allowOverdueFilter: false)
                 ->latest('completed_at')
                 ->latest();
+            $title = 'Murojaatlar arxivi';
+            $filename = 'murojaatlar-arxivi';
         } else {
             $query = $this->filteredTicketQuery($request, $this->activeStatuses())
                 ->latest();
+            $title = 'Faol murojaatlar';
+            $filename = 'faol-murojaatlar';
         }
 
-        $headers = [
-            'Content-Type' => 'text/csv',
-            'Content-Disposition' => 'attachment; filename="tickets-export.csv"',
-        ];
-
-        $callback = function () use ($query): void {
-            $handle = fopen('php://output', 'wb');
-            fputcsv($handle, ['Reference', 'Requester', 'Category', 'Priority', 'Status', 'Department', 'Executor', 'Deadline']);
-
+        $format = (string) $request->query('format', 'excel');
+        $headings = ['Murojaat raqami', 'Sarlavha', 'Murojaatchi', 'Kategoriya', 'Muhimlik', 'Holat', "Bo'lim", 'Ijrochi', 'Yaratilgan vaqt', 'Muddat', 'Yakunlangan vaqt'];
+        $rows = (function () use ($query): \Generator {
             foreach ($query->cursor() as $ticket) {
-                fputcsv($handle, [
+                yield [
                     $ticket->reference,
+                    $ticket->title ?? $ticket->description,
                     $ticket->requester_name,
                     $ticket->category?->name,
-                    $ticket->priority->value,
-                    $ticket->status->value,
+                    $ticket->priority->label(),
+                    $ticket->status->label(),
                     $ticket->assignedDepartment?->name,
                     $ticket->assignedExecutor?->name,
-                    optional($ticket->deadline_at)->toDateTimeString(),
-                ]);
+                    $ticket->created_at,
+                    $ticket->deadline_at,
+                    $ticket->completed_at,
+                ];
             }
+        })();
 
-            fclose($handle);
-        };
-
-        return Response::stream($callback, 200, $headers);
+        return TableExport::download($format, $filename, $title, $headings, $rows, [
+            'Eksport qilingan vaqt' => now(),
+            'Format' => strtolower($format) === 'csv' ? 'CSV' : 'Excel',
+        ]);
     }
 
     private function filteredTicketQuery(Request $request, array $allowedStatuses, bool $allowOverdueFilter = true)

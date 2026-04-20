@@ -205,4 +205,90 @@
     html[data-theme="dark"] .shadow-2xl {
         box-shadow: none !important;
     }
+
+    html[data-theme="dark"] table {
+        border-color: #34443d !important;
+    }
+
+    html[data-theme="dark"] table thead {
+        background-color: #243746 !important;
+        color: #d9e9e1 !important;
+    }
+
+    html[data-theme="dark"] table thead th {
+        color: #d9e9e1 !important;
+        border-color: #34443d !important;
+    }
+
+    html[data-theme="dark"] table tbody {
+        background-color: #111b17 !important;
+    }
+
+    html[data-theme="dark"] table tbody tr:nth-child(odd) {
+        background-color: #17241f !important;
+    }
+
+    html[data-theme="dark"] table tbody tr:nth-child(even) {
+        background-color: #101815 !important;
+    }
+
+    html[data-theme="dark"] table tbody td {
+        color: #d9e9e1 !important;
+        border-color: #34443d !important;
+    }
+
+    html[data-theme="dark"] table .divide-slate-100 > :not([hidden]) ~ :not([hidden]),
+    html[data-theme="dark"] table .divide-slate-200 > :not([hidden]) ~ :not([hidden]) {
+        border-color: #34443d !important;
+    }
+
+    html[data-theme="dark"] table .text-slate-400,
+    html[data-theme="dark"] table .text-slate-500,
+    html[data-theme="dark"] table .text-slate-600,
+    html[data-theme="dark"] table .text-slate-800,
+    html[data-theme="dark"] table .text-slate-900,
+    html[data-theme="dark"] table .text-slate-950 {
+        color: #d9e9e1 !important;
+    }
+
+    html[data-theme="dark"] table .bg-emerald-100 {
+        background-color: #1f4638 !important;
+    }
+
+    html[data-theme="dark"] table .text-emerald-700 {
+        color: #9ff6c5 !important;
+    }
+
+    html[data-theme="dark"] table .bg-slate-200 {
+        background-color: #26352f !important;
+    }
+
+    html[data-theme="dark"] table .text-slate-600 {
+        color: #c4d8cf !important;
+    }
+
+    html[data-theme="dark"] table .bg-yellow-100 {
+        background-color: #3d3517 !important;
+    }
+
+    html[data-theme="dark"] table .text-yellow-700 {
+        color: #f8e36a !important;
+    }
+
+    html[data-theme="dark"] .admin-profile-token,
+    html[data-theme="dark"] .admin-profile-status.bg-emerald-100 {
+        background-color: #1f4638 !important;
+        color: #9ff6c5 !important;
+        border-color: #34443d !important;
+    }
+
+    html[data-theme="dark"] .admin-profile-status.bg-rose-100 {
+        background-color: #3b1f27 !important;
+        color: #ffb4c1 !important;
+    }
+
+    html[data-theme="dark"] .admin-profile-status.bg-yellow-100 {
+        background-color: #3d3517 !important;
+        color: #f8e36a !important;
+    }
 }

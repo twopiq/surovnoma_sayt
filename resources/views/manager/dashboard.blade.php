@@ -56,9 +56,14 @@
                                 @endif
                             </span>
 
-                            <a href="{{ $stat['excel_url'] }}" class="theme-secondary rounded-md border px-3 py-1.5 text-xs font-semibold transition">
-                                Excel
-                            </a>
+                            <div class="flex flex-wrap justify-end gap-2">
+                                <a href="{{ $stat['excel_url'] }}" class="theme-secondary rounded-md border px-3 py-1.5 text-xs font-semibold transition">
+                                    Excel
+                                </a>
+                                <a href="{{ $stat['csv_url'] }}" class="theme-secondary rounded-md border px-3 py-1.5 text-xs font-semibold transition">
+                                    CSV
+                                </a>
+                            </div>
                         </div>
 
                         <div class="mt-4 font-['Space_Grotesk'] text-3xl font-bold theme-ink">{{ $stat['value'] }}</div>

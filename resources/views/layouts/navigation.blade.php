@@ -9,6 +9,18 @@
             'active' => request()->routeIs('app.home'),
             'icon' => 'home',
         ],
+        ...($user?->hasRole(\App\Enums\UserRole::Admin->value) ? [[
+            'label' => 'Ticket management',
+            'href' => route('admin.dispatch.tickets'),
+            'active' => request()->routeIs('admin.dispatch.*'),
+            'icon' => 'tickets',
+        ]] : []),
+        ...($user?->hasRole(\App\Enums\UserRole::Admin->value) ? [[
+            'label' => 'User management',
+            'href' => route('admin.users.list'),
+            'active' => request()->routeIs('admin.users.*'),
+            'icon' => 'users',
+        ]] : []),
         [
             'label' => 'Dashboard',
             'href' => route('app.dashboard'),
@@ -57,8 +69,8 @@
         :class="open ? 'translate-x-0' : '-translate-x-full'"
         class="fixed inset-y-0 left-0 z-[90] flex w-64 flex-col border-r border-emerald-950 bg-[#123b2f] text-white shadow-2xl transition-transform duration-200 lg:translate-x-0"
     >
-        <div class="border-b border-white/10 px-4 py-4">
-            <div class="flex items-start justify-between gap-3">
+        <div class="flex min-h-[96px] items-center border-b border-white/10 px-4 py-4">
+            <div class="flex w-full items-start justify-between gap-3">
                 <a href="{{ route('app.home') }}" class="flex items-center gap-3">
                     <x-application-logo class="h-10 w-10 fill-current text-cyan-200" />
                     <div>
@@ -87,6 +99,14 @@
                                 <path d="M4 8a6 6 0 1 1 12 0v3.586l.707.707A1 1 0 0 1 16 14H4a1 1 0 0 1-.707-1.707L4 11.586V8Z" />
                                 <path d="M8 15a2 2 0 1 0 4 0H8Z" />
                             </svg>
+                        @elseif ($item['icon'] === 'users')
+                            <svg class="h-5 w-5 text-cyan-100" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                <path d="M7.5 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM2 16.5A5.5 5.5 0 0 1 12.1 13.46a.75.75 0 0 0 1.24-.84 7 7 0 0 0-12.84 3.88.75.75 0 0 0 1.5 0ZM13 8.5a2.5 2.5 0 1 0 0-5 .75.75 0 0 0 0 1.5 1 1 0 1 1 0 2 .75.75 0 0 0 0 1.5ZM13.5 10.5a.75.75 0 0 0 0 1.5 3 3 0 0 1 3 3 .75.75 0 0 0 1.5 0 4.5 4.5 0 0 0-4.5-4.5Z" />
+                            </svg>
+                        @elseif ($item['icon'] === 'tickets')
+                            <svg class="h-5 w-5 text-cyan-100" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                <path fill-rule="evenodd" d="M4.5 3A2.5 2.5 0 0 0 2 5.5v1.75a.75.75 0 0 0 .75.75 2 2 0 1 1 0 4 .75.75 0 0 0-.75.75v1.75A2.5 2.5 0 0 0 4.5 17h11a2.5 2.5 0 0 0 2.5-2.5v-1.75a.75.75 0 0 0-.75-.75 2 2 0 1 1 0-4 .75.75 0 0 0 .75-.75V5.5A2.5 2.5 0 0 0 15.5 3h-11Zm6.25 3.25a.75.75 0 0 0-1.5 0v1a.75.75 0 0 0 1.5 0v-1Zm0 3.5a.75.75 0 0 0-1.5 0v.5a.75.75 0 0 0 1.5 0v-.5Zm0 3a.75.75 0 0 0-1.5 0v1a.75.75 0 0 0 1.5 0v-1Z" clip-rule="evenodd" />
+                            </svg>
                         @endif
                         <span class="min-w-0 flex-1 truncate">{{ $item['label'] }}</span>
                         @if (($item['badge'] ?? 0) > 0)
@@ -107,6 +127,14 @@
                             <svg class="h-5 w-5 text-cyan-100/75" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                                 <path d="M4 8a6 6 0 1 1 12 0v3.586l.707.707A1 1 0 0 1 16 14H4a1 1 0 0 1-.707-1.707L4 11.586V8Z" />
                                 <path d="M8 15a2 2 0 1 0 4 0H8Z" />
+                            </svg>
+                        @elseif ($item['icon'] === 'users')
+                            <svg class="h-5 w-5 text-cyan-100/75" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                <path d="M7.5 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM2 16.5A5.5 5.5 0 0 1 12.1 13.46a.75.75 0 0 0 1.24-.84 7 7 0 0 0-12.84 3.88.75.75 0 0 0 1.5 0ZM13 8.5a2.5 2.5 0 1 0 0-5 .75.75 0 0 0 0 1.5 1 1 0 1 1 0 2 .75.75 0 0 0 0 1.5ZM13.5 10.5a.75.75 0 0 0 0 1.5 3 3 0 0 1 3 3 .75.75 0 0 0 1.5 0 4.5 4.5 0 0 0-4.5-4.5Z" />
+                            </svg>
+                        @elseif ($item['icon'] === 'tickets')
+                            <svg class="h-5 w-5 text-cyan-100/75" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                <path fill-rule="evenodd" d="M4.5 3A2.5 2.5 0 0 0 2 5.5v1.75a.75.75 0 0 0 .75.75 2 2 0 1 1 0 4 .75.75 0 0 0-.75.75v1.75A2.5 2.5 0 0 0 4.5 17h11a2.5 2.5 0 0 0 2.5-2.5v-1.75a.75.75 0 0 0-.75-.75 2 2 0 1 1 0-4 .75.75 0 0 0 .75-.75V5.5A2.5 2.5 0 0 0 15.5 3h-11Zm6.25 3.25a.75.75 0 0 0-1.5 0v1a.75.75 0 0 0 1.5 0v-1Zm0 3.5a.75.75 0 0 0-1.5 0v.5a.75.75 0 0 0 1.5 0v-.5Zm0 3a.75.75 0 0 0-1.5 0v1a.75.75 0 0 0 1.5 0v-1Z" clip-rule="evenodd" />
                             </svg>
                         @endif
                         <span class="min-w-0 flex-1 truncate">{{ $item['label'] }}</span>

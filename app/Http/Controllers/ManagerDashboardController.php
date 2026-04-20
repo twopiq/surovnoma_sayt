@@ -7,11 +7,11 @@ use App\Enums\TicketStatus;
 use App\Models\Ticket;
 use App\Models\TicketStatusHistory;
 use App\Models\User;
+use App\Support\TableExport;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Response;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -47,6 +47,13 @@ class ManagerDashboardController extends Controller
                 'excel_url' => route('manager.dashboard.export', [
                     'stat' => $stat,
                     'month' => $monthValue,
+                    'format' => 'excel',
+                    ...$filters,
+                ]),
+                'csv_url' => route('manager.dashboard.export', [
+                    'stat' => $stat,
+                    'month' => $monthValue,
+                    'format' => 'csv',
                     ...$filters,
                 ]),
             ];
@@ -105,51 +112,37 @@ class ManagerDashboardController extends Controller
 
         [$start, $end, $monthValue, $monthLabel] = $this->reportPeriod($request);
         $filters = $this->reportFilters($request);
+        $format = (string) $request->query('format', 'excel');
         $query = $this->reportTicketsForStat($stat, $start, $end, $filters)
             ->with(['assignedDepartment', 'assignedExecutor', 'requester', 'category'])
             ->latest('updated_at');
 
         $filename = 'yakunlangan-ishlar-'.$stat.'-'.$monthValue;
-
-        return Response::streamDownload(function () use ($query, $monthLabel, $stat): void {
-            echo "\xEF\xBB\xBF";
-            echo '<html><head><meta charset="UTF-8"></head><body>';
-            echo '<table border="1">';
-            echo '<tr><th colspan="12">'.e($this->statMeta()[$stat]['label']).' - '.e($monthLabel).'</th></tr>';
-            echo '<tr>';
-
-            foreach ([
-                'Raqam',
-                'Sarlavha',
-                'Murojaatchi',
-                'Prioritet',
-                'Holat',
-                'Bo\'lim',
-                'Ijrochi',
-                'Kategoriya',
-                'Topshirilgan vaqt',
-                'Yakunlangan vaqt',
-                'Muddat',
-                'SLA natija',
-            ] as $heading) {
-                echo '<th>'.e($heading).'</th>';
-            }
-
-            echo '</tr>';
-
+        $title = $this->statMeta()[$stat]['label'].' - '.$monthLabel;
+        $headings = [
+            'Raqam',
+            'Sarlavha',
+            'Murojaatchi',
+            'Prioritet',
+            'Holat',
+            "Bo'lim",
+            'Ijrochi',
+            'Kategoriya',
+            'Topshirilgan vaqt',
+            'Yakunlangan vaqt',
+            'Muddat',
+            'SLA natija',
+        ];
+        $rows = (function () use ($query): \Generator {
             foreach ($query->cursor() as $ticket) {
-                echo '<tr>';
-
-                foreach ($this->ticketRow($ticket) as $value) {
-                    echo '<td>'.e((string) $value).'</td>';
-                }
-
-                echo '</tr>';
+                yield $this->ticketRow($ticket);
             }
+        })();
 
-            echo '</table></body></html>';
-        }, $filename.'.xls', [
-            'Content-Type' => 'application/vnd.ms-excel; charset=UTF-8',
+        return TableExport::download($format, $filename, $title, $headings, $rows, [
+            'Oy' => $monthLabel,
+            'Eksport qilingan vaqt' => now(),
+            'Format' => strtolower($format) === 'csv' ? 'CSV' : 'Excel',
         ]);
     }
 

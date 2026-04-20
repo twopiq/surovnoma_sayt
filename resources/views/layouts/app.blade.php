@@ -17,7 +17,7 @@
         @livewireStyles
     </head>
     <body class="bg-slate-50 font-sans antialiased text-slate-900">
-        <div class="min-h-screen">
+        <div>
             @include('layouts.navigation')
 
             <div class="min-w-0 lg:pl-64">
@@ -29,13 +29,15 @@
                     </header>
                 @endisset
 
-                <main class="min-h-screen app-shell-bg pb-12">
+                <main class="app-shell-bg pb-12">
                     @include('partials.flash')
                     {{ $slot }}
                 </main>
             </div>
 
-            @include('partials.notification-toasts')
+            @unless (request()->routeIs('notifications.*'))
+                @include('partials.notification-toasts')
+            @endunless
         </div>
 
         @livewireScripts

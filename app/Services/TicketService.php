@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\ExternalStatus;
 use App\Enums\TicketPriority;
 use App\Enums\TicketStatus;
+use App\Enums\UserRole;
 use App\Models\Category;
 use App\Models\SlaProfile;
 use App\Models\Ticket;
@@ -74,6 +75,7 @@ class TicketService
             $this->auditService->log($actor?->id, 'ticket.created', 'Murojaat yaratildi', $ticket, [
                 'channel' => $ticket->channel,
             ]);
+            $this->notifyAdminsAboutNewTicket($ticket);
 
             return [$ticket->fresh(), $trackingCode];
         });
@@ -164,7 +166,10 @@ class TicketService
             ];
         }
 
-        if ($ticket->priority->workloadUnits() > $executor->remainingExecutorWorkloadUnits()) {
+        if (
+            $ticket->assigned_executor_id !== $executor->id
+            && $ticket->priority->workloadUnits() > $executor->remainingExecutorWorkloadUnits($ticket->id)
+        ) {
             return [
                 'allowed' => false,
                 'message' => "Joriy yuklama limiti oshib ketadi. Bir vaqtning o'zida ko'pi bilan 1 ta shoshilinch va 1 ta past, yoki 2 ta yuqori, yoki 3 ta o'rta, yoki 5 ta past topshiriqni olish mumkin.",
@@ -217,6 +222,18 @@ class TicketService
                 'completed_at' => now(),
             ])->save();
 
+            $this->notifyAdmins(
+                'Murojaat bajarildi',
+                "{$updated->reference} ijrochi tomonidan bajarildi.",
+                route('admin.dispatch.show', $updated),
+                [
+                    'kind' => 'ticket_completed',
+                    'ticket_id' => $updated->id,
+                    'ticket_reference' => $updated->reference,
+                    'executor_id' => $executor->id,
+                ],
+            );
+
             return $updated->fresh();
         });
     }
@@ -253,15 +270,18 @@ class TicketService
 
             $updated = $this->transition($ticket, $executor, TicketStatus::Returned, ExternalStatus::InProgress, $reason, 'ticket.returned', 'Ijrochi murojaatni qaytardi');
 
-            $admins = User::role('admin')->get();
-
-            foreach ($admins as $admin) {
-                $admin->notify(new TicketStatusNotification(
-                    'Qaytarish so‘rovi',
-                    "{$ticket->reference} bo‘yicha qaytarish so‘rovi keldi.",
-                    route('admin.dispatch.show', $ticket),
-                ));
-            }
+            $this->notifyAdmins(
+                'Murojaat qaytarildi',
+                "{$updated->reference} bo'yicha qaytarish so'rovi keldi.",
+                route('admin.dispatch.show', $updated),
+                [
+                    'kind' => 'ticket_returned',
+                    'ticket_id' => $updated->id,
+                    'ticket_reference' => $updated->reference,
+                    'executor_id' => $executor->id,
+                    'reason' => $reason,
+                ],
+            );
 
             return $updated;
         });
@@ -356,6 +376,31 @@ class TicketService
                 'resolved_by' => $resolver->id,
                 'updated_at' => now(),
             ]);
+    }
+
+    protected function notifyAdminsAboutNewTicket(Ticket $ticket): void
+    {
+        $this->notifyAdmins(
+            'Yangi murojaat keldi',
+            "{$ticket->reference} bo'yicha yangi murojaat qabul qilindi.",
+            route('admin.dispatch.show', $ticket),
+            [
+                'kind' => 'ticket_created',
+                'ticket_id' => $ticket->id,
+                'ticket_reference' => $ticket->reference,
+                'channel' => $ticket->channel,
+            ],
+        );
+    }
+
+    protected function notifyAdmins(string $title, string $body, string $url, array $meta = []): void
+    {
+        User::query()
+            ->whereHas('roles', fn ($query) => $query->where('name', UserRole::Admin->value))
+            ->where('is_active', true)
+            ->whereNotNull('approved_at')
+            ->get()
+            ->each(fn (User $admin) => $admin->notify(new TicketStatusNotification($title, $body, $url, $meta)));
     }
 
     protected function storeAttachment(Ticket $ticket, UploadedFile $file, ?User $actor, string $context): void

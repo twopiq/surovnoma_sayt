@@ -15,6 +15,7 @@ class DispatchBoard extends Component
             TicketStatus::Assigned,
             TicketStatus::InProgress,
             TicketStatus::Returned,
+            TicketStatus::Completed,
             TicketStatus::Rejected,
         ];
 
@@ -23,13 +24,20 @@ class DispatchBoard extends Component
                 $status->value => Ticket::query()
                     ->where('status', $status->value)
                     ->latest()
-                    ->take(6)
+                    ->take(5)
                     ->get(),
+            ]);
+        $totals = collect($statuses)
+            ->mapWithKeys(fn (TicketStatus $status) => [
+                $status->value => Ticket::query()
+                    ->where('status', $status->value)
+                    ->count(),
             ]);
 
         return view('livewire.admin.dispatch-board', [
             'statuses' => $statuses,
             'grouped' => $grouped,
+            'totals' => $totals,
         ]);
     }
 }

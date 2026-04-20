@@ -15,6 +15,7 @@ use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Notification;
 use Tests\TestCase;
 
 class NotificationAndAttachmentTest extends TestCase
@@ -157,6 +158,62 @@ class NotificationAndAttachmentTest extends TestCase
             ->assertSessionHas("guest_ticket_access.{$ticket->id}", true);
 
         $this->assertDatabaseCount('tickets', 4);
+    }
+
+    public function test_guest_ticket_creation_notifies_admins(): void
+    {
+        Notification::fake();
+        $this->seed(DatabaseSeeder::class);
+
+        $admin = User::query()->where('email', 'admin@rtt.local')->firstOrFail();
+
+        $this->post(route('guest.store'), [
+            'name' => 'Guest User',
+            'email' => 'guest-admin-notify@example.test',
+            'phone' => '+998 90 111 22 33',
+            'department' => 'Kafedra',
+            'job_title' => 'Mutaxassis',
+            'category_id' => $this->categoryId(),
+            'description' => 'Bu guest forma orqali admin bildirishnomasini tekshirish uchun yetarlicha uzun matn.',
+        ])->assertOk();
+
+        $ticket = Ticket::query()->where('requester_email', 'guest-admin-notify@example.test')->firstOrFail();
+
+        Notification::assertSentTo(
+            $admin,
+            TicketStatusNotification::class,
+            fn (TicketStatusNotification $notification, array $channels, User $notifiable): bool => $channels === ['database']
+                && $notifiable->is($admin)
+                && $notification->toArray($admin)['kind'] === 'ticket_created'
+                && $notification->toArray($admin)['ticket_id'] === $ticket->id
+        );
+    }
+
+    public function test_executor_return_request_notifies_admins(): void
+    {
+        Notification::fake();
+        $this->seed(DatabaseSeeder::class);
+
+        $admin = User::query()->where('email', 'admin@rtt.local')->firstOrFail();
+        $executor = User::query()->where('email', 'executor@rtt.local')->firstOrFail();
+        $ticket = Ticket::query()->where('assigned_executor_id', $executor->id)->firstOrFail();
+
+        $this->actingAs($executor)
+            ->from(route('executor.tickets.show', $ticket))
+            ->post(route('executor.tickets.return', $ticket), [
+                'reason' => 'Ijro qilish uchun maʼlumot yetarli emas.',
+            ])
+            ->assertRedirect(route('executor.tickets.show', $ticket))
+            ->assertSessionHas('status', "Qaytarish so'rovi yuborildi.");
+
+        Notification::assertSentTo(
+            $admin,
+            TicketStatusNotification::class,
+            fn (TicketStatusNotification $notification, array $channels, User $notifiable): bool => $channels === ['database']
+                && $notifiable->is($admin)
+                && $notification->toArray($admin)['kind'] === 'ticket_returned'
+                && $notification->toArray($admin)['ticket_id'] === $ticket->id
+        );
     }
 
     public function test_guest_sees_allowed_attachment_formats_message(): void

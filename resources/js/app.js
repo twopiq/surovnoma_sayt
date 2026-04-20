@@ -35,13 +35,6 @@ window.notificationToasts = ({ feedUrl }) => ({
             });
             const notifications = response.data.notifications || [];
 
-            if (! this.bootstrapped) {
-                notifications.forEach((notification) => this.seenIds.add(notification.id));
-                this.persistSeenIds();
-                this.bootstrapped = true;
-                return;
-            }
-
             notifications
                 .slice()
                 .reverse()
@@ -55,6 +48,7 @@ window.notificationToasts = ({ feedUrl }) => ({
                 });
 
             this.persistSeenIds();
+            this.bootstrapped = true;
         } catch (error) {
             // Polling should stay silent if the user is logged out or the request fails.
         }
