@@ -36,6 +36,10 @@ class TelegramSetWebhookCommand extends Command
 
         $this->error('Telegram webhook o\'rnatilmadi. Token, internet va URL ni tekshiring.');
 
+        if ($bot->lastError()) {
+            $this->warn('Aniq xato: '.$bot->lastError());
+        }
+
         return self::FAILURE;
     }
 }

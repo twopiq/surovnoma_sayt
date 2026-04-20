@@ -15,11 +15,18 @@ class TelegramSdkBot
 {
     protected ?Api $api = null;
 
+    protected ?string $lastError = null;
+
     public function sendMessage(string $chatId, TelegramMessage $message): bool
     {
         return $this->call(function (Api $api) use ($chatId, $message): void {
             $api->sendMessage($message->toPayload($chatId));
         });
+    }
+
+    public function lastError(): ?string
+    {
+        return $this->lastError;
     }
 
     public function answerCallbackQuery(string $callbackQueryId, ?string $text = null): bool
@@ -118,6 +125,7 @@ class TelegramSdkBot
     protected function call(callable $callback): bool
     {
         try {
+            $this->lastError = null;
             $callback($this->api());
 
             return true;
@@ -131,6 +139,7 @@ class TelegramSdkBot
     protected function callAndReturn(callable $callback): mixed
     {
         try {
+            $this->lastError = null;
             return $callback($this->api());
         } catch (\Throwable $exception) {
             $this->logException($exception);
@@ -141,8 +150,10 @@ class TelegramSdkBot
 
     protected function logException(\Throwable $exception): void
     {
+        $this->lastError = $this->sanitizeToken($exception->getMessage());
+
         Log::warning('Telegram SDK request failed.', [
-            'message' => $this->sanitizeToken($exception->getMessage()),
+            'message' => $this->lastError,
         ]);
     }
 
