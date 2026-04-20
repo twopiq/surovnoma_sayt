@@ -15,6 +15,7 @@ Homestead.yaml
 npm-debug.log
 yarn-error.log
 /auth.json
+/app/Providers/TelescopeServiceProvider.php
 /.fleet
 /.idea
 /.nova
