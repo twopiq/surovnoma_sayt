@@ -86,8 +86,9 @@
                         @endforeach
                     </select>
                     <select name="priority" class="block w-full rounded-md border-slate-300 shadow-sm">
+                        @php($selectedPriority = old('priority', $ticket->priority->value))
                         @foreach ($priorities as $priority)
-                            <option value="{{ $priority->value }}" @selected(old('priority', $ticket->priority->value) === $priority->value)>{{ $priority->label() }}</option>
+                            <option value="{{ $priority->value }}" @selected($selectedPriority === $priority->value)>{{ $priority->label() }}</option>
                         @endforeach
                     </select>
                     <textarea name="note" rows="3" class="block w-full rounded-md border-slate-300 shadow-sm" placeholder="Izoh">{{ old('note') }}</textarea>

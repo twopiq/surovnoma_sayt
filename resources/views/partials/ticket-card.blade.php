@@ -17,11 +17,25 @@
         @if ($ticket->category)
             <span>Kategoriya: {{ $ticket->category->name }}</span>
         @endif
-        @if ($ticket->deadline_at)
-            <span>Deadline: {{ $ticket->deadline_at->format('d.m.Y H:i') }}</span>
-        @endif
         @if ($ticket->assignedExecutor)
             <span>Ijrochi: {{ $ticket->assignedExecutor->name }}</span>
         @endif
+    </div>
+
+    <div class="mt-4 grid gap-3 border-t border-slate-100 pt-4 text-sm sm:grid-cols-3">
+        <div>
+            <div class="text-xs font-semibold uppercase tracking-wide text-slate-400">Qabul qilingan</div>
+            <div class="mt-1 font-semibold text-slate-800">{{ $ticket->receivedAtLabel() }}</div>
+        </div>
+        <div>
+            <div class="text-xs font-semibold uppercase tracking-wide text-slate-400">Berilgan muddat</div>
+            <div class="mt-1 font-semibold text-slate-800">{{ $ticket->slaDurationLabel() }}</div>
+        </div>
+        <div>
+            <div class="text-xs font-semibold uppercase tracking-wide text-slate-400">Tugash muddati</div>
+            <div class="mt-1 font-semibold {{ $ticket->isOverdue() ? 'text-rose-700' : 'text-slate-800' }}">
+                {{ $ticket->deadlineLabel() }}
+            </div>
+        </div>
     </div>
 </div>

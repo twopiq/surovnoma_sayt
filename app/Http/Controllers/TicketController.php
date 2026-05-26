@@ -19,13 +19,22 @@ class TicketController extends Controller
 
     public function index(): View
     {
-        $tickets = Ticket::query()
-            ->with('category')
-            ->visibleTo(auth()->user())
+        $query = Ticket::query()->visibleTo(auth()->user());
+
+        $statusCounts = (clone $query)
+            ->get(['status'])
+            ->countBy(fn (Ticket $ticket): string => $ticket->status->value);
+
+        $tickets = (clone $query)
+            ->with(['category', 'assignedExecutor', 'slaProfile'])
             ->latest()
             ->paginate(12);
 
-        return view('tickets.index', compact('tickets'));
+        return view('tickets.index', [
+            'tickets' => $tickets,
+            'statusCounts' => $statusCounts,
+            'totalTickets' => $statusCounts->sum(),
+        ]);
     }
 
     public function create(): View
@@ -69,6 +78,8 @@ class TicketController extends Controller
             'comments' => fn ($query) => $query->where('is_public', true)->latest(),
             'attachments',
             'category',
+            'assignedExecutor',
+            'slaProfile',
         ]);
 
         return view('tickets.show', compact('ticket'));

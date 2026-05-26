@@ -93,6 +93,8 @@ class GuestTicketController extends Controller
             'comments' => fn ($query) => $query->where('is_public', true)->latest(),
             'attachments',
             'category',
+            'assignedExecutor',
+            'slaProfile',
         ]);
 
         return view('guest.show', compact('ticket'));

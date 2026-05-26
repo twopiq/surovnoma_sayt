@@ -194,9 +194,9 @@
                     </a>
                 </div>
 
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-slate-200 text-sm">
-                        <thead class="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                <div class="app-table-wrap">
+                    <table class="app-data-table app-data-table--auto">
+                        <thead>
                             <tr>
                                 <th class="px-5 py-3">SL.</th>
                                 <th class="px-5 py-3">Image</th>
@@ -206,7 +206,7 @@
                                 <th class="px-5 py-3 text-right">Yuklama</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-slate-100">
+                        <tbody>
                             @forelse ($topExecutorWorkload as $executor)
                                 <tr>
                                     <td class="px-5 py-3 text-slate-600">{{ $loop->iteration }}</td>

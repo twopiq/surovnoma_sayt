@@ -20,7 +20,7 @@ class OperatorTicketController extends Controller
     public function index(): View
     {
         $tickets = Ticket::query()
-            ->with('category')
+            ->with(['category', 'assignedExecutor', 'slaProfile'])
             ->where('operator_id', auth()->id())
             ->latest()
             ->paginate(12);
@@ -75,6 +75,8 @@ class OperatorTicketController extends Controller
             'comments' => fn ($query) => $query->where('is_public', true)->latest(),
             'attachments',
             'category',
+            'assignedExecutor',
+            'slaProfile',
         ]);
 
         return view('operator.show', compact('ticket'));

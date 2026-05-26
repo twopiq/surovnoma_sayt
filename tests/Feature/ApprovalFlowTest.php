@@ -138,6 +138,61 @@ class ApprovalFlowTest extends TestCase
         $this->assertFalse($pendingUser->is_active);
     }
 
+    public function test_admin_can_update_another_users_profile_details(): void
+    {
+        Role::findOrCreate(UserRole::Admin->value, 'web');
+        Role::findOrCreate(UserRole::Manager->value, 'web');
+        Role::findOrCreate(UserRole::Requester->value, 'web');
+
+        $department = Department::query()->create([
+            'name' => 'Raqamli xizmatlar',
+            'code' => 'DIG',
+            'is_active' => true,
+        ]);
+
+        $admin = User::factory()->create([
+            'approved_at' => now(),
+            'is_active' => true,
+        ]);
+        $admin->assignRole(UserRole::Admin->value);
+
+        $user = User::factory()->create([
+            'name' => 'Old User',
+            'email' => 'old@example.test',
+            'phone' => '+998 90 000 00 01',
+            'approved_at' => null,
+            'is_active' => true,
+        ]);
+        $user->assignRole(UserRole::Requester->value);
+
+        $response = $this->actingAs($admin)->patch(route('admin.users.profile.update', $user), [
+            'name' => 'Updated User',
+            'email' => 'updated@example.test',
+            'phone' => '+998 91 111 11 11',
+            'job_title' => 'Rahbar',
+            'department_id' => $department->id,
+            'role' => UserRole::Manager->value,
+            'status' => 'active',
+            'can_access_app_dashboard' => '1',
+        ]);
+
+        $response
+            ->assertRedirect(route('admin.users.profile', ['user' => $user->id]))
+            ->assertSessionHas('status', 'Foydalanuvchi maʼlumotlari yangilandi.');
+
+        $user->refresh();
+
+        $this->assertSame('Updated User', $user->name);
+        $this->assertSame('updated@example.test', $user->email);
+        $this->assertSame('+998 91 111 11 11', $user->phone);
+        $this->assertSame('Rahbar', $user->job_title);
+        $this->assertSame($department->id, $user->department_id);
+        $this->assertTrue($user->is_active);
+        $this->assertNotNull($user->approved_at);
+        $this->assertTrue($user->hasRole(UserRole::Manager->value));
+        $this->assertTrue($user->can_access_app_dashboard);
+    }
+
     public function test_rejected_user_sees_rejected_message_on_pending_approval_page(): void
     {
         Role::findOrCreate(UserRole::Requester->value, 'web');

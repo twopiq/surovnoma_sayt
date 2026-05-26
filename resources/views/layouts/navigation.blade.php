@@ -1,14 +1,28 @@
 @php
     $user = auth()->user();
     $unreadNotificationsCount = $user?->unreadNotifications()->count() ?? 0;
+    $isRequesterOnly = ($user?->hasRole(\App\Enums\UserRole::Requester->value) ?? false)
+        && ! ($user?->hasAnyRole([
+            \App\Enums\UserRole::Admin->value,
+            \App\Enums\UserRole::Manager->value,
+            \App\Enums\UserRole::Operator->value,
+            \App\Enums\UserRole::Executor->value,
+        ]) ?? false);
+    $homeHref = $isRequesterOnly ? route('tickets.index') : route('app.home');
 
     $sidebarItems = [
-        [
+        ...(! $isRequesterOnly ? [[
             'label' => 'Home',
             'href' => route('app.home'),
             'active' => request()->routeIs('app.home'),
             'icon' => 'home',
-        ],
+        ]] : []),
+        ...($isRequesterOnly ? [[
+            'label' => 'Murojaatlarim',
+            'href' => route('tickets.index'),
+            'active' => request()->routeIs('tickets.*'),
+            'icon' => 'tickets',
+        ]] : []),
         ...($user?->hasRole(\App\Enums\UserRole::Admin->value) ? [[
             'label' => 'Ticket management',
             'href' => route('admin.dispatch.tickets'),
@@ -21,12 +35,12 @@
             'active' => request()->routeIs('admin.users.*'),
             'icon' => 'users',
         ]] : []),
-        [
+        ...($user?->canAccessAppDashboard() ? [[
             'label' => 'Dashboard',
             'href' => route('app.dashboard'),
             'active' => request()->routeIs('app.dashboard'),
             'icon' => 'dashboard',
-        ],
+        ]] : []),
         [
             'label' => 'Bildirishnomalar',
             'href' => route('notifications.index'),
@@ -40,7 +54,7 @@
 <aside x-data="{ open: false }" class="relative z-[90]">
     <div class="sticky top-0 flex h-16 items-center justify-between border-b border-slate-200 bg-white px-4 lg:hidden">
         <div class="flex items-center gap-3">
-            <a href="{{ route('app.home') }}" class="flex items-center gap-3">
+            <a href="{{ $homeHref }}" class="flex items-center gap-3">
                 <x-application-logo class="h-9 w-9 fill-current text-cyan-700" />
                 <div>
                     <div class="font-['Space_Grotesk'] text-sm font-bold uppercase tracking-[0.16em] text-slate-800">RTT</div>
@@ -71,7 +85,7 @@
     >
         <div class="flex min-h-[96px] items-center border-b border-white/10 px-4 py-4">
             <div class="flex w-full items-start justify-between gap-3">
-                <a href="{{ route('app.home') }}" class="flex items-center gap-3">
+                <a href="{{ $homeHref }}" class="flex items-center gap-3">
                     <x-application-logo class="h-10 w-10 fill-current text-cyan-200" />
                     <div>
                         <div class="font-['Space_Grotesk'] text-sm font-bold uppercase tracking-[0.2em]">RTT</div>

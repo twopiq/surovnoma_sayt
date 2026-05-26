@@ -9,6 +9,44 @@ use Illuminate\Support\Collection;
 
 class SlaCalculator
 {
+    public function workdayDurationMinutes(): int
+    {
+        $schedules = WorkSchedule::query()
+            ->whereBetween('weekday', [1, 5])
+            ->where('is_working_day', true)
+            ->get();
+
+        if ($schedules->isEmpty()) {
+            $schedules = $this->defaultSchedules()
+                ->filter(fn (array $schedule): bool => $schedule['weekday'] <= 5 && $schedule['is_working_day']);
+        }
+
+        $minutes = $schedules
+            ->map(function ($schedule): int {
+                $startsAt = data_get($schedule, 'starts_at');
+                $endsAt = data_get($schedule, 'ends_at');
+
+                if (! $startsAt || ! $endsAt) {
+                    return 0;
+                }
+
+                return max(0, Carbon::parse($startsAt)->diffInMinutes(Carbon::parse($endsAt), false));
+            })
+            ->filter(fn (int $minutes): bool => $minutes > 0);
+
+        return (int) max(1, round($minutes->avg() ?: (9 * 60)));
+    }
+
+    public function minutesFromWorkdays(float $workdays): int
+    {
+        return max(1, (int) round($workdays * $this->workdayDurationMinutes()));
+    }
+
+    public function workdaysFromMinutes(int $minutes): float
+    {
+        return round($minutes / $this->workdayDurationMinutes(), 2);
+    }
+
     public function calculateDeadline(Carbon $start, int $durationMinutes): Carbon
     {
         $remaining = $durationMinutes;
@@ -65,6 +103,10 @@ class SlaCalculator
         $holiday = HolidayException::query()
             ->whereDate('date', $moment->toDateString())
             ->first();
+
+        if ($moment->isWeekend() && ! $holiday?->is_working_override) {
+            return null;
+        }
 
         if ($holiday && ! $holiday->is_working_override) {
             return null;

@@ -1,37 +1,43 @@
-import './bootstrap';
+import "./bootstrap";
 
-import Alpine from 'alpinejs';
+import Alpine from "alpinejs";
 
-const storedTheme = localStorage.getItem('theme');
-const preferredTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+const storedTheme = localStorage.getItem("theme");
+const preferredTheme = window.matchMedia("(prefers-color-scheme: dark)").matches
+    ? "dark"
+    : "light";
 
 document.documentElement.dataset.theme = storedTheme || preferredTheme;
 
 window.setTheme = (theme) => {
     document.documentElement.dataset.theme = theme;
-    localStorage.setItem('theme', theme);
-    window.dispatchEvent(new CustomEvent('theme-changed', { detail: theme }));
+    localStorage.setItem("theme", theme);
+    window.dispatchEvent(new CustomEvent("theme-changed", { detail: theme }));
 };
 
 window.toggleTheme = () => {
-    window.setTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark');
+    window.setTheme(
+        document.documentElement.dataset.theme === "dark" ? "light" : "dark",
+    );
 };
 
 window.notificationToasts = ({ feedUrl }) => ({
     bootstrapped: false,
-    seenIds: new Set(JSON.parse(sessionStorage.getItem('notification-toast-seen') || '[]')),
+    seenIds: new Set(
+        JSON.parse(sessionStorage.getItem("notification-toast-seen") || "[]"),
+    ),
     toasts: [],
     timer: null,
 
     start() {
         this.fetchNotifications();
-        this.timer = setInterval(() => this.fetchNotifications(), 5000);
+        this.timer = setInterval(() => this.fetchNotifications(), 30000);
     },
 
     async fetchNotifications() {
         try {
             const response = await window.axios.get(feedUrl, {
-                headers: { Accept: 'application/json' },
+                headers: { Accept: "application/json" },
             });
             const notifications = response.data.notifications || [];
 
@@ -65,11 +71,50 @@ window.notificationToasts = ({ feedUrl }) => ({
 
     persistSeenIds() {
         sessionStorage.setItem(
-            'notification-toast-seen',
+            "notification-toast-seen",
             JSON.stringify([...this.seenIds].slice(-100)),
         );
     },
 });
+
+const initAutoFilterForms = () => {
+    document.querySelectorAll("[data-auto-filter]").forEach((form) => {
+        const delay = Number.parseInt(
+            form.dataset.autoFilterDelay || "500",
+            10,
+        );
+        let timer = null;
+
+        const submitForm = (wait = 0) => {
+            window.clearTimeout(timer);
+
+            timer = window.setTimeout(() => {
+                if (typeof form.requestSubmit === "function") {
+                    form.requestSubmit();
+                    return;
+                }
+
+                form.submit();
+            }, wait);
+        };
+
+        form.querySelectorAll("select, input").forEach((field) => {
+            const type = (field.getAttribute("type") || "").toLowerCase();
+            const isTextInput =
+                ["search", "text", "email", "tel", "number"].includes(type) ||
+                (field.tagName === "INPUT" && type === "");
+
+            if (isTextInput) {
+                field.addEventListener("input", () => submitForm(delay));
+                return;
+            }
+
+            field.addEventListener("change", () => submitForm());
+        });
+    });
+};
+
+initAutoFilterForms();
 
 window.Alpine = Alpine;
 

@@ -134,7 +134,64 @@ class UserApprovalController extends Controller
         return view('admin.users.profile', [
             'selectedUser' => $selectedUser,
             'users' => User::query()->with(['roles'])->latest()->limit(12)->get(),
+            'departments' => Department::query()->where('is_active', true)->orderBy('name')->get(),
+            'roles' => UserRole::cases(),
+            'statuses' => $this->userStatusOptions(),
         ]);
+    }
+
+    public function updateProfile(Request $request, User $user): RedirectResponse
+    {
+        abort_if($user->is($request->user()), 403);
+
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:255', 'regex:/^\S+(?:\s+\S+)+$/'],
+            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', Rule::unique(User::class)->ignore($user->id)],
+            'phone' => ['nullable', 'regex:/^\+998 \d{2} \d{3} \d{2} \d{2}$/'],
+            'job_title' => ['nullable', 'string', 'max:255'],
+            'department_id' => ['nullable', 'exists:departments,id'],
+            'role' => ['required', Rule::in(UserRole::values())],
+            'status' => ['required', Rule::in(array_keys($this->userStatusOptions()))],
+            'can_access_app_dashboard' => ['nullable', 'boolean'],
+        ], [
+            'name.regex' => "F.I.Sh. kamida ism va familiyadan iborat bo'lishi kerak.",
+            'phone.regex' => "Telefon raqami +998 99 999 99 99 ko'rinishida bo'lishi kerak.",
+        ]);
+
+        Role::findOrCreate($data['role'], 'web');
+
+        $statusValues = match ($data['status']) {
+            'active' => [
+                'approved_at' => $user->approved_at ?? now(),
+                'is_active' => true,
+            ],
+            'pending' => [
+                'approved_at' => null,
+                'is_active' => true,
+            ],
+            default => [
+                'approved_at' => null,
+                'is_active' => false,
+            ],
+        };
+
+        $user->forceFill([
+            'name' => $data['name'],
+            'email' => $data['email'],
+            'phone' => $data['phone'] ?? null,
+            'job_title' => $data['job_title'] ?? null,
+            'department_id' => $data['department_id'] ?? null,
+            'can_access_app_dashboard' => $data['role'] === UserRole::Manager->value
+                ? (bool) ($data['can_access_app_dashboard'] ?? false)
+                : false,
+            ...$statusValues,
+        ])->save();
+
+        $user->syncRoles([$data['role']]);
+
+        return redirect()
+            ->route('admin.users.profile', ['user' => $user->id])
+            ->with('status', 'Foydalanuvchi maʼlumotlari yangilandi.');
     }
 
     public function update(Request $request, User $user): RedirectResponse
@@ -165,6 +222,21 @@ class UserApprovalController extends Controller
         ])->save();
 
         return back()->with('status', "Ro'yxatdan o'tish so'rovi rad etildi.");
+    }
+
+    public function updateDashboardAccess(Request $request, User $user): RedirectResponse
+    {
+        abort_unless($user->hasSystemRole(UserRole::Manager), 404);
+
+        $data = $request->validate([
+            'can_access_app_dashboard' => ['nullable', 'boolean'],
+        ]);
+
+        $user->forceFill([
+            'can_access_app_dashboard' => (bool) ($data['can_access_app_dashboard'] ?? false),
+        ])->save();
+
+        return back()->with('status', 'Manager uchun dashboard ruxsati yangilandi.');
     }
 
     protected function usersListQuery(Request $request)

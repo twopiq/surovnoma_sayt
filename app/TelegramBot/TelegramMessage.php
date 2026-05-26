@@ -11,6 +11,7 @@ class TelegramMessage
         public readonly string $body = '',
         public readonly ?string $url = null,
         public readonly array $buttons = [],
+        public readonly array $replyKeyboard = [],
     ) {
     }
 
@@ -36,6 +37,8 @@ class TelegramMessage
 
         if ($buttons !== []) {
             $payload['reply_markup'] = app(TelegramSdkBot::class)->inlineKeyboard($buttons);
+        } elseif ($this->replyKeyboard !== []) {
+            $payload['reply_markup'] = app(TelegramSdkBot::class)->replyKeyboard($this->replyKeyboard);
         }
 
         return $payload;

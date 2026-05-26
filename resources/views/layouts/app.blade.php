@@ -21,13 +21,23 @@
             @include('layouts.navigation')
 
             <div class="min-w-0 lg:pl-64">
-                @isset($header)
-                    <header class="border-b border-slate-200/80 bg-white/90 backdrop-blur">
-                        <div class="mx-auto max-w-7xl px-4 py-5 sm:px-6 lg:px-8">
-                            {{ $header }}
+                <header class="border-b border-slate-200/80 bg-white/90 backdrop-blur">
+                    <div class="mx-auto max-w-7xl px-4 py-5 sm:px-6 lg:px-8">
+                        <div class="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                            @isset($header)
+                                <div class="min-w-0 flex-1">
+                                    {{ $header }}
+                                </div>
+                            @else
+                                <div class="min-w-0 flex-1"></div>
+                            @endisset
+
+                            <div class="shrink-0 lg:pt-0.5">
+                                @include('partials.breadcrumbs')
+                            </div>
                         </div>
-                    </header>
-                @endisset
+                    </div>
+                </header>
 
                 <main class="app-shell-bg pb-12">
                     @include('partials.flash')

@@ -22,11 +22,18 @@ class DeadlineAlertsCommandTest extends TestCase
         $this->seed(DatabaseSeeder::class);
 
         $admin = User::query()->where('email', 'admin@rtt.local')->firstOrFail();
+        $executor = User::query()->where('email', 'executor@rtt.local')->firstOrFail();
         $slaProfile = SlaProfile::query()->firstOrFail();
         $ticket = Ticket::query()->firstOrFail();
 
+        Ticket::query()
+            ->whereKeyNot($ticket->id)
+            ->update(['deadline_at' => null]);
+        $admin->notifications()->delete();
+
         $ticket->forceFill([
             'status' => TicketStatus::Assigned,
+            'assigned_executor_id' => $executor->id,
             'sla_profile_id' => $slaProfile->id,
             'deadline_at' => now()->copy()->addMinutes($slaProfile->warning_minutes - 1),
             'metadata' => [],
@@ -53,6 +60,10 @@ class DeadlineAlertsCommandTest extends TestCase
             ['deadline_warning', 'deadline_overdue'],
             $admin->notifications->map(fn ($notification) => $notification->data['kind'])->all(),
         );
+
+        $ticket->refresh();
+        $this->assertSame(TicketStatus::Overdue, $ticket->status);
+        $this->assertNull($ticket->assigned_executor_id);
     }
 
     protected function tearDown(): void

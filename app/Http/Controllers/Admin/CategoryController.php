@@ -17,7 +17,7 @@ class CategoryController extends Controller
     {
         return view('admin.categories.index', [
             'categories' => Category::query()->orderBy('name')->get(),
-            'priorities' => TicketPriority::cases(),
+            'priorities' => TicketPriority::assignableCases(),
         ]);
     }
 
@@ -26,7 +26,7 @@ class CategoryController extends Controller
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
-            'default_priority' => ['required', Rule::in(array_column(TicketPriority::cases(), 'value'))],
+            'default_priority' => ['required', Rule::in(array_column(TicketPriority::assignableCases(), 'value'))],
         ]);
 
         Category::create([
@@ -43,7 +43,7 @@ class CategoryController extends Controller
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
-            'default_priority' => ['required', Rule::in(array_column(TicketPriority::cases(), 'value'))],
+            'default_priority' => ['required', Rule::in(array_column(TicketPriority::assignableCases(), 'value'))],
             'is_active' => ['nullable', 'boolean'],
         ]);
 

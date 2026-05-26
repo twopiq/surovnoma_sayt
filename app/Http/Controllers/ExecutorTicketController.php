@@ -22,7 +22,7 @@ class ExecutorTicketController extends Controller
         $executor = auth()->user();
 
         $myTickets = Ticket::query()
-            ->with(['assignedExecutor', 'requester', 'category'])
+            ->with(['assignedExecutor', 'requester', 'category', 'slaProfile'])
             ->where('assigned_executor_id', $executor->id)
             ->whereNotIn('status', [
                 TicketStatus::Completed->value,
@@ -33,9 +33,9 @@ class ExecutorTicketController extends Controller
             ->paginate(12, ['*'], 'my_page');
 
         $availableTickets = Ticket::query()
-            ->with(['assignedExecutor', 'requester', 'category'])
+            ->with(['assignedExecutor', 'requester', 'category', 'slaProfile'])
             ->whereNull('assigned_executor_id')
-            ->whereIn('status', [TicketStatus::New->value, TicketStatus::Assigned->value, TicketStatus::Returned->value])
+            ->whereIn('status', [TicketStatus::New->value, TicketStatus::Assigned->value, TicketStatus::Returned->value, TicketStatus::Overdue->value])
             ->latest('deadline_at')
             ->paginate(12, ['*'], 'available_page');
 
@@ -49,7 +49,7 @@ class ExecutorTicketController extends Controller
     public function archive(): View
     {
         $tickets = Ticket::query()
-            ->with(['assignedExecutor', 'requester', 'category'])
+            ->with(['assignedExecutor', 'requester', 'category', 'slaProfile'])
             ->where('assigned_executor_id', auth()->id())
             ->whereIn('status', [
                 TicketStatus::Completed->value,
@@ -67,7 +67,7 @@ class ExecutorTicketController extends Controller
 
         abort_unless($ticket->canExecutorAccess($executor), 403);
 
-        $ticket->load(['comments.user', 'attachments', 'requester', 'assignedDepartment', 'category', 'returnRequests']);
+        $ticket->load(['comments.user', 'attachments', 'requester', 'assignedDepartment', 'category', 'slaProfile', 'returnRequests']);
 
         return view('executor.show', [
             'ticket' => $ticket,
@@ -88,6 +88,7 @@ class ExecutorTicketController extends Controller
         }
 
         $wasReturned = $ticket->status === TicketStatus::Returned;
+        $wasOverdue = $ticket->status === TicketStatus::Overdue;
 
         try {
             $this->ticketService->claimForExecutor($ticket, $executor);
@@ -95,7 +96,7 @@ class ExecutorTicketController extends Controller
             return back()->withErrors($exception->errors());
         }
 
-        return back()->with('status', $wasReturned ? 'Murojaat qayta qabul qilindi.' : 'Murojaat qabul qilindi.');
+        return back()->with('status', $wasOverdue ? 'Kechikkan murojaat qabul qilindi.' : ($wasReturned ? 'Murojaat qayta qabul qilindi.' : 'Murojaat qabul qilindi.'));
     }
 
     public function complete(Request $request, Ticket $ticket): RedirectResponse

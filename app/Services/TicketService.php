@@ -52,7 +52,7 @@ class TicketService
                 'requester_job_title' => $attributes['requester_job_title'] ?? null,
                 'title' => $attributes['title'] ?? null,
                 'description' => $attributes['description'],
-                'priority' => $attributes['priority'] ?? $category?->default_priority ?? TicketPriority::Medium,
+                'priority' => $attributes['priority'] ?? TicketPriority::Unassigned,
                 'status' => TicketStatus::New,
                 'external_status' => ExternalStatus::Accepted,
             ]);
@@ -166,9 +166,11 @@ class TicketService
             ];
         }
 
+        $claimPriority = $this->priorityForDeadline($ticket);
+
         if (
             $ticket->assigned_executor_id !== $executor->id
-            && $ticket->priority->workloadUnits() > $executor->remainingExecutorWorkloadUnits($ticket->id)
+            && $claimPriority->workloadUnits() > $executor->remainingExecutorWorkloadUnits($ticket->id)
         ) {
             return [
                 'allowed' => false,
@@ -193,9 +195,40 @@ class TicketService
         }
 
         return DB::transaction(function () use ($ticket, $executor, $note): Ticket {
+            $ticket->refresh()->loadMissing('category');
+            $priority = $this->priorityForDeadline($ticket);
+            $slaProfile = SlaProfile::query()->where('priority', $priority->value)->first();
+
+            if (! $slaProfile) {
+                throw ValidationException::withMessages([
+                    'claim' => "{$priority->label()} muhimlik darajasi uchun deadline sozlamasi topilmadi.",
+                ]);
+            }
+
+            $deadline = (! $ticket->deadline_at || $ticket->status === TicketStatus::Overdue)
+                ? $this->slaCalculator->calculateDeadline(now(), $slaProfile->duration_minutes)
+                : $ticket->deadline_at;
+
             $ticket->forceFill([
                 'assigned_executor_id' => $executor->id,
+                'assigned_department_id' => $ticket->assigned_department_id ?: $ticket->category?->department_id,
+                'priority' => $priority,
+                'sla_profile_id' => $slaProfile->id,
+                'deadline_at' => $deadline,
+                'metadata' => array_merge($ticket->metadata ?? [], ['deadline_notifications' => []]),
             ])->save();
+
+            if (! $ticket->assignments()->where('executor_id', $executor->id)->exists()) {
+                TicketAssignment::create([
+                    'ticket_id' => $ticket->id,
+                    'assigned_by' => $executor->id,
+                    'department_id' => $ticket->assigned_department_id,
+                    'executor_id' => $executor->id,
+                    'priority' => $priority,
+                    'deadline_at' => $deadline,
+                    'note' => $note,
+                ]);
+            }
 
             return $this->markInProgress($ticket->fresh(), $executor, $note);
         });
@@ -365,6 +398,21 @@ class TicketService
             'to_external_status' => $toExternalStatus,
             'note' => $note,
         ]);
+    }
+
+    protected function priorityForDeadline(Ticket $ticket): TicketPriority
+    {
+        if ($ticket->priority !== TicketPriority::Unassigned) {
+            return $ticket->priority;
+        }
+
+        $categoryPriority = $ticket->category?->default_priority;
+
+        if ($categoryPriority instanceof TicketPriority && $categoryPriority !== TicketPriority::Unassigned) {
+            return $categoryPriority;
+        }
+
+        return TicketPriority::Medium;
     }
 
     protected function resolvePendingReturnRequests(Ticket $ticket, User $resolver): void

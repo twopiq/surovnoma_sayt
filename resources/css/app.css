@@ -97,6 +97,85 @@
         background: var(--surface-soft);
     }
 
+    .app-table-wrap {
+        width: 100%;
+        max-width: 100%;
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .app-data-table {
+        width: max-content;
+        min-width: 100%;
+        border-collapse: collapse;
+        table-layout: auto;
+        font-size: 0.875rem;
+        background: #ffffff;
+    }
+
+    .app-data-table--auto {
+        table-layout: auto;
+    }
+
+    .app-data-table--fit {
+        width: 100%;
+        min-width: 0;
+        table-layout: auto;
+    }
+
+    .app-data-table thead {
+        background: #f8fafc;
+    }
+
+    .app-data-table thead th {
+        padding: 0.75rem 1rem;
+        text-align: left;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #64748b;
+        white-space: nowrap;
+    }
+
+    .app-data-table tbody {
+        background: #ffffff;
+    }
+
+    .app-data-table tbody tr {
+        border-top: 1px solid #e2e8f0;
+    }
+
+    .app-data-table tbody tr:nth-child(odd) {
+        background: rgba(248, 250, 252, 0.72);
+    }
+
+    .app-data-table tbody tr:nth-child(even) {
+        background: #ffffff;
+    }
+
+    .app-data-table tbody td {
+        padding: 0.75rem 1rem;
+        vertical-align: middle;
+        color: #475569;
+        white-space: nowrap;
+    }
+
+    .app-data-table .truncate {
+        overflow: visible;
+        text-overflow: clip;
+        white-space: nowrap;
+    }
+
+    .app-data-table--compact thead th {
+        padding: 0.625rem 0.75rem;
+    }
+
+    .app-data-table--compact tbody td {
+        padding: 0.625rem 0.75rem;
+    }
+
     html[data-theme="dark"] .bg-white,
     html[data-theme="dark"] .bg-white\/80,
     html[data-theme="dark"] .bg-white\/90,
@@ -273,6 +352,39 @@
 
     html[data-theme="dark"] table .text-yellow-700 {
         color: #f8e36a !important;
+    }
+
+    html[data-theme="dark"] .app-data-table {
+        background: #111b17 !important;
+    }
+
+    html[data-theme="dark"] .app-data-table thead {
+        background: #243746 !important;
+    }
+
+    html[data-theme="dark"] .app-data-table thead th {
+        color: #d9e9e1 !important;
+    }
+
+    html[data-theme="dark"] .app-data-table tbody {
+        background: #111b17 !important;
+    }
+
+    html[data-theme="dark"] .app-data-table tbody tr {
+        border-color: #34443d !important;
+    }
+
+    html[data-theme="dark"] .app-data-table tbody tr:nth-child(odd) {
+        background: #17241f !important;
+    }
+
+    html[data-theme="dark"] .app-data-table tbody tr:nth-child(even) {
+        background: #101815 !important;
+    }
+
+    html[data-theme="dark"] .app-data-table tbody td {
+        color: #d9e9e1 !important;
+        border-color: #34443d !important;
     }
 
     html[data-theme="dark"] .admin-profile-token,

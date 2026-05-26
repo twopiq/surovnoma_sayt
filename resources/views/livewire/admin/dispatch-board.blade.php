@@ -24,6 +24,11 @@
                     <a href="{{ route('admin.dispatch.show', ['ticket' => $ticket, 'source' => $source]) }}" class="block rounded-xl bg-slate-50 p-3 text-sm text-slate-700 transition hover:bg-cyan-50">
                         <div class="font-semibold">{{ $ticket->reference }}</div>
                         <div class="mt-1 text-slate-500">{{ \Illuminate\Support\Str::limit($ticket->requester_name, 24) }}</div>
+                        <div class="mt-3 grid gap-1 text-xs text-slate-500">
+                            <div>Qabul: <span class="font-semibold text-slate-700">{{ $ticket->receivedAtLabel() }}</span></div>
+                            <div>Muddat: <span class="font-semibold text-slate-700">{{ $ticket->slaDurationLabel() }}</span></div>
+                            <div>Tugash: <span class="font-semibold {{ $ticket->isOverdue() ? 'text-rose-700' : 'text-slate-700' }}">{{ $ticket->deadlineLabel() }}</span></div>
+                        </div>
                     </a>
                 @empty
                     <div class="rounded-xl border border-dashed border-slate-200 p-4 text-sm text-slate-400">Bo'sh</div>

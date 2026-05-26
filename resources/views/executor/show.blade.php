@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
         <div class="flex items-center gap-3">
-            <a href="{{ request('source') === 'archive' ? route('executor.tickets.archive') : route('executor.tickets.index') }}" class="rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100">Ortga qaytish</a>
+            <a href="{{ request('source') === 'archive' ? route('executor.tickets.archive') : (request('source') === 'home' ? route('app.home') : route('executor.tickets.index')) }}" class="rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100">Ortga qaytish</a>
             <h2 class="font-['Space_Grotesk'] text-2xl font-bold">Ijrochi kartochkasi</h2>
         </div>
     </x-slot>

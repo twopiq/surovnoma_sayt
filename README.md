@@ -66,6 +66,10 @@ npm install
 npm run build
 ```
 
+<!--
+php artisan telegram:set-webhook https://register-gentleman-rounding.ngrok-free.dev/api/telegram/webhook
+-->
+
 ## Demo accountlar
 
 - `admin@rtt.local` / `password`

@@ -103,6 +103,22 @@ class TelegramSdkBot
         return $keyboard;
     }
 
+    public function replyKeyboard(array $rows): Keyboard
+    {
+        $keyboard = Keyboard::make()
+            ->setIsPersistent(true)
+            ->setResizeKeyboard(true);
+
+        foreach ($rows as $row) {
+            $keyboard->row(array_map(
+                fn (string|array $button) => Keyboard::button($button),
+                $row,
+            ));
+        }
+
+        return $keyboard;
+    }
+
     protected function api(): Api
     {
         if ($this->api instanceof Api) {

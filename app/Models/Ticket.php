@@ -6,6 +6,7 @@ use App\Enums\ExternalStatus;
 use App\Enums\TicketPriority;
 use App\Enums\TicketStatus;
 use App\Enums\UserRole;
+use App\Services\SlaCalculator;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -140,7 +141,7 @@ class Ticket extends Model
                     ->orWhere(function ($availableQuery) {
                         $availableQuery
                             ->whereNull('assigned_executor_id')
-                            ->whereIn('status', [TicketStatus::New->value, TicketStatus::Assigned->value, TicketStatus::Returned->value]);
+                            ->whereIn('status', [TicketStatus::New->value, TicketStatus::Assigned->value, TicketStatus::Returned->value, TicketStatus::Overdue->value]);
                     });
             });
         }
@@ -156,12 +157,36 @@ class Ticket extends Model
     {
         return $this->deadline_at !== null
             && $this->deadline_at->isPast()
-            && ! in_array($this->status, [TicketStatus::Closed, TicketStatus::Rejected], true);
+            && ! in_array($this->status, [TicketStatus::Completed, TicketStatus::Closed, TicketStatus::Rejected], true);
+    }
+
+    public function receivedAtLabel(): string
+    {
+        return $this->created_at?->format('d.m.Y H:i') ?? '-';
+    }
+
+    public function slaDurationLabel(): string
+    {
+        $minutes = $this->slaProfile?->duration_minutes;
+
+        if (! $minutes) {
+            return 'Belgilanmagan';
+        }
+
+        $workdays = app(SlaCalculator::class)->workdaysFromMinutes($minutes);
+        $label = rtrim(rtrim(number_format($workdays, 2, '.', ''), '0'), '.');
+
+        return $label.' ish kuni';
+    }
+
+    public function deadlineLabel(): string
+    {
+        return $this->deadline_at?->format('d.m.Y H:i') ?? 'Belgilanmagan';
     }
 
     public function canExecutorClaim(): bool
     {
-        return in_array($this->status, [TicketStatus::New, TicketStatus::Assigned, TicketStatus::Returned], true);
+        return in_array($this->status, [TicketStatus::New, TicketStatus::Assigned, TicketStatus::Returned, TicketStatus::Overdue], true);
     }
 
     public function canExecutorAccess(User $user): bool
@@ -171,7 +196,7 @@ class Ticket extends Model
         }
 
         return $this->assigned_executor_id === null
-            && in_array($this->status, [TicketStatus::New, TicketStatus::Assigned, TicketStatus::Returned], true);
+            && in_array($this->status, [TicketStatus::New, TicketStatus::Assigned, TicketStatus::Returned, TicketStatus::Overdue], true);
     }
 
     public function canExecutorClaimBy(User $user): bool
@@ -195,6 +220,7 @@ class Ticket extends Model
             TicketStatus::New => 'Bajarishga olish',
             TicketStatus::Assigned => $this->assigned_executor_id === null ? 'Bajarishga olish' : 'Qabul qilish',
             TicketStatus::Returned => 'Qayta qabul qilish',
+            TicketStatus::Overdue => 'Kechikkan murojaatni olish',
             TicketStatus::InProgress => 'Qabul qilindi',
             TicketStatus::Completed => 'Bajarilgan',
             TicketStatus::Closed => 'Yopilgan',

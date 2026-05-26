@@ -15,6 +15,16 @@
             'href' => route('admin.dispatch.archive'),
             'active' => request()->routeIs('admin.dispatch.archive'),
         ],
+        [
+            'label' => 'Deadline sozlamalari',
+            'href' => route('admin.dispatch.deadlines'),
+            'active' => request()->routeIs('admin.dispatch.deadlines'),
+        ],
+        [
+            'label' => 'Ish kunlari',
+            'href' => route('admin.dispatch.work-schedule'),
+            'active' => request()->routeIs('admin.dispatch.work-schedule'),
+        ],
     ];
 @endphp
 

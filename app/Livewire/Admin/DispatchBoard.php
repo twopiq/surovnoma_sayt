@@ -15,6 +15,7 @@ class DispatchBoard extends Component
             TicketStatus::Assigned,
             TicketStatus::InProgress,
             TicketStatus::Returned,
+            TicketStatus::Overdue,
             TicketStatus::Completed,
             TicketStatus::Rejected,
         ];
@@ -22,6 +23,7 @@ class DispatchBoard extends Component
         $grouped = collect($statuses)
             ->mapWithKeys(fn (TicketStatus $status) => [
                 $status->value => Ticket::query()
+                    ->with('slaProfile')
                     ->where('status', $status->value)
                     ->latest()
                     ->take(5)

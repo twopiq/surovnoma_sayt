@@ -5,7 +5,6 @@
                 <h2 class="font-['Space_Grotesk'] text-2xl font-bold">Recent registrations</h2>
                 <p class="mt-1 text-sm text-slate-500">Oxirgi ro'yxatdan o'tgan foydalanuvchilar va tasdiqlanish vaqtlari.</p>
             </div>
-            <div class="text-sm text-slate-500">Application / Users / <span class="font-semibold text-cyan-700">Recent registrations</span></div>
         </div>
     </x-slot>
 
@@ -21,23 +20,23 @@
                 <span class="text-sm font-semibold text-slate-500">{{ $users->total() }} ta</span>
             </div>
 
-            <div class="max-w-full overflow-hidden">
-                <table class="w-full table-fixed border-collapse text-sm">
-                    <thead class="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+            <div class="app-table-wrap">
+                <table class="app-data-table app-data-table--auto">
+                    <thead>
                         <tr>
-                            <th class="w-12 px-4 py-3">#</th>
-                            <th class="w-[18%] px-4 py-3">F.I.Sh.</th>
-                            <th class="w-[18%] px-4 py-3">Email</th>
-                            <th class="hidden w-[12%] px-4 py-3 md:table-cell">Login</th>
-                            <th class="hidden w-[12%] px-4 py-3 lg:table-cell">Telefon</th>
-                            <th class="hidden w-[12%] px-4 py-3 lg:table-cell">Bo'lim</th>
-                            <th class="w-[10%] px-4 py-3">Rol</th>
-                            <th class="hidden w-[12%] px-4 py-3 xl:table-cell">Ro'yxatdan o'tgan</th>
-                            <th class="hidden w-[12%] px-4 py-3 xl:table-cell">Tasdiqlangan</th>
-                            <th class="w-[92px] px-4 py-3">Status</th>
+                            <th class="px-4 py-3">#</th>
+                            <th class="px-4 py-3">F.I.Sh.</th>
+                            <th class="px-4 py-3">Email</th>
+                            <th class="hidden px-4 py-3 md:table-cell">Login</th>
+                            <th class="hidden px-4 py-3 lg:table-cell">Telefon</th>
+                            <th class="hidden px-4 py-3 lg:table-cell">Bo'lim</th>
+                            <th class="px-4 py-3">Rol</th>
+                            <th class="hidden px-4 py-3 xl:table-cell">Ro'yxatdan o'tgan</th>
+                            <th class="hidden px-4 py-3 xl:table-cell">Tasdiqlangan</th>
+                            <th class="px-4 py-3">Status</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-slate-100 bg-white">
+                    <tbody>
                         @forelse ($users as $user)
                             @php
                                 $status = $user->approved_at && $user->is_active

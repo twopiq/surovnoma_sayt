@@ -34,7 +34,7 @@ class DispatchController extends Controller
         return view('admin.dispatch.tickets', [
             'tickets' => $query->paginate(15)->withQueryString(),
             'statuses' => $this->activeStatuses(),
-            'priorities' => TicketPriority::cases(),
+            'priorities' => TicketPriority::assignableCases(),
         ]);
     }
 
@@ -47,7 +47,7 @@ class DispatchController extends Controller
         return view('admin.dispatch.archive', [
             'tickets' => $query->paginate(15)->withQueryString(),
             'statuses' => $this->archiveStatuses(),
-            'priorities' => TicketPriority::cases(),
+            'priorities' => TicketPriority::assignableCases(),
         ]);
     }
 
@@ -58,7 +58,7 @@ class DispatchController extends Controller
         abort_unless($ticketStatus instanceof TicketStatus, 404);
 
         $query = Ticket::query()
-            ->with(['assignedDepartment', 'assignedExecutor', 'requester', 'category'])
+            ->with(['assignedDepartment', 'assignedExecutor', 'requester', 'category', 'slaProfile'])
             ->where('status', $ticketStatus->value)
             ->when($request->filled('priority'), fn ($query) => $query->where('priority', $request->string('priority')))
             ->latest();
@@ -79,6 +79,7 @@ class DispatchController extends Controller
             'assignedDepartment',
             'assignedExecutor',
             'category',
+            'slaProfile',
             'assignments',
             'histories.user',
             'returnRequests.executor',
@@ -93,7 +94,7 @@ class DispatchController extends Controller
                 ->orderBy('name')
                 ->get(),
             'categories' => Category::query()->where('is_active', true)->orderBy('name')->get(),
-            'priorities' => TicketPriority::cases(),
+            'priorities' => TicketPriority::assignableCases(),
             'availabilityLabels' => collect(AvailabilityStatus::cases())->mapWithKeys(fn (AvailabilityStatus $case) => [$case->value => $case->label()]),
         ]);
     }
@@ -104,7 +105,7 @@ class DispatchController extends Controller
             'assigned_department_id' => ['nullable', 'exists:departments,id'],
             'assigned_executor_id' => ['nullable', 'exists:users,id'],
             'category_id' => ['nullable', 'exists:categories,id'],
-            'priority' => ['required', Rule::in(array_column(TicketPriority::cases(), 'value'))],
+            'priority' => ['required', Rule::in(array_column(TicketPriority::assignableCases(), 'value'))],
             'note' => ['nullable', 'string'],
             'confirm_overload' => ['nullable', 'boolean'],
             'confirmed_overload_executor_id' => ['nullable', 'integer'],
@@ -224,7 +225,7 @@ class DispatchController extends Controller
         $allowedStatusValues = array_map(fn (TicketStatus $status): string => $status->value, $allowedStatuses);
 
         $query = Ticket::query()
-            ->with(['assignedDepartment', 'assignedExecutor', 'requester', 'category'])
+            ->with(['assignedDepartment', 'assignedExecutor', 'requester', 'category', 'slaProfile'])
             ->whereIn('status', $allowedStatusValues);
 
         if ($request->filled('status')) {
@@ -254,6 +255,7 @@ class DispatchController extends Controller
             TicketStatus::Assigned,
             TicketStatus::InProgress,
             TicketStatus::Returned,
+            TicketStatus::Overdue,
             TicketStatus::Rejected,
         ];
     }

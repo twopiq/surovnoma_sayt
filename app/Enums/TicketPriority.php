@@ -8,6 +8,34 @@ enum TicketPriority: string
     case Medium = 'medium';
     case High = 'high';
     case Urgent = 'urgent';
+    case Unassigned = 'unassigned';
+
+    /**
+     * @return array<int, self>
+     */
+    public static function assignableCases(): array
+    {
+        return [
+            self::Low,
+            self::Medium,
+            self::High,
+            self::Urgent,
+        ];
+    }
+
+    /**
+     * @return array<int, self>
+     */
+    public static function dashboardCases(): array
+    {
+        return [
+            self::Urgent,
+            self::High,
+            self::Medium,
+            self::Low,
+            self::Unassigned,
+        ];
+    }
 
     public function label(): string
     {
@@ -16,6 +44,7 @@ enum TicketPriority: string
             self::Medium => "O'rta",
             self::High => 'Yuqori',
             self::Urgent => 'Shoshilinch',
+            self::Unassigned => 'Belgilanmagan',
         };
     }
 
@@ -26,6 +55,7 @@ enum TicketPriority: string
             self::Medium => 10,
             self::High => 15,
             self::Urgent => 24,
+            self::Unassigned => 0,
         };
     }
 }

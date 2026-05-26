@@ -20,7 +20,7 @@
         @include('admin.dispatch.partials.top-menu')
 
         <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <form method="GET" action="{{ route('admin.dispatch.tickets') }}" class="grid gap-3 md:grid-cols-[1fr_1fr_auto_auto_auto] md:items-center">
+            <form method="GET" action="{{ route('admin.dispatch.tickets') }}" class="grid gap-3 md:grid-cols-[1fr_1fr_auto_auto] md:items-center" data-auto-filter>
                 <select name="status" class="rounded-md border-slate-300 shadow-sm">
                     <option value="">Barcha faol holatlar</option>
                     @foreach ($statuses as $status)
@@ -40,7 +40,6 @@
                     Faqat kechikkanlar
                 </label>
 
-                <button class="rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white">Filtrlash</button>
                 <a href="{{ route('admin.dispatch.tickets') }}" class="rounded-md border border-slate-300 px-4 py-2 text-center text-sm font-semibold text-slate-700 transition hover:bg-slate-100">Tozalash</a>
             </form>
         </div>

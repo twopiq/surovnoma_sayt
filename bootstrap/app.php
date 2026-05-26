@@ -24,7 +24,7 @@ return Application::configure(basePath: dirname(__DIR__))
         }
 
         $schedule->command('tickets:send-deadline-alerts')
-            ->everyTenMinutes()
+            ->everyMinute()
             ->withoutOverlapping();
 
         $schedule->command('notifications:purge-expired')

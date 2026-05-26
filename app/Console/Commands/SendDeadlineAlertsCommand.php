@@ -2,11 +2,14 @@
 
 namespace App\Console\Commands;
 
+use App\Enums\ExternalStatus;
 use App\Enums\TicketStatus;
 use App\Models\Ticket;
+use App\Models\TicketStatusHistory;
 use App\Models\User;
 use App\Notifications\TicketStatusNotification;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\DB;
 
 class SendDeadlineAlertsCommand extends Command
 {
@@ -23,39 +26,43 @@ class SendDeadlineAlertsCommand extends Command
                 TicketStatus::Completed->value,
                 TicketStatus::Closed->value,
                 TicketStatus::Rejected->value,
+                TicketStatus::Overdue->value,
             ])
             ->get();
 
         $admins = User::role('admin')->get();
 
         foreach ($tickets as $ticket) {
-            if (! $ticket->slaProfile || $admins->isEmpty()) {
-                continue;
-            }
-
             $minutesLeft = now()->diffInMinutes($ticket->deadline_at, false);
             $marker = $ticket->deadline_at->toIso8601String();
             $sent = $ticket->metadata['deadline_notifications'] ?? [];
 
-            if ($minutesLeft <= 0 && ($sent['overdue_for'] ?? null) !== $marker) {
-                foreach ($admins as $admin) {
-                    $admin->notify(new TicketStatusNotification(
-                        'Kechikkan murojaat',
-                        "{$ticket->reference} deadline vaqtidan o'tib ketdi.",
-                        route('admin.dispatch.show', $ticket),
-                        ['kind' => 'deadline_overdue', 'ticket_id' => $ticket->id],
-                    ));
+            if ($minutesLeft <= 0) {
+                $this->markTicketAsOverdue($ticket, $marker);
+
+                if (($sent['overdue_for'] ?? null) !== $marker) {
+                    foreach ($admins as $admin) {
+                        $admin->notify(new TicketStatusNotification(
+                            'Kechikkan murojaat',
+                            "{$ticket->reference} deadline vaqtidan o'tib ketdi va ijrochidan yechildi.",
+                            route('admin.dispatch.show', $ticket),
+                            ['kind' => 'deadline_overdue', 'ticket_id' => $ticket->id],
+                        ));
+                    }
+
+                    $this->markAsSent($ticket->fresh(), 'overdue_for', $marker);
                 }
 
-                $this->markAsSent($ticket, 'overdue_for', $marker);
-                $this->line("Overdue ogohlantirish yuborildi: {$ticket->reference}");
+                $this->line("Kechikkan holatga o'tkazildi: {$ticket->reference}");
                 continue;
             }
 
             if (
-                $minutesLeft > 0
+                $ticket->slaProfile
+                && $minutesLeft > 0
                 && $minutesLeft <= $ticket->slaProfile->warning_minutes
                 && ($sent['warning_for'] ?? null) !== $marker
+                && $admins->isNotEmpty()
             ) {
                 foreach ($admins as $admin) {
                     $admin->notify(new TicketStatusNotification(
@@ -72,6 +79,57 @@ class SendDeadlineAlertsCommand extends Command
         }
 
         return self::SUCCESS;
+    }
+
+    protected function markTicketAsOverdue(Ticket $ticket, string $marker): void
+    {
+        DB::transaction(function () use ($ticket, $marker): void {
+            $ticket->refresh();
+
+            if (in_array($ticket->status, [
+                TicketStatus::Completed,
+                TicketStatus::Closed,
+                TicketStatus::Rejected,
+                TicketStatus::Overdue,
+            ], true)) {
+                return;
+            }
+
+            $metadata = $ticket->metadata ?? [];
+            $metadata['overdue'] = [
+                'deadline_at' => $marker,
+                'previous_executor_id' => $ticket->assigned_executor_id,
+                'marked_at' => now()->toIso8601String(),
+            ];
+
+            $fromStatus = $ticket->status;
+            $fromExternalStatus = $ticket->external_status;
+
+            $ticket->forceFill([
+                'assigned_executor_id' => null,
+                'status' => TicketStatus::Overdue,
+                'external_status' => ExternalStatus::Overdue,
+                'metadata' => $metadata,
+            ])->save();
+
+            $ticket->returnRequests()
+                ->pending()
+                ->update([
+                    'resolved_at' => now(),
+                    'resolved_by' => null,
+                    'updated_at' => now(),
+                ]);
+
+            TicketStatusHistory::create([
+                'ticket_id' => $ticket->id,
+                'user_id' => null,
+                'from_status' => $fromStatus,
+                'to_status' => TicketStatus::Overdue,
+                'from_external_status' => $fromExternalStatus,
+                'to_external_status' => ExternalStatus::Overdue,
+                'note' => 'Deadline tugagani uchun ijrochidan yechildi.',
+            ]);
+        });
     }
 
     protected function markAsSent(Ticket $ticket, string $key, string $marker): void

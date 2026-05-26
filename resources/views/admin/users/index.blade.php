@@ -61,47 +61,47 @@
                 <a href="{{ route('admin.users.list') }}" class="text-sm font-semibold text-violet-700">View All &rsaquo;</a>
             </div>
 
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-slate-200 text-sm">
-                    <thead class="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+            <div class="app-table-wrap">
+                <table class="app-data-table app-data-table--fit">
+                    <thead>
                         <tr>
-                            <th class="px-5 py-3">SL.</th>
-                            <th class="px-5 py-3">Ro'yxatdan o'tgan</th>
-                            <th class="px-5 py-3">Tasdiqlangan</th>
-                            <th class="px-5 py-3">F.I.Sh.</th>
-                            <th class="px-5 py-3">Login</th>
-                            <th class="px-5 py-3">Email</th>
-                            <th class="px-5 py-3">Telefon</th>
-                            <th class="px-5 py-3">Lavozim</th>
-                            <th class="px-5 py-3">Bo'lim</th>
-                            <th class="px-5 py-3">Rol</th>
-                            <th class="px-5 py-3">Status</th>
+                            <th class="px-3 py-3">SL.</th>
+                            <th class="px-3 py-3">Ro'yxatdan o'tgan</th>
+                            <th class="px-3 py-3">Tasdiqlangan</th>
+                            <th class="px-3 py-3">F.I.Sh.</th>
+                            <th class="px-3 py-3">Login</th>
+                            <th class="px-3 py-3">Email</th>
+                            <th class="px-3 py-3">Telefon</th>
+                            <th class="px-3 py-3">Lavozim</th>
+                            <th class="px-3 py-3">Bo'lim</th>
+                            <th class="px-3 py-3">Rol</th>
+                            <th class="px-3 py-3">Status</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-slate-100">
+                    <tbody>
                         @forelse ($latestUsers as $user)
                             <tr>
-                                <td class="px-5 py-3 text-slate-600">{{ $loop->iteration }}</td>
-                                <td class="whitespace-nowrap px-5 py-3 text-slate-600">{{ $user->created_at?->format('d.m.Y H:i') }}</td>
-                                <td class="whitespace-nowrap px-5 py-3 text-slate-600">{{ $user->approved_at?->format('d.m.Y H:i') ?? '-' }}</td>
-                                <td class="px-5 py-3">
+                                <td class="px-3 py-3 text-slate-600">{{ $loop->iteration }}</td>
+                                <td class="whitespace-nowrap px-3 py-3 text-slate-600">{{ $user->created_at?->format('d.m.Y H:i') }}</td>
+                                <td class="whitespace-nowrap px-3 py-3 text-slate-600">{{ $user->approved_at?->format('d.m.Y H:i') ?? '-' }}</td>
+                                <td class="px-3 py-3">
                                     <a href="{{ route('admin.users.profile', ['user' => $user]) }}" class="flex items-center gap-3">
-                                        <span class="inline-flex h-10 w-10 items-center justify-center rounded-full bg-emerald-100 text-sm font-bold text-emerald-700">
+                                        <span class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-sm font-bold text-emerald-700">
                                             {{ mb_substr($user->name, 0, 1) }}
                                         </span>
-                                        <span>
+                                        <span class="min-w-0">
                                             <span class="block font-semibold text-slate-900">{{ $user->name }}</span>
                                             <span class="block text-xs text-slate-500">{{ $user->created_at?->diffForHumans() }}</span>
                                         </span>
                                     </a>
                                 </td>
-                                <td class="px-5 py-3 text-slate-600">{{ $user->login }}</td>
-                                <td class="px-5 py-3 text-slate-600">{{ $user->email }}</td>
-                                <td class="px-5 py-3 text-slate-600">{{ $user->phone ?? '-' }}</td>
-                                <td class="px-5 py-3 text-slate-600">{{ $user->job_title ?: '-' }}</td>
-                                <td class="px-5 py-3 text-slate-600">{{ $user->department?->name ?? '-' }}</td>
-                                <td class="px-5 py-3 text-slate-600">{{ $user->display_role }}</td>
-                                <td class="px-5 py-3">
+                                <td class="px-3 py-3 text-slate-600">{{ $user->login }}</td>
+                                <td class="px-3 py-3 text-slate-600">{{ $user->email }}</td>
+                                <td class="px-3 py-3 text-slate-600">{{ $user->phone ?? '-' }}</td>
+                                <td class="px-3 py-3 text-slate-600">{{ $user->job_title ?: '-' }}</td>
+                                <td class="px-3 py-3 text-slate-600">{{ $user->department?->name ?? '-' }}</td>
+                                <td class="px-3 py-3 text-slate-600">{{ $user->display_role }}</td>
+                                <td class="px-3 py-3">
                                     @if ($user->approved_at && $user->is_active)
                                         <span class="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">Active</span>
                                     @elseif (! $user->is_active)

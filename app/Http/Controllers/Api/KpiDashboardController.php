@@ -117,6 +117,7 @@ class KpiDashboardController extends Controller
                         TicketStatus::Assigned->value,
                         TicketStatus::InProgress->value,
                         TicketStatus::Returned->value,
+                        TicketStatus::Overdue->value,
                     ]);
                 },
             ])
@@ -285,6 +286,7 @@ class KpiDashboardController extends Controller
             TicketStatus::Assigned->value,
             TicketStatus::InProgress->value => 'Jarayonda',
             TicketStatus::Returned->value => 'Qaytarilgan',
+            TicketStatus::Overdue->value => 'Kechikkan',
             TicketStatus::Completed->value,
             TicketStatus::Closed->value => 'Bajarildi',
             TicketStatus::Rejected->value => 'Rad etildi',

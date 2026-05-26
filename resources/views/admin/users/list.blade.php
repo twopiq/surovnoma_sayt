@@ -5,15 +5,14 @@
                 <h2 class="font-['Space_Grotesk'] text-2xl font-bold">User management</h2>
                 <p class="mt-1 text-sm text-slate-500">Foydalanuvchilar, rollar va akkaunt holatini boshqarish.</p>
             </div>
-            <div class="text-sm text-slate-500">Application / Users / <span class="font-semibold text-cyan-700">User management</span></div>
         </div>
     </x-slot>
 
-    <div class="mx-auto max-w-none space-y-5 px-4 pt-8 sm:px-6 lg:px-8">
+    <div class="mx-auto max-w-none space-y-4 px-4 pt-5 sm:px-6 lg:px-8">
         @include('admin.users.partials.top-menu')
 
         <section class="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-            <form method="GET" action="{{ route('admin.users.list') }}" class="space-y-3 border-b border-slate-200 px-4 py-4">
+            <form method="GET" action="{{ route('admin.users.list') }}" class="space-y-3 border-b border-slate-200 px-4 py-3" data-auto-filter>
                 <div class="grid min-w-0 gap-3 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-[minmax(180px,1fr)_150px_150px_160px_120px]">
                     <label class="relative block">
                         <span class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
@@ -48,9 +47,6 @@
                 </div>
 
                 <div class="grid gap-2 sm:grid-cols-2 md:grid-cols-4 lg:flex lg:flex-wrap lg:justify-end">
-                    <button class="inline-flex min-w-[104px] items-center justify-center rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800">
-                        Filtrlash
-                    </button>
                     <a href="{{ route('admin.users.list') }}" class="inline-flex min-w-[104px] items-center justify-center rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
                         Tozalash
                     </a>
@@ -70,21 +66,21 @@
                 </div>
             </form>
 
-            <div class="max-w-full overflow-hidden">
-                <table class="admin-users-table w-full table-fixed border-collapse text-sm">
-                    <thead class="bg-[#243746] text-left text-xs font-semibold uppercase tracking-wide text-slate-200">
+            <div class="app-table-wrap">
+                <table class="app-data-table app-data-table--auto app-data-table--compact admin-users-table">
+                    <thead>
                         <tr>
-                            <th class="w-[34%] px-3 py-2 md:w-[23%]">Full Name</th>
-                            <th class="w-[34%] px-3 py-2 md:w-[24%]">Email</th>
-                            <th class="hidden w-[12%] px-3 py-2 md:table-cell">Username</th>
-                            <th class="w-[82px] px-2 py-2 text-center sm:w-[92px]">Status</th>
-                            <th class="hidden w-[11%] px-3 py-2 lg:table-cell">Role</th>
-                            <th class="hidden w-[13%] px-3 py-2 xl:table-cell">Joined Date</th>
-                            <th class="hidden w-[12%] px-3 py-2 xl:table-cell">Last Active</th>
-                            <th class="w-[72px] px-3 py-2 text-right">Actions</th>
+                            <th class="px-3 py-2">Full Name</th>
+                            <th class="px-3 py-2">Email</th>
+                            <th class="hidden px-3 py-2 md:table-cell">Username</th>
+                            <th class="px-2 py-2 text-center">Status</th>
+                            <th class="hidden px-3 py-2 lg:table-cell">Role</th>
+                            <th class="hidden px-3 py-2 xl:table-cell">Joined Date</th>
+                            <th class="hidden px-3 py-2 xl:table-cell">Last Active</th>
+                            <th class="px-3 py-2 text-right">Actions</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-slate-100 bg-white">
+                    <tbody>
                         @forelse ($users as $user)
                             @php
                                 $status = $user->approved_at && $user->is_active
@@ -93,7 +89,7 @@
                                         ? ['label' => 'Inactive', 'class' => 'bg-slate-200 text-slate-600']
                                         : ['label' => 'Pending', 'class' => 'bg-yellow-100 text-yellow-700']);
                             @endphp
-                            <tr class="odd:bg-emerald-50/45 even:bg-white">
+                            <tr>
                                 <td class="px-3 py-2">
                                     <a href="{{ route('admin.users.profile', ['user' => $user]) }}" class="flex min-w-0 items-center gap-3">
                                         <span class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-xs font-bold text-emerald-700">
@@ -108,7 +104,7 @@
                                 <td class="truncate px-3 py-2 text-slate-600">{{ $user->email }}</td>
                                 <td class="hidden truncate px-3 py-2 text-slate-600 md:table-cell">{{ $user->login }}</td>
                                 <td class="px-2 py-2 text-center">
-                                    <span class="inline-flex w-full max-w-[66px] justify-center rounded-full px-2 py-1 text-[11px] font-semibold leading-4 sm:max-w-[76px] sm:text-xs {{ $status['class'] }}">
+                                    <span class="inline-flex max-w-full justify-center rounded-full px-2.5 py-1 text-[11px] font-semibold leading-4 sm:text-xs {{ $status['class'] }}">
                                         {{ $status['label'] }}
                                     </span>
                                 </td>
@@ -137,7 +133,7 @@
                 </table>
             </div>
 
-            <div class="flex flex-col gap-3 border-t border-slate-200 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+            <div class="flex flex-col gap-2 border-t border-slate-200 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
                 <div class="text-sm font-medium text-slate-600">
                     Rows per page {{ $perPage }} · {{ $users->total() }} rows
                 </div>

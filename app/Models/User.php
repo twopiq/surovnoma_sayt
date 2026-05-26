@@ -40,6 +40,7 @@ class User extends Authenticatable
         'telegram_notifications_enabled',
         'is_active',
         'approved_at',
+        'can_access_app_dashboard',
         'password',
     ];
 
@@ -56,6 +57,7 @@ class User extends Authenticatable
             'telegram_linked_at' => 'datetime',
             'telegram_notifications_enabled' => 'boolean',
             'is_active' => 'boolean',
+            'can_access_app_dashboard' => 'boolean',
             'availability_status' => AvailabilityStatus::class,
             'password' => 'hashed',
         ];
@@ -115,6 +117,19 @@ class User extends Authenticatable
         $roleValue = $role instanceof UserRole ? $role->value : $role;
 
         return $this->hasRole($roleValue);
+    }
+
+    public function canAccessAppDashboard(): bool
+    {
+        if ($this->hasSystemRole(UserRole::Admin)) {
+            return true;
+        }
+
+        if ($this->hasSystemRole(UserRole::Manager)) {
+            return (bool) $this->can_access_app_dashboard;
+        }
+
+        return false;
     }
 
     public function currentExecutorWorkloadUnits(?int $exceptTicketId = null): int
