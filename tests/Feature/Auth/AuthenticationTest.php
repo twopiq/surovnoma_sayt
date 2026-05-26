@@ -2,7 +2,12 @@
 
 namespace Tests\Feature\Auth;
 
+use App\Enums\ExternalStatus;
+use App\Enums\TicketStatus;
 use App\Models\User;
+use App\Models\Ticket;
+use Carbon\Carbon;
+use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -27,7 +32,7 @@ class AuthenticationTest extends TestCase
         ]);
 
         $this->assertAuthenticated();
-        $response->assertRedirect(route('dashboard', absolute: false));
+        $response->assertRedirect(route('app.home', absolute: false));
     }
 
     public function test_users_can_authenticate_using_login_name(): void
@@ -43,7 +48,7 @@ class AuthenticationTest extends TestCase
         ]);
 
         $this->assertAuthenticatedAs($user);
-        $response->assertRedirect(route('dashboard', absolute: false));
+        $response->assertRedirect(route('app.home', absolute: false));
     }
 
     public function test_users_can_not_authenticate_with_invalid_password(): void
@@ -78,5 +83,54 @@ class AuthenticationTest extends TestCase
 
         $this->assertGuest();
         $response->assertRedirect(route('login'));
+    }
+
+    public function test_admin_login_marks_expired_deadline_tickets_as_overdue(): void
+    {
+        Carbon::setTestNow('2026-04-09 10:00:00');
+        $this->seed(DatabaseSeeder::class);
+
+        $admin = User::query()->where('email', 'admin@rtt.local')->firstOrFail();
+        $executor = User::query()->where('email', 'executor@rtt.local')->firstOrFail();
+        $tickets = Ticket::query()
+            ->where('assigned_executor_id', $executor->id)
+            ->take(2)
+            ->get();
+
+        $this->assertCount(2, $tickets);
+
+        Ticket::query()
+            ->whereKeyNot($tickets->pluck('id'))
+            ->update(['deadline_at' => null]);
+
+        foreach ($tickets as $ticket) {
+            $ticket->forceFill([
+                'status' => TicketStatus::Assigned,
+                'external_status' => ExternalStatus::InProgress,
+                'assigned_executor_id' => $executor->id,
+                'deadline_at' => now()->subMinutes(15),
+                'metadata' => [],
+            ])->save();
+        }
+
+        $this->post('/login', [
+            'login' => $admin->email,
+            'password' => 'password',
+        ])->assertRedirect(route('app.home', absolute: false));
+
+        foreach ($tickets as $ticket) {
+            $ticket->refresh();
+
+            $this->assertSame(TicketStatus::Overdue, $ticket->status);
+            $this->assertSame(ExternalStatus::Overdue, $ticket->external_status);
+            $this->assertNull($ticket->assigned_executor_id);
+        }
+    }
+
+    protected function tearDown(): void
+    {
+        Carbon::setTestNow();
+
+        parent::tearDown();
     }
 }

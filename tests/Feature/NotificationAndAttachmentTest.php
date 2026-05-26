@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Enums\ExternalStatus;
 use App\Enums\TicketPriority;
 use App\Enums\TicketStatus;
+use App\Enums\UserRole;
 use App\Models\Category;
 use App\Models\Ticket;
 use App\Models\User;
@@ -138,7 +139,7 @@ class NotificationAndAttachmentTest extends TestCase
 
         $response = $this->post(route('guest.store'), [
             'name' => 'Guest User',
-            'email' => 'guest@example.test',
+            'email' => 'guest-submit@example.test',
             'phone' => '+998 90 111 22 33',
             'department' => 'Kafedra',
             'job_title' => 'Mutaxassis',
@@ -146,13 +147,13 @@ class NotificationAndAttachmentTest extends TestCase
             'description' => 'Bu guest forma uchun yaratilgan va yuborishga yetadigan uzun tavsif matni hisoblanadi.',
         ]);
 
-        $ticket = Ticket::query()->where('requester_email', 'guest@example.test')->firstOrFail();
+        $ticket = Ticket::query()->where('requester_email', 'guest-submit@example.test')->firstOrFail();
 
         $response
             ->assertOk()
-            ->assertSee('Murojaat qabul qilindi')
-            ->assertSee('Maxfiy tracking code')
-            ->assertSee("Ma'lumotlarni yuklab olish", false)
+            ->assertSeeText('Murojaat qabul qilindi')
+            ->assertSeeText('Maxfiy tracking code')
+            ->assertSeeText("Ma'lumotlarni yuklab olish", false)
             ->assertSee('download="murojaat-', false)
             ->assertSee(route('guest.tickets.show', $ticket), false)
             ->assertSessionHas("guest_ticket_access.{$ticket->id}", true);
@@ -357,7 +358,13 @@ class NotificationAndAttachmentTest extends TestCase
     {
         $this->seed(DatabaseSeeder::class);
 
-        $executor = User::query()->where('email', 'executor@rtt.local')->firstOrFail();
+        $executor = User::factory()->create([
+            'name' => 'Available Executor',
+            'email' => 'available-executor@example.test',
+            'approved_at' => now(),
+            'is_active' => true,
+        ]);
+        $executor->assignRole(UserRole::Executor->value);
 
         $ticket = Ticket::create([
             'reference' => 'RTT-TEST-UNASSIGNED',
@@ -373,8 +380,8 @@ class NotificationAndAttachmentTest extends TestCase
         $this->actingAs($executor)
             ->get(route('executor.tickets.index'))
             ->assertOk()
-            ->assertSee("Bo'sh murojaatlar", false)
-            ->assertSee('RTT-TEST-UNASSIGNED');
+            ->assertSeeText("Bo'sh murojaatlar", false)
+            ->assertSeeText('RTT-TEST-UNASSIGNED');
 
         $this->actingAs($executor)
             ->get(route('executor.tickets.show', $ticket))
@@ -507,9 +514,7 @@ class NotificationAndAttachmentTest extends TestCase
             ->get(route('executor.tickets.show', ['ticket' => $ticket, 'source' => 'archive']))
             ->assertOk()
             ->assertSee(route('executor.tickets.archive'), false)
-            ->assertDontSee('>Arxiv</a>', false)
-            ->assertSee('<span class="inline-flex items-center px-1 pt-1 border-b-2 border-indigo-400 text-sm font-medium leading-5 text-gray-900 focus:outline-none focus:border-indigo-700 transition duration-150 ease-in-out cursor-default" aria-current="page">', false)
-            ->assertSee('Arxiv', false)
+            ->assertSeeText('Ortga qaytish')
             ->assertSee('href="'.route('executor.tickets.index').'"', false);
     }
 

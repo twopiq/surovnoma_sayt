@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
+use App\Enums\UserRole;
+use App\Services\DeadlineMonitorService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -16,7 +18,7 @@ class AuthenticatedSessionController extends Controller
         return view('auth.login');
     }
 
-    public function store(LoginRequest $request): RedirectResponse
+    public function store(LoginRequest $request, DeadlineMonitorService $deadlineMonitor): RedirectResponse
     {
         $request->authenticate();
 
@@ -32,6 +34,10 @@ class AuthenticatedSessionController extends Controller
             $request->session()->put('pending_approval_rejected', ! $pendingUser->is_active && $pendingUser->approved_at === null);
 
             return redirect()->route('pending-approval');
+        }
+
+        if ($request->user()->hasSystemRole(UserRole::Admin)) {
+            $deadlineMonitor->markOverdueTickets();
         }
 
         return redirect()->route('app.home');

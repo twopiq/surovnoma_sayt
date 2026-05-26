@@ -61,6 +61,9 @@ class ReturnRequestFlowTest extends TestCase
             'category_id' => $categoryId,
             'priority' => TicketPriority::Medium->value,
             'note' => 'Qayta ko‘rib chiqildi.',
+            'confirm_overload' => '1',
+            'confirmed_overload_executor_id' => $executor->id,
+            'confirmed_overload_priority' => TicketPriority::Medium->value,
         ]);
 
         $this->assertFalse($ticket->fresh()->hasPendingReturnRequest());

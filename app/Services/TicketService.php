@@ -417,7 +417,8 @@ class TicketService
 
     protected function resolvePendingReturnRequests(Ticket $ticket, User $resolver): void
     {
-        $ticket->returnRequests()
+        TicketReturnRequest::query()
+            ->where('ticket_id', $ticket->getKey())
             ->pending()
             ->update([
                 'resolved_at' => now(),
