@@ -44,6 +44,7 @@ class UserApprovalController extends Controller
             'filters' => $this->userListFilters($request),
             'roles' => UserRole::cases(),
             'statuses' => $this->userStatusOptions(),
+            'pendingCount' => User::query()->whereNull('approved_at')->where('is_active', true)->count(),
         ]);
     }
 
@@ -54,6 +55,7 @@ class UserApprovalController extends Controller
                 ->with(['department', 'roles'])
                 ->latest()
                 ->paginate(15),
+            'pendingCount' => User::query()->whereNull('approved_at')->where('is_active', true)->count(),
         ]);
     }
 

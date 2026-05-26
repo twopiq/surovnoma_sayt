@@ -117,11 +117,6 @@
                                             <path d="M13.586 3.586a2 2 0 0 1 2.828 2.828l-7.793 7.793a1 1 0 0 1-.414.242l-3 1a1 1 0 0 1-1.265-1.265l1-3a1 1 0 0 1 .242-.414l7.793-7.793Z" />
                                         </svg>
                                     </a>
-                                    <a href="{{ route('admin.users.index') }}" class="inline-flex rounded-md p-1.5 text-cyan-700 transition hover:bg-cyan-50" aria-label="Tasdiqlash boshqaruvi">
-                                        <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                                            <path fill-rule="evenodd" d="M10 1.5 3.75 4.25v4.7c0 4.02 2.58 7.58 6.25 8.85 3.67-1.27 6.25-4.83 6.25-8.85v-4.7L10 1.5Zm2.78 6.97a.75.75 0 0 0-1.06-1.06L9.25 9.88 8.28 8.9a.75.75 0 0 0-1.06 1.06l1.5 1.5c.3.3.77.3 1.06 0l3-3Z" clip-rule="evenodd" />
-                                        </svg>
-                                    </a>
                                 </td>
                             </tr>
                         @empty
