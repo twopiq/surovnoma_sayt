@@ -180,6 +180,24 @@ class TelegramUpdateHandler
             return;
         }
 
+        if (Str::startsWith($data, 'executor:complete:')) {
+            $this->askExecutorComplete($chatId, $user, (int) Str::after($data, 'executor:complete:'));
+
+            return;
+        }
+
+        if (Str::startsWith($data, 'executor:return:')) {
+            $this->askExecutorReturn($chatId, $user, (int) Str::after($data, 'executor:return:'));
+
+            return;
+        }
+
+        if (Str::startsWith($data, 'executor:comment:')) {
+            $this->askExecutorComment($chatId, $user, (int) Str::after($data, 'executor:comment:'));
+
+            return;
+        }
+
         match ($data) {
             'profile' => $this->sendProfile($chatId),
             'notifications:toggle' => $this->toggleNotifications($chatId),
@@ -415,6 +433,9 @@ class TelegramUpdateHandler
             'guest:create:phone' => $this->collectGuestPhone($chatId, $text, $state),
             'guest:create:description' => $this->createGuestTicketFromText($chatId, $text, $message, $state),
             'requester:create:description' => $this->createRequesterTicketFromText($chatId, $text, $user, $state),
+            'executor:complete:note' => $this->completeExecutorTicketFromText($chatId, $text, $user, $state),
+            'executor:return:reason' => $this->returnExecutorTicketFromText($chatId, $text, $user, $state),
+            'executor:comment:body' => $this->commentExecutorTicketFromText($chatId, $text, $user, $state),
             default => $this->sendMenu($chatId, $user),
         };
     }
@@ -730,15 +751,22 @@ class TelegramUpdateHandler
             ->limit(5)
             ->get();
 
-        $body = $tickets->isEmpty()
-            ? "Sizga biriktirilgan faol murojaat yo'q."
-            : $tickets->map(fn (Ticket $ticket): string => $this->ticketLine($ticket))->implode("\n\n");
+        if ($tickets->isEmpty()) {
+            $this->bot->sendMessage($chatId, new TelegramMessage(
+                'Mening vazifalarim',
+                "Sizga biriktirilgan faol murojaat yo'q.",
+                route('executor.tickets.index'),
+                $this->menuButtons($user),
+            ));
+
+            return;
+        }
 
         $this->bot->sendMessage($chatId, new TelegramMessage(
             'Mening vazifalarim',
-            $body,
+            $tickets->map(fn (Ticket $ticket): string => $this->ticketLine($ticket))->implode("\n\n"),
             route('executor.tickets.index'),
-            $this->menuButtons($user),
+            $this->executorTicketActionButtons($tickets, $user),
         ));
     }
 
@@ -829,7 +857,202 @@ class TelegramUpdateHandler
             'Murojaat qabul qilindi',
             $this->ticketSummary($updated),
             route('executor.tickets.show', $updated),
+            $this->executorTicketActionButtons(collect([$updated]), $user),
+        ));
+    }
+
+    protected function askExecutorComplete(string $chatId, ?User $user, int $ticketId): void
+    {
+        $ticket = $this->executorTicketForAction($chatId, $user, $ticketId);
+
+        if (! $ticket) {
+            return;
+        }
+
+        if (! $ticket->canExecutorCompleteBy($user)) {
+            $this->bot->sendMessage($chatId, new TelegramMessage(
+                'Bajarib bo\'lmaydi',
+                "Bu murojaatni hozir bajarildi deb yuborib bo'lmaydi. Avval uni qabul qiling.",
+                null,
+                $this->executorTicketActionButtons(collect([$ticket]), $user),
+            ));
+
+            return;
+        }
+
+        Cache::put($this->stateKey($chatId), [
+            'mode' => 'executor:complete:note',
+            'ticket_id' => $ticket->id,
+        ], now()->addMinutes(20));
+
+        $this->bot->sendMessage($chatId, new TelegramMessage(
+            'Bajarish izohi',
+            "{$ticket->reference} bo'yicha bajarilgan ishni qisqa yozing. Bekor qilish uchun /cancel yuboring.",
+        ));
+    }
+
+    protected function completeExecutorTicketFromText(string $chatId, string $text, ?User $user, array $state): void
+    {
+        $ticket = $this->executorTicketForAction($chatId, $user, (int) ($state['ticket_id'] ?? 0));
+
+        if (! $ticket) {
+            Cache::forget($this->stateKey($chatId));
+
+            return;
+        }
+
+        if (mb_strlen($text) < 3) {
+            $this->bot->sendMessage($chatId, new TelegramMessage(
+                'Izoh qisqa',
+                "Bajarilgan ish bo'yicha kamida 3 belgi yozing. Bekor qilish uchun /cancel yuboring.",
+            ));
+
+            return;
+        }
+
+        try {
+            $updated = $this->ticketService->complete($ticket, $user, [], $text);
+        } catch (\Throwable $exception) {
+            Cache::forget($this->stateKey($chatId));
+            $this->bot->sendMessage($chatId, new TelegramMessage(
+                'Bajarilmadi',
+                $exception->getMessage(),
+                null,
+                $this->menuButtons($user),
+            ));
+
+            return;
+        }
+
+        Cache::forget($this->stateKey($chatId));
+
+        $this->bot->sendMessage($chatId, new TelegramMessage(
+            'Murojaat bajarildi',
+            $this->ticketSummary($updated),
+            route('executor.tickets.show', $updated),
             $this->menuButtons($user),
+        ));
+    }
+
+    protected function askExecutorReturn(string $chatId, ?User $user, int $ticketId): void
+    {
+        $ticket = $this->executorTicketForAction($chatId, $user, $ticketId);
+
+        if (! $ticket) {
+            return;
+        }
+
+        if ($ticket->assigned_executor_id !== $user?->id || ! in_array($ticket->status, [TicketStatus::Assigned, TicketStatus::InProgress], true)) {
+            $this->bot->sendMessage($chatId, new TelegramMessage(
+                'Qaytarib bo\'lmaydi',
+                "Bu murojaat bo'yicha qaytarish so'rovi yuborib bo'lmaydi.",
+                null,
+                $this->executorTicketActionButtons(collect([$ticket]), $user),
+            ));
+
+            return;
+        }
+
+        Cache::put($this->stateKey($chatId), [
+            'mode' => 'executor:return:reason',
+            'ticket_id' => $ticket->id,
+        ], now()->addMinutes(20));
+
+        $this->bot->sendMessage($chatId, new TelegramMessage(
+            'Qaytarish sababi',
+            "{$ticket->reference} bo'yicha adminga qaytarish sababini yozing. Bekor qilish uchun /cancel yuboring.",
+        ));
+    }
+
+    protected function returnExecutorTicketFromText(string $chatId, string $text, ?User $user, array $state): void
+    {
+        $ticket = $this->executorTicketForAction($chatId, $user, (int) ($state['ticket_id'] ?? 0));
+
+        if (! $ticket) {
+            Cache::forget($this->stateKey($chatId));
+
+            return;
+        }
+
+        if (mb_strlen($text) < 5) {
+            $this->bot->sendMessage($chatId, new TelegramMessage(
+                'Sabab qisqa',
+                "Qaytarish sababini kamida 5 belgida yozing. Bekor qilish uchun /cancel yuboring.",
+            ));
+
+            return;
+        }
+
+        try {
+            $updated = $this->ticketService->requestReturn($ticket, $user, $text);
+        } catch (\Throwable $exception) {
+            Cache::forget($this->stateKey($chatId));
+            $this->bot->sendMessage($chatId, new TelegramMessage(
+                "So'rov yuborilmadi",
+                $exception->getMessage(),
+                null,
+                $this->menuButtons($user),
+            ));
+
+            return;
+        }
+
+        Cache::forget($this->stateKey($chatId));
+
+        $this->bot->sendMessage($chatId, new TelegramMessage(
+            "Qaytarish so'rovi yuborildi",
+            $this->ticketSummary($updated),
+            route('executor.tickets.show', $updated),
+            $this->menuButtons($user),
+        ));
+    }
+
+    protected function askExecutorComment(string $chatId, ?User $user, int $ticketId): void
+    {
+        $ticket = $this->executorTicketForAction($chatId, $user, $ticketId);
+
+        if (! $ticket) {
+            return;
+        }
+
+        Cache::put($this->stateKey($chatId), [
+            'mode' => 'executor:comment:body',
+            'ticket_id' => $ticket->id,
+        ], now()->addMinutes(20));
+
+        $this->bot->sendMessage($chatId, new TelegramMessage(
+            'Izoh yozing',
+            "{$ticket->reference} uchun izoh matnini yuboring. Izoh murojaatchiga ko'rinadi. Bekor qilish uchun /cancel yuboring.",
+        ));
+    }
+
+    protected function commentExecutorTicketFromText(string $chatId, string $text, ?User $user, array $state): void
+    {
+        $ticket = $this->executorTicketForAction($chatId, $user, (int) ($state['ticket_id'] ?? 0));
+
+        if (! $ticket) {
+            Cache::forget($this->stateKey($chatId));
+
+            return;
+        }
+
+        if (mb_strlen($text) < 3) {
+            $this->bot->sendMessage($chatId, new TelegramMessage(
+                'Izoh qisqa',
+                "Izohni kamida 3 belgida yozing. Bekor qilish uchun /cancel yuboring.",
+            ));
+
+            return;
+        }
+
+        $this->ticketService->addComment($ticket, $user, $text, true);
+        Cache::forget($this->stateKey($chatId));
+
+        $this->bot->sendMessage($chatId, new TelegramMessage(
+            "Izoh qo'shildi",
+            $this->ticketSummary($ticket->fresh()),
+            route('executor.tickets.show', $ticket),
+            $this->executorTicketActionButtons(collect([$ticket->fresh()]), $user),
         ));
     }
 
@@ -863,6 +1086,68 @@ class TelegramUpdateHandler
                 ...$this->menuButtons($user),
             ],
         ));
+    }
+
+    protected function executorTicketForAction(string $chatId, ?User $user, int $ticketId): ?Ticket
+    {
+        if (! $user?->hasSystemRole(UserRole::Executor)) {
+            $this->sendMenu($chatId, $user);
+
+            return null;
+        }
+
+        $ticket = Ticket::query()->find($ticketId);
+
+        if (! $ticket || ! $ticket->canExecutorAccess($user)) {
+            $this->bot->sendMessage($chatId, new TelegramMessage(
+                'Murojaat topilmadi',
+                'Bu murojaat topilmadi yoki siz uchun ochiq emas.',
+                null,
+                $this->menuButtons($user),
+            ));
+
+            return null;
+        }
+
+        return $ticket;
+    }
+
+    protected function executorTicketActionButtons(iterable $tickets, User $user): array
+    {
+        $buttons = [];
+
+        foreach ($tickets as $ticket) {
+            if (! $ticket instanceof Ticket) {
+                continue;
+            }
+
+            $row = [];
+
+            if ($ticket->canExecutorClaimBy($user)) {
+                $row[] = ['text' => "{$ticket->executorClaimLabel()}: {$ticket->reference}", 'callback_data' => 'executor:claim:'.$ticket->id];
+            }
+
+            if ($ticket->canExecutorCompleteBy($user)) {
+                $row[] = ['text' => "Bajarish: {$ticket->reference}", 'callback_data' => 'executor:complete:'.$ticket->id];
+            }
+
+            if (
+                $ticket->assigned_executor_id === $user->id
+                && in_array($ticket->status, [TicketStatus::Assigned, TicketStatus::InProgress], true)
+            ) {
+                $row[] = ['text' => "Qaytarish: {$ticket->reference}", 'callback_data' => 'executor:return:'.$ticket->id];
+            }
+
+            if ($ticket->assigned_executor_id === $user->id) {
+                $row[] = ['text' => "Izoh: {$ticket->reference}", 'callback_data' => 'executor:comment:'.$ticket->id];
+            }
+
+            foreach (array_chunk($row, 2) as $chunk) {
+                $buttons[] = $chunk;
+            }
+        }
+
+        return $buttons !== [] ? $buttons : $this->menuButtons($user);
     }
 
     protected function sendAdminSummary(string $chatId, ?User $user): void

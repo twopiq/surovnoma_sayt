@@ -153,10 +153,25 @@ Qoidalar:
 - Frontend yoki Blade asset o'zgarsa `npm run build` ishlatilsin.
 - Access control o'zgarsa `tests/Feature/RoleAccessTest.php` va tegishli flow testlar ko'rib chiqilsin.
 - Ticket lifecycle o'zgarsa `ReturnRequestFlowTest`, `ApprovalFlowTest`, `NotificationAndAttachmentTest` kabi testlarni ishga tushirishni ko'rib chiq.
+- Telegram bot action testlari `TelegramBotActionTest.php` da yozilsin. Mocking tartibi: `TelegramSdkBot` `Mockery::mock` bilan almashtirilsin, `services.telegram_bot.webhook_secret` `null` qilinsin, bot action ikkita `postJson` (callback + text) bilan simulyatsiya qilinsin.
 
 ---
 
-## 9. Kod yozish qoidalari
+## 9. Telegram bot qoidalari
+
+Bu loyihada Telegram bot faqat bildirishnoma yoki ma'lumot ko'rish kanali emas; u saytning amaliy ish oqimlari uchun ikkinchi interfeys hisoblanadi.
+
+- Saytga yangi feature, status, action yoki rolga tegishli workflow qo'shilsa, shu imkoniyat Telegram botda ham kerak-kerak emasligi albatta tekshirilsin.
+- Ticket lifecycle o'zgarishlari botda ham aks etsin: yaratish, ko'rish, qabul qilish, izoh qoldirish, qaytarish, bajarish, admin/manager xulosalari.
+- Botda bajarilgan actionlar sayt bilan bir xil service/domain logikadan foydalansin; controllerdagi validatsiyani nusxalamasdan, umumiy service ishlatilsin.
+- Bot actionlari role-based access bilan himoyalansin: requester faqat o'z murojaatlari, executor o'ziga ochiq vazifalar, admin/manager o'z rollari doirasida ishlasin.
+- Bot callback va state nomlari aniq namespace bilan yozilsin (`executor:*`, `admin:*`, `guest:*`, `requester:*`) va eski callbacklar bilan to'qnashmasin.
+- Yangi bot imkoniyati qo'shilsa, `telegram:status`, webhook sozlamalari, cache/config va kamida bitta tegishli test ko'rib chiqilsin.
+- Webhook productionga chiqqandan keyin `php artisan telegram:status` bilan URL, pending updates va oxirgi xato tekshirilsin.
+
+---
+
+## 10. Kod yozish qoidalari
 
 - Avval mavjud fayl va patternlarni o'qi; taxmin bilan kod yozma.
 - Ortiqcha abstraksiya, ishlatilmaydigan helper yoki "kelajak uchun" parametr qo'shma.
@@ -167,7 +182,7 @@ Qoidalar:
 
 ---
 
-## 10. Javob berish tartibi
+## 11. Javob berish tartibi
 
 Ish oxirida qisqa hisobot ber:
 
@@ -177,3 +192,19 @@ Ish oxirida qisqa hisobot ber:
 - Agar test/build ishlatilmagan bo'lsa, sababini ayt.
 
 Eski LMS/HEMIS/Nuxt yoki ikki serverli production qoidalarini bu loyihaga tatbiq qilma, agar foydalanuvchi buni alohida so'ramasa.
+
+---
+
+## 12. Xato sahifalari va exception handling
+
+Loyihada xato holatlari uchun alohida Blade view tizimi mavjud.
+
+- Mavjud xato viewlari `resources/views/errors/` ichida: `403`, `404`, `419`, `429`, `500`, `503`, `post-too-large`, `assets-missing`.
+- Yangi exception type uchun maxsus view kerak bo'lsa, quyidagi to'rt qadam bir vaqtda bajarilsin:
+  1. `resources/views/errors/` ichiga view yaratilsin.
+  2. `bootstrap/app.php` → `withExceptions()` ichida handler ro'yxatga olinsin.
+  3. `routes/web.php` → `/_errors/...` pattern bo'yicha preview route qo'shilsin.
+  4. `tests/Feature/ErrorPagesTest.php` ga shu preview route uchun test qo'shilsin.
+- `ViteManifestNotFoundException` → `errors.assets-missing`: frontend build topilmaganda ko'rsatiladi; `npm run build` + `php artisan optimize:clear` bilan tuzatiladi.
+- Xato viewlari `@extends` yoki mavjud layout ishlatmasdan standalone HTML yozishi mumkin — chunki layout o'zi Vite assetlarga tayangan, assetlar yo'q bo'lganda layout ham ishlamas edi.
+- `/_errors/{code}` debug routelari faqat lokal tekshiruv uchun; haqiqiy xatoni trigger qilmasdan viewni ko'rish imkonini beradi.

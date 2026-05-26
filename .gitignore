@@ -5,8 +5,6 @@
 /storage/*.key
 /storage/pail
 /vendor
-vendor.zip
-vendor.rar
 UI templates/
 .env
 .env.backup
