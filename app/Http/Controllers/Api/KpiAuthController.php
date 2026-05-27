@@ -49,7 +49,7 @@ class KpiAuthController extends Controller
 
         if (! $this->canUseKpi($user)) {
             return response()->json([
-                'message' => 'KPI tizimiga faqat admin foydalanuvchi kira oladi.',
+                'message' => 'KPI tizimiga faqat admin va rahbar foydalanuvchilar kira oladi.',
             ], 403);
         }
 
@@ -115,7 +115,7 @@ class KpiAuthController extends Controller
     private function canUseKpi(User $user): bool
     {
         return $user->isApproved()
-            && $user->hasRole(UserRole::Admin->value);
+            && $user->hasAnyRole([UserRole::Admin->value, UserRole::Manager->value]);
     }
 
     private function tokenFromRequest(Request $request): ?string
@@ -131,7 +131,7 @@ class KpiAuthController extends Controller
             'id' => (string) $user->id,
             'name' => $user->name,
             'login' => $user->login ?: $user->email,
-            'role' => UserRole::Admin->value,
+            'role' => $user->hasRole(UserRole::Admin->value) ? UserRole::Admin->value : UserRole::Manager->value,
             'source' => 'survey-api',
         ];
     }

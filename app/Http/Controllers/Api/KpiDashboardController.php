@@ -242,7 +242,8 @@ class KpiDashboardController extends Controller
 
         $user = User::query()->find($payload['user_id'] ?? null);
 
-        return $user && $user->isApproved() && $user->hasRole(UserRole::Admin->value)
+        return $user && $user->isApproved()
+            && $user->hasAnyRole([UserRole::Admin->value, UserRole::Manager->value])
             ? $user
             : null;
     }

@@ -1,13 +1,8 @@
 <x-app-layout>
     <x-slot name="header">
-        <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-            <div>
-                <h2 class="font-['Space_Grotesk'] text-2xl font-bold">Foydalanuvchi profili</h2>
-                <p class="mt-1 text-sm text-slate-500">Foydalanuvchi ma'lumotlari va tizimdagi holati.</p>
-            </div>
-            <a href="{{ url()->previous() !== url()->current() ? url()->previous() : route('admin.users.list') }}" class="inline-flex items-center justify-center rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
-                Ortga qaytish
-            </a>
+        <div>
+            <h2 class="font-['Space_Grotesk'] text-2xl font-bold">Foydalanuvchi profili</h2>
+            <p class="mt-1 text-sm text-slate-500">Foydalanuvchi ma'lumotlari va tizimdagi holati.</p>
         </div>
     </x-slot>
 
@@ -202,6 +197,9 @@
                             </div>
 
                             <div class="flex flex-wrap items-center gap-3 border-t border-slate-200 pt-4">
+                                <a href="{{ route('admin.users.list') }}" class="inline-flex rounded-md border border-slate-300 px-5 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
+                                    Ortga qaytish
+                                </a>
                                 <button class="inline-flex rounded-md bg-emerald-600 px-5 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700">
                                     Saqlash
                                 </button>
