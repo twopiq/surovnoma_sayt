@@ -195,7 +195,7 @@
     @else
         <x-slot name="header">
             <div>
-                <h2 class="font-['Space_Grotesk'] text-2xl font-bold">Home</h2>
+                <h2 class="font-['Space_Grotesk'] text-2xl font-bold">Bosh sahifa</h2>
                 <p class="mt-1 text-sm text-slate-500">Sizning ish maydoningizga mos asosiy yo'nalishlar.</p>
             </div>
         </x-slot>

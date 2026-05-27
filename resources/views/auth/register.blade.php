@@ -46,12 +46,12 @@
         <div class="grid gap-4 sm:grid-cols-2">
             <div>
                 <x-input-label for="password" value="Parol" />
-                <x-text-input id="password" class="mt-1 block w-full" type="password" name="password" required />
+                <x-password-input id="password" name="password" class="mt-1 block w-full" required />
                 <x-input-error :messages="$errors->get('password')" class="mt-2" />
             </div>
             <div>
                 <x-input-label for="password_confirmation" value="Parolni tasdiqlash" />
-                <x-text-input id="password_confirmation" class="mt-1 block w-full" type="password" name="password_confirmation" required />
+                <x-password-input id="password_confirmation" name="password_confirmation" class="mt-1 block w-full" required />
                 <x-input-error :messages="$errors->get('password_confirmation')" class="mt-2" />
             </div>
         </div>

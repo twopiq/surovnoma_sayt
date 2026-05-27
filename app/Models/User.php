@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\AvailabilityStatus;
 use App\Enums\TicketStatus;
 use App\Enums\UserRole;
+use App\Notifications\ResetPasswordNotification;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -159,6 +160,11 @@ class User extends Authenticatable
             'overload_units' => max(0, $usedUnits - self::EXECUTOR_MAX_WORKLOAD_UNITS),
             'counts' => $tickets->countBy(fn (Ticket $ticket) => $ticket->priority->value)->all(),
         ];
+    }
+
+    public function sendPasswordResetNotification($token): void
+    {
+        $this->notify(new ResetPasswordNotification($token));
     }
 
     public function routeNotificationForTelegram(mixed $notification = null): ?string

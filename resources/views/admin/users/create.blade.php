@@ -66,13 +66,13 @@
                 <div class="grid gap-5 sm:grid-cols-2">
                     <div>
                         <x-input-label for="password" value="Parol" />
-                        <x-text-input id="password" name="password" type="password" class="mt-1 block w-full" required autocomplete="new-password" />
+                        <x-password-input id="password" name="password" class="mt-1 block w-full" required autocomplete="new-password" />
                         <x-input-error :messages="$errors->get('password')" class="mt-2" />
                     </div>
 
                     <div>
                         <x-input-label for="password_confirmation" value="Parolni tasdiqlash" />
-                        <x-text-input id="password_confirmation" name="password_confirmation" type="password" class="mt-1 block w-full" required autocomplete="new-password" />
+                        <x-password-input id="password_confirmation" name="password_confirmation" class="mt-1 block w-full" required autocomplete="new-password" />
                     </div>
                 </div>
 

@@ -8,10 +8,12 @@
             \App\Enums\UserRole::Operator->value,
             \App\Enums\UserRole::Executor->value,
         ]) ?? false);
-    $homeHref = $isRequesterOnly ? route('tickets.index') : route('app.home');
+    $homeHref = $isRequesterOnly
+        ? route('tickets.index')
+        : ($user?->canAccessAppDashboard() ? route('app.dashboard') : route('app.home'));
 
     $sidebarItems = [
-        ...(! $isRequesterOnly ? [[
+        ...(! $isRequesterOnly && ! $user?->canAccessAppDashboard() ? [[
             'label' => 'Home',
             'href' => route('app.home'),
             'active' => request()->routeIs('app.home'),
@@ -36,10 +38,10 @@
             'icon' => 'users',
         ]] : []),
         ...($user?->canAccessAppDashboard() ? [[
-            'label' => 'Dashboard',
+            'label' => 'Home',
             'href' => route('app.dashboard'),
             'active' => request()->routeIs('app.dashboard'),
-            'icon' => 'dashboard',
+            'icon' => 'home',
         ]] : []),
         [
             'label' => 'Bildirishnomalar',

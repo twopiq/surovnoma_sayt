@@ -1,6 +1,6 @@
 <x-guest-layout>
     <div class="mb-4 text-sm text-gray-600">
-        {{ __('Forgot your password? No problem. Just let us know your email address and we will email you a password reset link that will allow you to choose a new one.') }}
+        Parolingizni unutdingizmi? Email manzilingizni kiriting, biz sizga yangi parol o'rnatish havolasini yuboramiz.
     </div>
 
     <!-- Session Status -->
@@ -22,7 +22,7 @@
             </a>
 
             <x-primary-button>
-                {{ __('Email Password Reset Link') }}
+                Havolani yuborish
             </x-primary-button>
         </div>
     </form>
