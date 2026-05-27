@@ -3,7 +3,7 @@
         <h2 class="font-['Space_Grotesk'] text-2xl font-bold">Xodimlar bo'limlari</h2>
     </x-slot>
 
-    <div class="mx-auto max-w-7xl space-y-6 px-4 pt-8 sm:px-6 lg:px-8">
+    <div class="mx-auto max-w-none space-y-6 px-4 pt-8 sm:px-6 lg:px-8">
         <form method="POST" action="{{ route('admin.departments.store') }}" class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             @csrf
             <h3 class="font-semibold">Yangi xodim bo'limi</h3>
@@ -13,7 +13,7 @@
                 <input name="code" placeholder="Kodi" class="rounded-md border-slate-300 shadow-sm" />
                 <input name="description" placeholder="Tavsif" class="rounded-md border-slate-300 shadow-sm" />
             </div>
-            <button class="mt-4 rounded-full bg-cyan-700 px-4 py-2 text-sm font-semibold text-white">Qo‘shish</button>
+            <button class="mt-4 rounded-md bg-cyan-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-cyan-800">Qo’shish</button>
         </form>
 
         <div class="space-y-4">
@@ -30,7 +30,7 @@
                             Faol
                         </label>
                     </div>
-                    <button class="mt-4 rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white">Yangilash</button>
+                    <button class="mt-4 rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700">Yangilash</button>
                 </form>
             @endforeach
         </div>

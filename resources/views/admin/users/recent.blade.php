@@ -2,7 +2,7 @@
     <x-slot name="header">
         <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div>
-                <h2 class="font-['Space_Grotesk'] text-2xl font-bold">Recent registrations</h2>
+                <h2 class="font-['Space_Grotesk'] text-2xl font-bold">So'nggi ro'yxatdan o'tganlar</h2>
                 <p class="mt-1 text-sm text-slate-500">Oxirgi ro'yxatdan o'tgan foydalanuvchilar va tasdiqlanish vaqtlari.</p>
             </div>
         </div>
@@ -40,10 +40,10 @@
                         @forelse ($users as $user)
                             @php
                                 $status = $user->approved_at && $user->is_active
-                                    ? ['label' => 'Active', 'class' => 'bg-emerald-100 text-emerald-700']
+                                    ? ['label' => 'Faol', 'class' => 'bg-emerald-100 text-emerald-700']
                                     : (! $user->is_active
-                                        ? ['label' => 'Inactive', 'class' => 'bg-slate-200 text-slate-600']
-                                        : ['label' => 'Pending', 'class' => 'bg-yellow-100 text-yellow-700']);
+                                        ? ['label' => 'Nofaol', 'class' => 'bg-slate-200 text-slate-600']
+                                        : ['label' => 'Kutilmoqda', 'class' => 'bg-yellow-100 text-yellow-700']);
                             @endphp
                             <tr class="odd:bg-slate-50/60">
                                 <td class="px-4 py-3 text-slate-500">{{ $users->firstItem() + $loop->index }}</td>
@@ -82,7 +82,7 @@
 
             <div class="flex flex-col gap-3 border-t border-slate-200 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
                 <div class="text-sm font-medium text-slate-600">
-                    {{ $users->firstItem() ?? 0 }} - {{ $users->lastItem() ?? 0 }} / {{ $users->total() }} users
+                    {{ $users->firstItem() ?? 0 }} - {{ $users->lastItem() ?? 0 }} / {{ $users->total() }} ta
                 </div>
                 <div class="max-w-full overflow-hidden">
                     {{ $users->onEachSide(1)->links() }}

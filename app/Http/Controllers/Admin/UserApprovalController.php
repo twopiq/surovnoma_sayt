@@ -19,9 +19,11 @@ class UserApprovalController extends Controller
 {
     public function index(): View
     {
+        $pendingUsers = User::query()->with(['department', 'roles'])->whereNull('approved_at')->where('is_active', true)->latest()->get();
+
         return view('admin.users.index', [
-            'latestUsers' => User::query()->with(['department', 'roles'])->latest()->limit(8)->get(),
-            'pendingUsers' => User::query()->with(['department', 'roles'])->whereNull('approved_at')->where('is_active', true)->latest()->get(),
+            'pendingUsers' => $pendingUsers,
+            'pendingCount' => $pendingUsers->count(),
             'rejectedUsers' => User::query()->with(['department', 'roles'])->whereNull('approved_at')->where('is_active', false)->latest()->limit(20)->get(),
             'roles' => UserRole::cases(),
         ]);

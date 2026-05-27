@@ -5,7 +5,7 @@
             <h2 class="font-['Space_Grotesk'] text-2xl font-bold">Operator murojaati</h2>
         </div>
     </x-slot>
-    <div class="mx-auto max-w-5xl space-y-6 px-4 pt-8 sm:px-6 lg:px-8">
+    <div class="mx-auto max-w-none space-y-6 px-4 pt-8 sm:px-6 lg:px-8">
         @include('partials.ticket-card', ['ticket' => $ticket])
         <div class="rounded-2xl border border-slate-200 bg-white p-6">
             <h3 class="font-semibold">Fayllar</h3>

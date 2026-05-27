@@ -2,16 +2,18 @@
     <x-slot name="header">
         <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div>
-                <h2 class="font-['Space_Grotesk'] text-2xl font-bold">So'nggi ro'yxatdan o'tganlar</h2>
-                <p class="mt-1 text-sm text-slate-500">Yangi akkauntlar va tasdiq kutayotgan foydalanuvchilar.</p>
+                <h2 class="font-['Space_Grotesk'] text-2xl font-bold">Tasdiq kutayotganlar</h2>
+                <p class="mt-1 text-sm text-slate-500">Yangi ro'yxatdan o'tgan va tasdiqlash kutayotgan foydalanuvchilar.</p>
             </div>
-            <a href="{{ route('admin.users.list') }}" class="rounded-md px-4 py-2 text-sm font-semibold text-violet-700 transition hover:bg-violet-50">
-                Barchasini ko'rish &rsaquo;
+            <a href="{{ url()->previous() !== url()->current() ? url()->previous() : route('admin.users.list') }}" class="inline-flex items-center justify-center rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
+                Ortga qaytish
             </a>
         </div>
     </x-slot>
 
-    <div class="mx-auto max-w-none space-y-6 px-4 pt-8 sm:px-6 lg:px-8">
+    <div class="mx-auto max-w-none space-y-5 px-4 pt-8 sm:px-6 lg:px-8">
+        @include('admin.users.partials.top-menu')
+
         <section class="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
             <h3 class="font-semibold text-slate-900">Tasdiq kutayotganlar</h3>
             <div class="mt-4 space-y-4">
@@ -37,7 +39,7 @@
                                     <option value="{{ $role->value }}">{{ $role->label() }}</option>
                                 @endforeach
                             </select>
-                            <button class="rounded-md bg-cyan-700 px-4 py-2 text-sm font-semibold text-white">Tasdiqlash</button>
+                            <button class="rounded-md bg-cyan-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-cyan-800">Tasdiqlash</button>
                         </form>
 
                         <form method="POST" action="{{ route('admin.users.update', $user) }}">
@@ -52,72 +54,6 @@
                 @empty
                     <p class="text-sm text-slate-500">Kutilayotgan foydalanuvchi yo'q.</p>
                 @endforelse
-            </div>
-        </section>
-
-        <section class="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-            <div class="flex items-center justify-between border-b border-slate-200 px-5 py-4">
-                <h3 class="font-['Space_Grotesk'] text-lg font-bold text-slate-900">Recent Registered Client</h3>
-                <a href="{{ route('admin.users.list') }}" class="text-sm font-semibold text-violet-700">View All &rsaquo;</a>
-            </div>
-
-            <div class="app-table-wrap">
-                <table class="app-data-table app-data-table--fit">
-                    <thead>
-                        <tr>
-                            <th class="px-3 py-3">SL.</th>
-                            <th class="px-3 py-3">Ro'yxatdan o'tgan</th>
-                            <th class="px-3 py-3">Tasdiqlangan</th>
-                            <th class="px-3 py-3">F.I.Sh.</th>
-                            <th class="px-3 py-3">Login</th>
-                            <th class="px-3 py-3">Email</th>
-                            <th class="px-3 py-3">Telefon</th>
-                            <th class="px-3 py-3">Lavozim</th>
-                            <th class="px-3 py-3">Bo'lim</th>
-                            <th class="px-3 py-3">Rol</th>
-                            <th class="px-3 py-3">Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse ($latestUsers as $user)
-                            <tr>
-                                <td class="px-3 py-3 text-slate-600">{{ $loop->iteration }}</td>
-                                <td class="whitespace-nowrap px-3 py-3 text-slate-600">{{ $user->created_at?->format('d.m.Y H:i') }}</td>
-                                <td class="whitespace-nowrap px-3 py-3 text-slate-600">{{ $user->approved_at?->format('d.m.Y H:i') ?? '-' }}</td>
-                                <td class="px-3 py-3">
-                                    <a href="{{ route('admin.users.profile', ['user' => $user]) }}" class="flex items-center gap-3">
-                                        <span class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-sm font-bold text-emerald-700">
-                                            {{ mb_substr($user->name, 0, 1) }}
-                                        </span>
-                                        <span class="min-w-0">
-                                            <span class="block font-semibold text-slate-900">{{ $user->name }}</span>
-                                            <span class="block text-xs text-slate-500">{{ $user->created_at?->diffForHumans() }}</span>
-                                        </span>
-                                    </a>
-                                </td>
-                                <td class="px-3 py-3 text-slate-600">{{ $user->login }}</td>
-                                <td class="px-3 py-3 text-slate-600">{{ $user->email }}</td>
-                                <td class="px-3 py-3 text-slate-600">{{ $user->phone ?? '-' }}</td>
-                                <td class="px-3 py-3 text-slate-600">{{ $user->job_title ?: '-' }}</td>
-                                <td class="px-3 py-3 text-slate-600">{{ $user->department?->name ?? '-' }}</td>
-                                <td class="px-3 py-3 text-slate-600">{{ $user->display_role }}</td>
-                                <td class="px-3 py-3">
-                                    @if ($user->approved_at && $user->is_active)
-                                        <span class="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">Active</span>
-                                    @elseif (! $user->is_active)
-                                        <span class="rounded-full bg-rose-100 px-3 py-1 text-xs font-semibold text-rose-700">Inactive</span>
-                                    @else
-                                        <span class="rounded-full bg-yellow-100 px-3 py-1 text-xs font-semibold text-yellow-700">Pending</span>
-                                    @endif
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="11" class="px-5 py-8 text-center text-slate-500">Hozircha foydalanuvchi yo'q.</td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
             </div>
         </section>
 

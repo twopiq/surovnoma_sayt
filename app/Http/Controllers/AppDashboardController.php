@@ -25,12 +25,21 @@ class AppDashboardController extends Controller
         $year = $this->validYear($request->query('year'), $years);
         $trend = $this->validTrend($request->query('trend'));
 
-        $summaryQuery = $this->ticketsQuery($viewer);
+        $summaryQuery = $this->filteredTicketsQuery($viewer, $agentId, $year);
         $resolvedQuery = (clone $summaryQuery)
             ->whereNotNull('completed_at')
             ->whereIn('status', [TicketStatus::Completed->value, TicketStatus::Closed->value]);
 
         $totalTickets = (clone $summaryQuery)->count();
+        $openTickets = (clone $summaryQuery)
+            ->whereIn('status', [
+                TicketStatus::New->value,
+                TicketStatus::Assigned->value,
+                TicketStatus::InProgress->value,
+                TicketStatus::Returned->value,
+                TicketStatus::Overdue->value,
+            ])
+            ->count();
         $resolvedTickets = (clone $resolvedQuery)->count();
         $urgentResolved = (clone $resolvedQuery)
             ->whereIn('priority', [TicketPriority::Urgent->value, TicketPriority::High->value])
@@ -69,8 +78,8 @@ class AppDashboardController extends Controller
             ],
             'dashboardStats' => [
                 'total_tickets' => $totalTickets,
+                'open_tickets' => $openTickets,
                 'avg_resolution_hours' => $avgResolutionHours,
-                'customer_satisfaction' => null,
                 'urgent_resolved' => $urgentResolved,
                 'same_day_resolved' => $sameDayResolved,
                 'resolved_total' => $resolvedTickets,

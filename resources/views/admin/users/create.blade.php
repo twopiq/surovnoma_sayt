@@ -2,16 +2,16 @@
     <x-slot name="header">
         <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div>
-                <h2 class="font-['Space_Grotesk'] text-2xl font-bold">Add user</h2>
+                <h2 class="font-['Space_Grotesk'] text-2xl font-bold">Foydalanuvchi qo'shish</h2>
                 <p class="mt-1 text-sm text-slate-500">Admin tomonidan yangi tasdiqlangan foydalanuvchi yaratish.</p>
             </div>
             <a href="{{ route('admin.users.list') }}" class="rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
-                User management
+                Foydalanuvchilar boshqaruvi
             </a>
         </div>
     </x-slot>
 
-    <div class="mx-auto max-w-7xl space-y-5 px-4 pt-8 sm:px-6 lg:px-8">
+    <div class="mx-auto max-w-none space-y-5 px-4 pt-8 sm:px-6 lg:px-8">
         @include('admin.users.partials.top-menu')
 
         <section class="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
@@ -36,7 +36,7 @@
 
                 <div class="grid gap-5 sm:grid-cols-2">
                     <div>
-                        <x-input-label for="role" value="Role" />
+                        <x-input-label for="role" value="Rol" />
                         <select id="role" name="role" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm" required>
                             @foreach ($roles as $role)
                                 <option value="{{ $role->value }}" @selected(old('role') === $role->value)>{{ $role->label() }}</option>

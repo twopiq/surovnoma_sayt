@@ -8,7 +8,7 @@
         </div>
     </x-slot>
 
-    <div class="mx-auto max-w-7xl space-y-6 px-4 pt-8 sm:px-6 lg:px-8">
+    <div class="mx-auto max-w-none space-y-6 px-4 pt-8 sm:px-6 lg:px-8">
         @include('admin.dispatch.partials.top-menu')
 
         <livewire:admin.dispatch-board />

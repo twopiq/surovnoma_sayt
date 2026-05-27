@@ -6,7 +6,7 @@
         </div>
     </x-slot>
 
-    <div class="mx-auto grid max-w-7xl gap-6 px-4 pt-8 lg:grid-cols-[1.3fr_0.9fr] sm:px-6 lg:px-8">
+    <div class="mx-auto grid max-w-none gap-6 px-4 pt-8 lg:grid-cols-[1.3fr_0.9fr] sm:px-6 lg:px-8">
         <div class="space-y-6">
             @include('partials.ticket-card', ['ticket' => $ticket])
             <div class="rounded-2xl border border-slate-200 bg-white p-6">

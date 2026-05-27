@@ -13,7 +13,7 @@
             </div>
         </x-slot>
 
-        <div class="mx-auto max-w-7xl space-y-6 px-4 pt-8 sm:px-6 lg:px-8">
+        <div class="mx-auto max-w-none space-y-6 px-4 pt-8 sm:px-6 lg:px-8">
             <livewire:admin.dispatch-board />
         </div>
     @elseif ($user->hasRole(\App\Enums\UserRole::Executor->value))
@@ -200,7 +200,7 @@
             </div>
         </x-slot>
 
-        <div class="mx-auto max-w-4xl px-4 pt-8 sm:px-6 lg:px-8">
+        <div class="mx-auto max-w-none px-4 pt-8 sm:px-6 lg:px-8">
             <div class="rounded-lg border border-slate-200 bg-white p-8 text-center shadow-sm">
                 <h3 class="font-['Space_Grotesk'] text-xl font-bold text-slate-900">Sahifa tayyorlanmoqda</h3>
                 <p class="mt-3 text-sm leading-6 text-slate-500">

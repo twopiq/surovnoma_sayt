@@ -4,7 +4,6 @@ use App\Support\TicketFileUpload;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
-use Illuminate\Foundation\ViteManifestNotFoundException;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Http\Exceptions\PostTooLargeException;
 use Illuminate\Http\Request;
@@ -41,12 +40,6 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        $exceptions->render(function (ViteManifestNotFoundException $exception, Request $request) {
-            return response()->view('errors.assets-missing', [
-                'manifestPath' => public_path('build/manifest.json'),
-            ], 500);
-        });
-
         $exceptions->render(function (PostTooLargeException $exception, Request $request) {
             return response()->view('errors.post-too-large', [
                 'maxSize' => TicketFileUpload::maxTotalSizeLabel(),

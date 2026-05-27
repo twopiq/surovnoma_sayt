@@ -15,13 +15,4 @@ class ErrorPagesTest extends TestCase
                 ->assertSee('RTT');
         }
     }
-
-    public function test_assets_missing_error_page_can_be_rendered_without_vite(): void
-    {
-        $this->get(route('errors.assets'))
-            ->assertStatus(500)
-            ->assertSee('Build assetlar topilmadi')
-            ->assertSee('public/build/manifest.json')
-            ->assertSee('RTT');
-    }
 }

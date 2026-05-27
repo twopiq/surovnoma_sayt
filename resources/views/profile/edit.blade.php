@@ -22,7 +22,7 @@
         ];
     @endphp
 
-    <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+    <div class="mx-auto max-w-none px-4 py-8 sm:px-6 lg:px-8">
         <div class="mb-6">
             <p class="text-sm font-semibold uppercase tracking-wide text-cyan-700">Profil</p>
             <h1 class="mt-2 font-['Space_Grotesk'] text-3xl font-bold text-slate-950">Mening ma'lumotlarim</h1>

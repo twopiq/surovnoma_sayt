@@ -2,7 +2,7 @@
     <x-slot name="header">
         <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div>
-                <h2 class="font-['Space_Grotesk'] text-2xl font-bold">User Profile</h2>
+                <h2 class="font-['Space_Grotesk'] text-2xl font-bold">Foydalanuvchi profili</h2>
                 <p class="mt-1 text-sm text-slate-500">Foydalanuvchi ma'lumotlari va tizimdagi holati.</p>
             </div>
             <a href="{{ url()->previous() !== url()->current() ? url()->previous() : route('admin.users.list') }}" class="inline-flex items-center justify-center rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
@@ -11,7 +11,7 @@
         </div>
     </x-slot>
 
-    <div class="mx-auto max-w-7xl space-y-5 px-4 pt-8 sm:px-6 lg:px-8">
+    <div class="mx-auto max-w-none space-y-5 px-4 pt-8 sm:px-6 lg:px-8">
         <div class="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
             <section class="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
                 <div class="relative z-0 h-44 bg-[#123b2f]">
@@ -27,7 +27,7 @@
 
                     <div class="mt-6 overflow-hidden rounded-lg border border-slate-200">
                         <div class="grid grid-cols-[0.85fr_1.15fr] border-b border-slate-200 px-4 py-3 text-sm">
-                            <div class="text-slate-500">Full Name</div>
+                            <div class="text-slate-500">F.I.Sh.</div>
                             <div class="font-semibold text-slate-900">: {{ $selectedUser->name }}</div>
                         </div>
                         <div class="grid grid-cols-[0.85fr_1.15fr] border-b border-slate-200 px-4 py-3 text-sm">
@@ -35,22 +35,22 @@
                             <div class="font-semibold text-slate-900">: {{ $selectedUser->email }}</div>
                         </div>
                         <div class="grid grid-cols-[0.85fr_1.15fr] border-b border-slate-200 px-4 py-3 text-sm">
-                            <div class="text-slate-500">Phone Number</div>
+                            <div class="text-slate-500">Telefon raqami</div>
                             <div class="font-semibold text-slate-900">: {{ $selectedUser->phone ?? '-' }}</div>
                         </div>
                         <div class="grid grid-cols-[0.85fr_1.15fr] border-b border-slate-200 px-4 py-3 text-sm">
-                            <div class="text-slate-500">Registration Date</div>
+                            <div class="text-slate-500">Ro'yxatdan o'tgan sana</div>
                             <div class="font-semibold text-slate-900">: {{ $selectedUser->created_at?->format('d M, Y') }}</div>
                         </div>
                         <div class="grid grid-cols-[0.85fr_1.15fr] px-4 py-3 text-sm">
-                            <div class="text-slate-500">Status</div>
+                            <div class="text-slate-500">Holat</div>
                             <div>
                                 @if ($selectedUser->approved_at && $selectedUser->is_active)
-                                    <span class="admin-profile-status rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">Active</span>
+                                    <span class="admin-profile-status rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">Faol</span>
                                 @elseif (! $selectedUser->is_active)
-                                    <span class="admin-profile-status rounded-full bg-rose-100 px-3 py-1 text-xs font-semibold text-rose-700">Inactive</span>
+                                    <span class="admin-profile-status rounded-full bg-rose-100 px-3 py-1 text-xs font-semibold text-rose-700">Nofaol</span>
                                 @else
-                                    <span class="admin-profile-status rounded-full bg-yellow-100 px-3 py-1 text-xs font-semibold text-yellow-700">Pending</span>
+                                    <span class="admin-profile-status rounded-full bg-yellow-100 px-3 py-1 text-xs font-semibold text-yellow-700">Kutilmoqda</span>
                                 @endif
                             </div>
                         </div>
@@ -60,7 +60,7 @@
 
             <section class="rounded-lg border border-slate-200 bg-white shadow-sm">
                 <div class="border-b border-slate-200 px-5 py-4">
-                    <h3 class="font-['Space_Grotesk'] text-lg font-bold text-slate-900">User Profile</h3>
+                    <h3 class="font-['Space_Grotesk'] text-lg font-bold text-slate-900">Foydalanuvchi profili</h3>
                 </div>
 
                 <div class="p-5">
@@ -74,7 +74,7 @@
                     @if ($selectedUser->is(auth()->user()))
                         <div class="space-y-4">
                             <div class="grid gap-2 sm:grid-cols-[220px_1fr] sm:items-center">
-                                <label class="text-sm text-slate-600">Name</label>
+                                <label class="text-sm text-slate-600">Ism</label>
                                 <input value="{{ $selectedUser->name }}" class="rounded-md border-slate-300 shadow-sm" readonly>
                             </div>
                             <div class="grid gap-2 sm:grid-cols-[220px_1fr] sm:items-center">
@@ -86,19 +86,19 @@
                                 <input value="{{ $selectedUser->login }}" class="rounded-md border-slate-300 shadow-sm" readonly>
                             </div>
                             <div class="grid gap-2 sm:grid-cols-[220px_1fr] sm:items-center">
-                                <label class="text-sm text-slate-600">Phone</label>
+                                <label class="text-sm text-slate-600">Telefon</label>
                                 <input value="{{ $selectedUser->phone ?? '-' }}" class="rounded-md border-slate-300 shadow-sm" readonly>
                             </div>
                             <div class="grid gap-2 sm:grid-cols-[220px_1fr] sm:items-center">
-                                <label class="text-sm text-slate-600">Position</label>
+                                <label class="text-sm text-slate-600">Lavozim</label>
                                 <input value="{{ $selectedUser->job_title ?: $selectedUser->display_role }}" class="rounded-md border-slate-300 shadow-sm" readonly>
                             </div>
                             <div class="grid gap-2 sm:grid-cols-[220px_1fr] sm:items-center">
-                                <label class="text-sm text-slate-600">Department</label>
+                                <label class="text-sm text-slate-600">Bo'lim</label>
                                 <input value="{{ $selectedUser->department?->name ?? '-' }}" class="rounded-md border-slate-300 shadow-sm" readonly>
                             </div>
                             <div class="grid gap-2 sm:grid-cols-[220px_1fr] sm:items-center">
-                                <label class="text-sm text-slate-600">Role</label>
+                                <label class="text-sm text-slate-600">Rol</label>
                                 <input value="{{ $selectedUser->display_role }}" class="rounded-md border-slate-300 shadow-sm" readonly>
                             </div>
 
@@ -112,7 +112,7 @@
                             @method('PATCH')
 
                             <div class="grid gap-2 sm:grid-cols-[220px_1fr] sm:items-start">
-                                <label for="name" class="pt-2 text-sm text-slate-600">Name</label>
+                                <label for="name" class="pt-2 text-sm text-slate-600">Ism</label>
                                 <div>
                                     <input id="name" name="name" value="{{ old('name', $selectedUser->name) }}" class="w-full rounded-md border-slate-300 shadow-sm">
                                     <x-input-error :messages="$errors->get('name')" class="mt-2" />
@@ -133,7 +133,7 @@
                             </div>
 
                             <div class="grid gap-2 sm:grid-cols-[220px_1fr] sm:items-start">
-                                <label for="phone" class="pt-2 text-sm text-slate-600">Phone</label>
+                                <label for="phone" class="pt-2 text-sm text-slate-600">Telefon</label>
                                 <div>
                                     <input id="phone" name="phone" value="{{ old('phone', $selectedUser->phone) }}" placeholder="+998 90 000 00 00" class="w-full rounded-md border-slate-300 shadow-sm">
                                     <x-input-error :messages="$errors->get('phone')" class="mt-2" />
@@ -141,7 +141,7 @@
                             </div>
 
                             <div class="grid gap-2 sm:grid-cols-[220px_1fr] sm:items-start">
-                                <label for="job_title" class="pt-2 text-sm text-slate-600">Position</label>
+                                <label for="job_title" class="pt-2 text-sm text-slate-600">Lavozim</label>
                                 <div>
                                     <input id="job_title" name="job_title" value="{{ old('job_title', $selectedUser->job_title) }}" class="w-full rounded-md border-slate-300 shadow-sm">
                                     <x-input-error :messages="$errors->get('job_title')" class="mt-2" />
@@ -149,7 +149,7 @@
                             </div>
 
                             <div class="grid gap-2 sm:grid-cols-[220px_1fr] sm:items-start">
-                                <label for="department_id" class="pt-2 text-sm text-slate-600">Department</label>
+                                <label for="department_id" class="pt-2 text-sm text-slate-600">Bo'lim</label>
                                 <div>
                                     <select id="department_id" name="department_id" class="w-full rounded-md border-slate-300 shadow-sm">
                                         <option value="">Bo'lim tanlanmagan</option>
@@ -162,7 +162,7 @@
                             </div>
 
                             <div class="grid gap-2 sm:grid-cols-[220px_1fr] sm:items-start">
-                                <label for="role" class="pt-2 text-sm text-slate-600">Role</label>
+                                <label for="role" class="pt-2 text-sm text-slate-600">Rol</label>
                                 <div>
                                     <select id="role" name="role" class="w-full rounded-md border-slate-300 shadow-sm">
                                         @foreach ($roles as $role)
@@ -174,7 +174,7 @@
                             </div>
 
                             <div class="grid gap-2 sm:grid-cols-[220px_1fr] sm:items-start">
-                                <label for="status" class="pt-2 text-sm text-slate-600">Status</label>
+                                <label for="status" class="pt-2 text-sm text-slate-600">Holat</label>
                                 <div>
                                     <select id="status" name="status" class="w-full rounded-md border-slate-300 shadow-sm">
                                         @foreach ($statuses as $value => $label)

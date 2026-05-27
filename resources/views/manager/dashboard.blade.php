@@ -13,7 +13,7 @@
     </x-slot>
 
     <div>
-        <div class="mx-auto max-w-7xl space-y-5 px-4 py-5 sm:px-6 lg:px-8">
+        <div class="mx-auto max-w-none space-y-5 px-4 py-5 sm:px-6 lg:px-8">
             <form method="GET" action="{{ route('manager.dashboard') }}" class="flex flex-wrap items-center gap-3">
                 @if ($activeFilters['priority'] ?? null)
                     <input type="hidden" name="priority" value="{{ $activeFilters['priority'] }}">

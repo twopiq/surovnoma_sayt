@@ -16,7 +16,7 @@
         </div>
     </x-slot>
 
-    <div class="mx-auto max-w-7xl space-y-6 px-4 pt-8 sm:px-6 lg:px-8">
+    <div class="mx-auto max-w-none space-y-6 px-4 pt-8 sm:px-6 lg:px-8">
         @include('admin.dispatch.partials.top-menu')
 
         <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">

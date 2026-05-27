@@ -5,7 +5,7 @@
                 <h2 class="font-['Space_Grotesk'] text-2xl font-bold">{{ $status->label() }} murojaatlar</h2>
                 <p class="mt-1 text-sm text-slate-500">Tanlangan holatdagi barcha murojaatlar.</p>
             </div>
-            <a href="{{ route('admin.dispatch.index') }}" class="rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100">
+            <a href="{{ route('admin.dispatch.index') }}" class="inline-flex items-center justify-center rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
                 Doskaga qaytish
             </a>
         </div>

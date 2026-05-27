@@ -2,13 +2,13 @@
     <x-slot name="header">
         <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div>
-                <h2 class="font-['Space_Grotesk'] text-2xl font-bold">User management</h2>
+                <h2 class="font-['Space_Grotesk'] text-2xl font-bold">Foydalanuvchilar boshqaruvi</h2>
                 <p class="mt-1 text-sm text-slate-500">Foydalanuvchilar, rollar va akkaunt holatini boshqarish.</p>
             </div>
         </div>
     </x-slot>
 
-    <div class="mx-auto max-w-none space-y-4 px-4 pt-5 sm:px-6 lg:px-8">
+    <div class="mx-auto max-w-none space-y-4 px-4 pt-8 sm:px-6 lg:px-8">
         @include('admin.users.partials.top-menu')
 
         <section class="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
@@ -20,18 +20,18 @@
                                 <path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 1 0 3.47 9.77l2.63 2.63a1 1 0 0 0 1.42-1.42l-2.63-2.63A5.5 5.5 0 0 0 9 3.5ZM5.5 9a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0Z" clip-rule="evenodd" />
                             </svg>
                         </span>
-                        <input name="search" value="{{ $filters['search'] }}" placeholder="Search" class="w-full rounded-md border-slate-300 pl-9 text-sm shadow-sm" />
+                        <input name="search" value="{{ $filters['search'] }}" placeholder="Qidirish" class="w-full rounded-md border-slate-300 pl-9 text-sm shadow-sm" />
                     </label>
 
                     <select name="role" class="w-full rounded-md border-slate-300 text-sm shadow-sm">
-                        <option value="">Role</option>
+                        <option value="">Rol</option>
                         @foreach ($roles as $role)
                             <option value="{{ $role->value }}" @selected($filters['role'] === $role->value)>{{ $role->label() }}</option>
                         @endforeach
                     </select>
 
                     <select name="status" class="w-full rounded-md border-slate-300 text-sm shadow-sm">
-                        <option value="">Status</option>
+                        <option value="">Holat</option>
                         @foreach ($statuses as $value => $label)
                             <option value="{{ $value }}" @selected($filters['status'] === $value)>{{ $label }}</option>
                         @endforeach
@@ -41,7 +41,7 @@
 
                     <select name="per_page" class="w-full rounded-md border-slate-300 text-sm shadow-sm">
                         @foreach ([10, 25, 50] as $option)
-                            <option value="{{ $option }}" @selected($perPage === $option)>{{ $option }} rows</option>
+                            <option value="{{ $option }}" @selected($perPage === $option)>{{ $option }} qator</option>
                         @endforeach
                     </select>
                 </div>
@@ -61,7 +61,7 @@
                         CSV
                     </a>
                     <a href="{{ route('admin.users.create') }}" class="inline-flex min-w-[104px] items-center justify-center rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700">
-                        Add user
+                        Foydalanuvchi qo'shish
                     </a>
                 </div>
             </form>
@@ -84,10 +84,10 @@
                         @forelse ($users as $user)
                             @php
                                 $status = $user->approved_at && $user->is_active
-                                    ? ['label' => 'Active', 'class' => 'bg-emerald-100 text-emerald-700']
+                                    ? ['label' => 'Faol', 'class' => 'bg-emerald-100 text-emerald-700']
                                     : (! $user->is_active
-                                        ? ['label' => 'Inactive', 'class' => 'bg-slate-200 text-slate-600']
-                                        : ['label' => 'Pending', 'class' => 'bg-yellow-100 text-yellow-700']);
+                                        ? ['label' => 'Nofaol', 'class' => 'bg-slate-200 text-slate-600']
+                                        : ['label' => 'Kutilmoqda', 'class' => 'bg-yellow-100 text-yellow-700']);
                             @endphp
                             <tr>
                                 <td class="px-3 py-2">
@@ -130,7 +130,7 @@
 
             <div class="flex flex-col gap-2 border-t border-slate-200 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
                 <div class="text-sm font-medium text-slate-600">
-                    Rows per page {{ $perPage }} · {{ $users->total() }} rows
+                    Sahifada {{ $perPage }} ta · Jami {{ $users->total() }} ta
                 </div>
                 <div class="max-w-full overflow-hidden">
                     {{ $users->onEachSide(1)->links() }}

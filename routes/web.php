@@ -21,11 +21,6 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/pending-approval', [HomeController::class, 'pendingApproval'])->name('pending-approval');
-Route::get('/_errors/assets', function () {
-    return response()->view('errors.assets-missing', [
-        'manifestPath' => public_path('build/manifest.json'),
-    ], 500);
-})->name('errors.assets');
 Route::get('/_errors/{code}', function (string $code) {
     $views = [
         '403' => 'errors.403',

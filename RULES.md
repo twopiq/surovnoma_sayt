@@ -62,6 +62,7 @@ UI bu loyihada Blade, Livewire, Alpine va Tailwind orqali qurilgan. O'zgarishlar
 - Formlarda validation error, success/error flash, loading/disabled state va mobile ko'rinish hisobga olinsin.
 - Admin, operator, executor, requester va guest ekranlarida bir xil terminlar ishlatilsin.
 - Frontend o'zgarsa `npm run build` bilan asset build tekshirilsin.
+- **Til qoidasi:** Jadval ustuni nomlari (`<th>`) ingliz tilida qolishi mumkin. Boshqa barcha interfeys matnlari (sarlavhalar, tugmalar, labellar, placeholder, filter variantlar, status badgelar, bo'sh holat matnlari) o'zbek tilida bo'lsin.
 
 ---
 

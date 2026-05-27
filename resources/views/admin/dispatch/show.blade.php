@@ -10,12 +10,12 @@
         @endphp
 
         <div class="flex items-center gap-3">
-            <a href="{{ $backUrl }}" class="rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100">Ortga qaytish</a>
+            <a href="{{ $backUrl }}" class="inline-flex items-center justify-center rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">Ortga qaytish</a>
             <h2 class="font-['Space_Grotesk'] text-2xl font-bold">Dispetcher kartochkasi</h2>
         </div>
     </x-slot>
 
-    <div class="mx-auto grid max-w-7xl gap-6 px-4 pt-8 lg:grid-cols-[1.35fr_0.95fr] sm:px-6 lg:px-8">
+    <div class="mx-auto grid max-w-none gap-6 px-4 pt-8 lg:grid-cols-[1.35fr_0.95fr] sm:px-6 lg:px-8">
         <div class="space-y-6">
             @include('partials.ticket-card', ['ticket' => $ticket])
             <div class="rounded-2xl border border-slate-200 bg-white p-6">
@@ -51,7 +51,7 @@
                     <input type="checkbox" name="is_public" value="1">
                     Public izoh
                 </label>
-                <button class="mt-4 rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white">Saqlash</button>
+                <button class="mt-4 rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700">Saqlash</button>
             </form>
 
             <form method="POST" action="{{ route('admin.dispatch.assign', $ticket) }}" class="rounded-2xl border border-slate-200 bg-white p-6">
@@ -106,9 +106,9 @@
                         <input type="hidden" name="confirmed_overload_executor_id" value="{{ old('assigned_executor_id') }}">
                         <input type="hidden" name="confirmed_overload_priority" value="{{ old('priority') }}">
                     </div>
-                    <button class="mt-4 rounded-full bg-orange-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-orange-700">Baribir tasdiqlash</button>
+                    <button class="mt-4 rounded-md bg-orange-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-orange-700">Baribir tasdiqlash</button>
                 @else
-                    <button class="mt-4 rounded-full bg-cyan-700 px-4 py-2 text-sm font-semibold text-white">Saqlash</button>
+                    <button class="mt-4 rounded-md bg-cyan-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-cyan-800">Saqlash</button>
                 @endif
             </form>
 
@@ -116,14 +116,14 @@
                 @csrf
                 <h3 class="font-semibold">Rad etish</h3>
                 <textarea name="reason" rows="3" class="mt-4 block w-full rounded-md border-slate-300 shadow-sm" placeholder="Sabab" required></textarea>
-                <button class="mt-4 rounded-full bg-rose-700 px-4 py-2 text-sm font-semibold text-white">Rad etish</button>
+                <button class="mt-4 rounded-md bg-rose-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-rose-800">Rad etish</button>
             </form>
 
             <form method="POST" action="{{ route('admin.dispatch.close', $ticket) }}" class="rounded-2xl border border-slate-200 bg-white p-6">
                 @csrf
                 <h3 class="font-semibold">Yakuniy yopish</h3>
                 <textarea name="note" rows="3" class="mt-4 block w-full rounded-md border-slate-300 shadow-sm" placeholder="Yakuniy izoh"></textarea>
-                <button class="mt-4 rounded-full bg-emerald-700 px-4 py-2 text-sm font-semibold text-white">Yopish</button>
+                <button class="mt-4 rounded-md bg-emerald-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-800">Yopish</button>
             </form>
         </div>
     </div>
