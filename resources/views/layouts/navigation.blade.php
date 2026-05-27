@@ -8,12 +8,15 @@
             \App\Enums\UserRole::Operator->value,
             \App\Enums\UserRole::Executor->value,
         ]) ?? false);
+    $isAdmin = $user?->hasRole(\App\Enums\UserRole::Admin->value) ?? false;
+    $isManagerWithDashboard = (! $isAdmin) && ($user?->canAccessAppDashboard() ?? false);
+
     $homeHref = $isRequesterOnly
         ? route('tickets.index')
-        : ($user?->canAccessAppDashboard() ? route('app.dashboard') : route('app.home'));
+        : ($isManagerWithDashboard ? route('app.dashboard') : route('app.home'));
 
     $sidebarItems = [
-        ...(! $isRequesterOnly && ! $user?->canAccessAppDashboard() ? [[
+        ...(! $isRequesterOnly && ! $isManagerWithDashboard ? [[
             'label' => 'Home',
             'href' => route('app.home'),
             'active' => request()->routeIs('app.home'),
@@ -25,23 +28,23 @@
             'active' => request()->routeIs('tickets.*'),
             'icon' => 'tickets',
         ]] : []),
-        ...($user?->hasRole(\App\Enums\UserRole::Admin->value) ? [[
+        ...($isAdmin ? [[
             'label' => 'Ticket management',
             'href' => route('admin.dispatch.tickets'),
             'active' => request()->routeIs('admin.dispatch.*'),
             'icon' => 'tickets',
         ]] : []),
-        ...($user?->hasRole(\App\Enums\UserRole::Admin->value) ? [[
+        ...($isAdmin ? [[
             'label' => 'User management',
             'href' => route('admin.users.list'),
             'active' => request()->routeIs('admin.users.*'),
             'icon' => 'users',
         ]] : []),
         ...($user?->canAccessAppDashboard() ? [[
-            'label' => 'Home',
+            'label' => $isManagerWithDashboard ? 'Home' : 'Dashboard',
             'href' => route('app.dashboard'),
             'active' => request()->routeIs('app.dashboard'),
-            'icon' => 'home',
+            'icon' => $isManagerWithDashboard ? 'home' : 'dashboard',
         ]] : []),
         [
             'label' => 'Bildirishnomalar',
