@@ -1,7 +1,9 @@
 <?php
 
+use App\Http\Controllers\Api\KpiAnalyticsController;
 use App\Http\Controllers\Api\KpiAuthController;
 use App\Http\Controllers\Api\KpiDashboardController;
+use App\Http\Controllers\Api\KpiTicketsController;
 use App\Http\Controllers\TelegramWebhookController;
 use App\Http\Middleware\KpiApiCors;
 use Illuminate\Support\Facades\Route;
@@ -16,4 +18,6 @@ Route::middleware(KpiApiCors::class)->group(function (): void {
     Route::post('/auth/logout', [KpiAuthController::class, 'logout']);
 
     Route::get('/kpi/dashboard', KpiDashboardController::class);
+    Route::get('/kpi/tickets', KpiTicketsController::class);
+    Route::get('/kpi/analytics', KpiAnalyticsController::class);
 });
