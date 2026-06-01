@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="300" viewBox="0 0 680 400">
+
+  <g transform="translate(340,60)">
+    <ellipse cx="0" cy="-30" rx="80" ry="22" stroke="#4f8ef7" stroke-width="5" fill="none"/>
+    <line x1="-80" y1="-30" x2="-80" y2="30" stroke="#4f8ef7" stroke-width="5"/>
+    <line x1="80"  y1="-30" x2="80"  y2="30" stroke="#4f8ef7" stroke-width="5"/>
+    <ellipse cx="0" cy="30" rx="80" ry="22" stroke="#4f8ef7" stroke-width="5" fill="none"/>
+    <line x1="-80" y1="30" x2="-80" y2="90" stroke="#7ed6a0" stroke-width="5"/>
+    <line x1="80"  y1="30" x2="80"  y2="90" stroke="#7ed6a0" stroke-width="5"/>
+    <ellipse cx="0" cy="90" rx="80" ry="22" stroke="#7ed6a0" stroke-width="5" fill="none"/>
+
+    <text x="0" y="190"
+      text-anchor="middle"
+      font-family="Arial, sans-serif"
+      font-weight="800"
+      font-size="68"
+      fill="#ffffff"
+      letter-spacing="8">RTTM</text>
+
+    <text x="0" y="225"
+      text-anchor="middle"
+      font-family="Arial, sans-serif"
+      font-weight="400"
+      font-size="18"
+      fill="#93c5fd"
+      letter-spacing="5">MUROJAATLAR TIZIMI</text>
+  </g>
+
+</svg>
