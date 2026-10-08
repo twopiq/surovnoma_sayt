@@ -319,10 +319,9 @@ class GuestRequestGuard
             $bot = app(TelegramSdkBot::class);
 
             User::role(UserRole::Admin->value)
-                ->whereNotNull('telegram_chat_id')
                 ->get()
                 ->each(function (User $admin) use ($bot, $message) {
-                    if ($chatId = $admin->routeNotificationForTelegram()) {
+                    foreach ($admin->telegramChatIds() as $chatId) {
                         $bot->sendMessage((string) $chatId, $message);
                     }
                 });

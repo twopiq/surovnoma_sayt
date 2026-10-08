@@ -61,8 +61,33 @@ class ProfileController extends Controller
             ])->save();
         }
 
+        $user = $user->fresh();
+        $telegramAccounts = collect();
+
+        if ($telegramSchemaReady && $user->telegram_chat_id) {
+            $telegramAccounts->push((object) [
+                'chat_id' => (string) $user->telegram_chat_id,
+                'username' => $user->telegram_username,
+                'linked_at' => $user->telegram_linked_at,
+                'primary' => true,
+            ]);
+        }
+
+        if ($telegramSchemaReady && $this->multiTelegramReady() && $user->canLinkMultipleTelegram()) {
+            foreach ($user->telegramAccounts as $account) {
+                $telegramAccounts->push((object) [
+                    'chat_id' => (string) $account->chat_id,
+                    'username' => $account->username,
+                    'linked_at' => $account->linked_at,
+                    'primary' => false,
+                ]);
+            }
+        }
+
         return view('app.settings', [
-            'user' => $user->fresh(),
+            'user' => $user,
+            'telegramAccounts' => $telegramAccounts,
+            'canLinkMultipleTelegram' => $this->multiTelegramReady() && $user->canLinkMultipleTelegram(),
             'telegramBotUsername' => config('services.telegram_bot.username') ?: $telegramBot->getMeUsername(),
             'telegramBotConfigured' => is_string(config('services.telegram_bot.token')) && config('services.telegram_bot.token') !== '',
             'telegramSchemaReady' => $telegramSchemaReady,
@@ -112,15 +137,27 @@ class ProfileController extends Controller
             return Redirect::route('app.settings')->with('status', 'telegram-migration-required');
         }
 
-        $request->user()->forceFill([
-            'telegram_chat_id' => null,
-            'telegram_username' => null,
-            'telegram_link_token' => Str::random(48),
-            'telegram_notifications_enabled' => true,
-            'telegram_linked_at' => null,
-        ])->save();
+        $request->user()->unlinkAllTelegram();
 
         return Redirect::route('app.settings')->with('status', 'telegram-disconnected');
+    }
+
+    public function disconnectTelegramChat(Request $request, string $chatId): RedirectResponse
+    {
+        $user = $request->user();
+        $owned = (string) $user->telegram_chat_id === $chatId
+            || ($this->multiTelegramReady() && $user->telegramAccounts()->where('chat_id', $chatId)->exists());
+
+        abort_unless($owned, 404);
+
+        $user->unlinkTelegramChat($chatId);
+
+        return Redirect::route('app.settings')->with('status', 'telegram-disconnected');
+    }
+
+    protected function multiTelegramReady(): bool
+    {
+        return Schema::hasTable('user_telegram_accounts');
     }
 
     protected function telegramSchemaReady(): bool

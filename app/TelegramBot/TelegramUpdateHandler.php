@@ -204,6 +204,9 @@ class TelegramUpdateHandler
             'notifications:on' => $this->setNotifications($chatId, true),
             'notifications:off' => $this->setNotifications($chatId, false),
             'link' => $this->sendLinkHelp($chatId),
+            'unlink:ask' => $this->askUnlink($chatId, $user),
+            'unlink:confirm' => $this->handleUnlink($chatId),
+            'unlink:cancel' => $this->sendMenu($chatId, $user),
             'guest:create' => $this->sendCategoryPicker($chatId, null, 'guest'),
             'guest:track' => $this->askGuestTrack($chatId),
             'requester:tickets' => $this->sendRequesterTickets($chatId, $user),
@@ -248,17 +251,15 @@ class TelegramUpdateHandler
         $from = $message['from'] ?? [];
         $chat = $message['chat'] ?? [];
 
-        $user->forceFill([
-            'telegram_chat_id' => $chatId,
-            'telegram_username' => $from['username'] ?? $chat['username'] ?? null,
-            'telegram_link_token' => Str::random(48),
-            'telegram_notifications_enabled' => true,
-            'telegram_linked_at' => now(),
-        ])->save();
+        $result = $user->linkTelegramChat($chatId, $from['username'] ?? $chat['username'] ?? null);
 
         $this->bot->sendMessage($chatId, new TelegramMessage(
             'Assalomu alaykum!',
-            "Muvaffaqiyatli ulandingiz. Telegram akkauntingiz sayt profilingizga bog'landi. Endi yangi tizim xabarlari shu chatga avtomatik yuboriladi.",
+            match ($result) {
+                'added' => "Qo'shimcha Telegram akkaunt ulandi. Tizim xabarlari endi bu chatga ham, avval ulangan chatlaringizga ham yuboriladi.",
+                'already' => "Bu chat allaqachon profilingizga ulangan. Tizim xabarlari shu chatga keladi.",
+                default => "Muvaffaqiyatli ulandingiz. Telegram akkauntingiz sayt profilingizga bog'landi. Endi yangi tizim xabarlari shu chatga avtomatik yuboriladi.",
+            },
             null,
             $this->menuButtons($user->fresh()),
         ));
@@ -1511,10 +1512,36 @@ class TelegramUpdateHandler
     protected function sendLinkHelp(string $chatId): void
     {
         $this->bot->sendMessage($chatId, new TelegramMessage(
-            'Saytga ulash',
-            "Avval saytga kiring, Sozlamalar bo'limini oching va Telegram botni ochish tugmasini bosing. Bot akkauntingizni avtomatik ulaydi.",
-            null,
+            'Saytdagi akkauntni ulash',
+            implode("\n", [
+                '1. Saytga login va parolingiz bilan kiring.',
+                "2. Sozlamalar sahifasidagi «Telegram ulanishi» bo'limini oching.",
+                "3. «Telegramda ulash» tugmasini bosing — shu bot ochiladi.",
+                "4. Botda «Start» ni bosing: akkaunt avtomatik ulanadi.",
+                '',
+                "Telegram boshqa qurilmada bo'lsa, Sozlamalardagi havolani nusxalab, o'sha qurilmada oching.",
+            ]),
+            route('app.settings'),
             $this->menuButtons(null, $chatId),
+        ));
+    }
+
+    protected function askUnlink(string $chatId, ?User $user): void
+    {
+        if (! $user) {
+            $this->sendMenu($chatId, null);
+
+            return;
+        }
+
+        $this->bot->sendMessage($chatId, new TelegramMessage(
+            'Akkauntdan chiqish',
+            "Bu Telegram chat «{$user->name}» akkauntidan uziladi va tizim xabarlari bu yerga kelmaydi. Davom etasizmi?",
+            null,
+            [[
+                ['text' => 'Ha, chiqish', 'callback_data' => 'unlink:confirm'],
+                ['text' => 'Bekor qilish', 'callback_data' => 'unlink:cancel'],
+            ]],
         ));
     }
 
@@ -1533,13 +1560,7 @@ class TelegramUpdateHandler
             return;
         }
 
-        $user->forceFill([
-            'telegram_chat_id' => null,
-            'telegram_username' => null,
-            'telegram_link_token' => Str::random(48),
-            'telegram_notifications_enabled' => true,
-            'telegram_linked_at' => null,
-        ])->save();
+        $user->unlinkTelegramChat($chatId);
 
         $this->bot->sendMessage($chatId, new TelegramMessage(
             'Telegram uzildi',
@@ -1563,6 +1584,9 @@ class TelegramUpdateHandler
 
             $buttons[] = [
                 ['text' => 'Guest holatini tekshirish', 'callback_data' => 'guest:track'],
+            ];
+            $buttons[] = [
+                ['text' => 'Saytdagi akkauntni ulash', 'callback_data' => 'link'],
             ];
             $buttons[] = [
                 ['text' => "Ro'yxatdan o'tish", 'url' => route('register')],
@@ -1623,15 +1647,28 @@ class TelegramUpdateHandler
             ['text' => "Profilni ko'rish", 'callback_data' => 'profile'],
             $notificationButton,
         ];
+        $buttons[] = [
+            ['text' => 'Saytdagi akkauntdan chiqish', 'callback_data' => 'unlink:ask'],
+        ];
 
         return $buttons;
     }
 
     protected function userByChat(string $chatId): ?User
     {
-        return User::query()
+        $user = User::query()
             ->with('department')
             ->where('telegram_chat_id', $chatId)
+            ->first();
+
+        if ($user || ! \Illuminate\Support\Facades\Schema::hasTable('user_telegram_accounts')) {
+            return $user;
+        }
+
+        // Adminning qo'shimcha Telegram akkaunti
+        return User::query()
+            ->with('department')
+            ->whereHas('telegramAccounts', fn ($query) => $query->where('chat_id', $chatId))
             ->first();
     }
 

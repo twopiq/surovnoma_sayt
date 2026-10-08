@@ -24,11 +24,7 @@ class DatabaseBackupManager
         $timestamp = now()->format('Ymd-His');
         $backupPath = $backupDirectory.DIRECTORY_SEPARATOR."{$safeLabel}-{$timestamp}.sqlite";
 
-        DB::disconnect(config('database.default'));
-
-        if (! File::copy($databasePath, $backupPath)) {
-            throw new RuntimeException('Baza zahirasini yaratib bo‘lmadi.');
-        }
+        $this->snapshot($databasePath, $backupPath);
 
         $this->prune($keep ?? config('database-backup.keep', 30));
 
@@ -42,6 +38,10 @@ class DatabaseBackupManager
     {
         $databasePath = $this->databasePath();
         $backupPath = $this->resolveBackupPath($fileName);
+
+        if (! $this->isSqliteFile($backupPath)) {
+            throw new RuntimeException("Zahira fayli buzilgan yoki SQLite bazasi emas: {$fileName}");
+        }
 
         $safetyBackup = null;
 
@@ -87,6 +87,60 @@ class DatabaseBackupManager
     public function latest(): ?array
     {
         return $this->list()->first();
+    }
+
+    /** Zahira faylining to'liq yo'li (faqat zahira papkasi ichidan). */
+    public function pathFor(string $fileName): string
+    {
+        return $this->resolveBackupPath($fileName);
+    }
+
+    public function delete(string $fileName): void
+    {
+        File::delete($this->resolveBackupPath($fileName));
+    }
+
+    public function isSupported(): bool
+    {
+        return config('database.default') === 'sqlite';
+    }
+
+    /**
+     * Izchil nusxa: SQLite «VACUUM INTO» ishlab turgan bazadan tranzaksiya bo'yicha butun nusxa oladi
+     * (oddiy fayl nusxasi yozish paytida buzilishi mumkin). Eski SQLite bo'lsa — fayl nusxasi.
+     */
+    protected function snapshot(string $databasePath, string $backupPath): void
+    {
+        try {
+            DB::connection(config('database.default'))
+                ->statement("VACUUM INTO '".str_replace("'", "''", $backupPath)."'");
+
+            if (File::exists($backupPath)) {
+                return;
+            }
+        } catch (\Throwable) {
+            File::delete($backupPath);
+        }
+
+        DB::disconnect(config('database.default'));
+
+        if (! File::copy($databasePath, $backupPath)) {
+            throw new RuntimeException('Baza zahirasini yaratib bo‘lmadi.');
+        }
+    }
+
+    protected function isSqliteFile(string $path): bool
+    {
+        $handle = @fopen($path, 'rb');
+
+        if (! $handle) {
+            return false;
+        }
+
+        $header = fread($handle, 16);
+        fclose($handle);
+
+        return $header === "SQLite format 3\0";
     }
 
     protected function prune(int $keep): void
@@ -142,7 +196,7 @@ class DatabaseBackupManager
 
         $candidate = $backupDirectory.DIRECTORY_SEPARATOR.basename($fileName);
 
-        if (! File::exists($candidate)) {
+        if (! str_ends_with($candidate, '.sqlite') || ! File::exists($candidate)) {
             throw new RuntimeException("Backup fayli topilmadi: {$fileName}");
         }
 

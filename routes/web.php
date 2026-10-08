@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\BackupController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\DepartmentController;
 use App\Http\Controllers\Admin\DispatchController;
@@ -65,6 +66,9 @@ Route::middleware(['auth', 'approved'])->group(function () {
     Route::patch('/app/settings/email', [ProfileController::class, 'updateEmail'])->name('settings.email.update');
     Route::post('/app/settings/telegram/link-token', [ProfileController::class, 'regenerateTelegramLink'])->name('settings.telegram.regenerate');
     Route::delete('/app/settings/telegram', [ProfileController::class, 'disconnectTelegram'])->name('settings.telegram.disconnect');
+    Route::delete('/app/settings/telegram/{chatId}', [ProfileController::class, 'disconnectTelegramChat'])
+        ->where('chatId', '-?[0-9]+')
+        ->name('settings.telegram.disconnect-chat');
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
     Route::get('/attachments/{attachment}', [TicketAttachmentController::class, 'download'])->name('attachments.download');
     Route::prefix('notifications')->name('notifications.')->group(function () {
@@ -152,6 +156,13 @@ Route::middleware(['auth', 'approved'])->group(function () {
         Route::post('/guest-blocks/{guestBlock}/unblock', [GuestBlockController::class, 'unblock'])->name('guest-blocks.unblock');
         Route::get('/guest-blocks/settings', [GuestSettingsController::class, 'edit'])->name('guest-blocks.settings');
         Route::put('/guest-blocks/settings', [GuestSettingsController::class, 'update'])->name('guest-blocks.settings.update');
+
+        Route::get('/backups', [BackupController::class, 'index'])->name('backups.index');
+        Route::post('/backups', [BackupController::class, 'store'])->middleware('throttle:10,1')->name('backups.store');
+        Route::put('/backups/settings', [BackupController::class, 'updateSettings'])->name('backups.settings');
+        Route::get('/backups/{backup}/download', [BackupController::class, 'download'])->where('backup', '[A-Za-z0-9_.-]+')->name('backups.download');
+        Route::post('/backups/{backup}/restore', [BackupController::class, 'restore'])->where('backup', '[A-Za-z0-9_.-]+')->middleware('throttle:5,1')->name('backups.restore');
+        Route::delete('/backups/{backup}', [BackupController::class, 'destroy'])->where('backup', '[A-Za-z0-9_.-]+')->name('backups.destroy');
 
         Route::get('/categories', [CategoryController::class, 'index'])->name('categories.index');
         Route::post('/categories', [CategoryController::class, 'store'])->name('categories.store');

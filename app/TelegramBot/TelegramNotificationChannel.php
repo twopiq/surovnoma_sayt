@@ -17,9 +17,12 @@ class TelegramNotificationChannel
             return;
         }
 
-        $chatId = $notifiable->routeNotificationFor('telegram', $notification);
+        // Admin bir nechta Telegram akkaunt ulagan bo'lishi mumkin — hammasiga yuboriladi
+        $chatIds = method_exists($notifiable, 'telegramChatIds')
+            ? $notifiable->telegramChatIds()
+            : array_filter([$notifiable->routeNotificationFor('telegram', $notification)]);
 
-        if (! $chatId) {
+        if ($chatIds === []) {
             return;
         }
 
@@ -29,6 +32,8 @@ class TelegramNotificationChannel
             return;
         }
 
-        $this->bot->sendMessage((string) $chatId, $message);
+        foreach ($chatIds as $chatId) {
+            $this->bot->sendMessage((string) $chatId, $message);
+        }
     }
 }

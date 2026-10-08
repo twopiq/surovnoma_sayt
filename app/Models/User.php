@@ -169,11 +169,117 @@ class User extends Authenticatable
 
     public function routeNotificationForTelegram(mixed $notification = null): ?string
     {
+        return $this->telegramChatIds()[0] ?? null;
+    }
+
+    /** Admin uchun qo'shimcha Telegram akkauntlari (asosiysi telegram_chat_id). */
+    public function telegramAccounts(): HasMany
+    {
+        return $this->hasMany(UserTelegramAccount::class)->orderBy('linked_at');
+    }
+
+    public function canLinkMultipleTelegram(): bool
+    {
+        return $this->hasRole(UserRole::Admin->value);
+    }
+
+    /**
+     * Xabar yuboriladigan barcha chatlar: asosiy + (admin uchun) qo'shimchalar.
+     *
+     * @return list<string>
+     */
+    public function telegramChatIds(): array
+    {
         if ($this->telegram_notifications_enabled === false) {
-            return null;
+            return [];
         }
 
-        return $this->telegram_chat_id;
+        $extra = $this->canLinkMultipleTelegram() && \Illuminate\Support\Facades\Schema::hasTable('user_telegram_accounts')
+            ? $this->telegramAccounts->pluck('chat_id')->all()
+            : [];
+
+        return array_values(array_unique(array_filter([(string) $this->telegram_chat_id, ...array_map('strval', $extra)])));
+    }
+
+    /**
+     * Telegram chatni akkauntga bog'laydi. Admin allaqachon ulangan bo'lsa — qo'shimcha akkaunt qo'shiladi,
+     * boshqa rollarda asosiy akkaunt almashtiriladi.
+     *
+     * @return 'linked'|'added'|'already'
+     */
+    public function linkTelegramChat(string $chatId, ?string $username): string
+    {
+        $base = [
+            'telegram_link_token' => Str::random(48),
+            'telegram_notifications_enabled' => true,
+        ];
+
+        $multiReady = \Illuminate\Support\Facades\Schema::hasTable('user_telegram_accounts');
+
+        if ((string) $this->telegram_chat_id === $chatId || ($multiReady && $this->telegramAccounts()->where('chat_id', $chatId)->exists())) {
+            $this->forceFill($base)->save();
+
+            return 'already';
+        }
+
+        if ($multiReady && $this->telegram_chat_id && $this->canLinkMultipleTelegram()) {
+            $this->telegramAccounts()->create(['chat_id' => $chatId, 'username' => $username, 'linked_at' => now()]);
+            $this->forceFill($base)->save();
+
+            return 'added';
+        }
+
+        $this->forceFill([
+            ...$base,
+            'telegram_chat_id' => $chatId,
+            'telegram_username' => $username,
+            'telegram_linked_at' => now(),
+        ])->save();
+
+        return 'linked';
+    }
+
+    /**
+     * Bitta chatni uzadi. Asosiy chat uzilsa, birinchi qo'shimcha akkaunt asosiyga ko'tariladi.
+     */
+    public function unlinkTelegramChat(string $chatId): void
+    {
+        $multiReady = \Illuminate\Support\Facades\Schema::hasTable('user_telegram_accounts');
+
+        if ((string) $this->telegram_chat_id !== $chatId) {
+            if ($multiReady) {
+                $this->telegramAccounts()->where('chat_id', $chatId)->delete();
+            }
+
+            return;
+        }
+
+        $next = $multiReady && $this->canLinkMultipleTelegram() ? $this->telegramAccounts()->first() : null;
+
+        $this->forceFill([
+            'telegram_chat_id' => $next?->chat_id,
+            'telegram_username' => $next?->username,
+            'telegram_linked_at' => $next?->linked_at,
+            'telegram_link_token' => Str::random(48),
+        ])->save();
+
+        $next?->delete();
+    }
+
+    /** Hamma Telegram ulanishlarini uzadi. */
+    public function unlinkAllTelegram(): void
+    {
+        if (\Illuminate\Support\Facades\Schema::hasTable('user_telegram_accounts')) {
+            $this->telegramAccounts()->delete();
+        }
+
+        $this->forceFill([
+            'telegram_chat_id' => null,
+            'telegram_username' => null,
+            'telegram_link_token' => Str::random(48),
+            'telegram_notifications_enabled' => true,
+            'telegram_linked_at' => null,
+        ])->save();
     }
 
     public static function generateUniqueLogin(string $name, ?int $ignoreUserId = null): string

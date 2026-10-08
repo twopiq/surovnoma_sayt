@@ -17,11 +17,11 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withSchedule(function (Schedule $schedule) {
-        if (config('database-backup.enabled', true)) {
-            $schedule->command('db:backup --label=scheduled')
-                ->everySixHours()
-                ->withoutOverlapping();
-        }
+        // Avtomatik zahira: chastota, saqlash soni va yoqish admin panelda (Sozlamalar → Zahira nusxalar)
+        $schedule->command('db:backup', ['--label' => 'scheduled', '--keep' => \App\Support\BackupSchedule::keep()])
+            ->cron(\App\Support\BackupSchedule::cron())
+            ->when(fn () => \App\Support\BackupSchedule::enabled())
+            ->withoutOverlapping();
 
         $schedule->command('tickets:send-deadline-alerts')
             ->everyMinute()

@@ -77,6 +77,22 @@ class TelegramSdkBot
         return is_string($username) && $username !== '' ? $username : null;
     }
 
+    /**
+     * Long polling (faqat lokal sinov uchun, webhook o'rnatilmagan bo'lsa ishlaydi).
+     *
+     * @return list<array>
+     */
+    public function getUpdates(int $offset, int $timeout = 25): array
+    {
+        $updates = $this->callAndReturn(fn (Api $api) => $api->getUpdates([
+            'offset' => $offset,
+            'timeout' => $timeout,
+            'allowed_updates' => ['message', 'edited_message', 'callback_query'],
+        ]));
+
+        return collect($updates ?? [])->map(fn ($update) => $update->toArray())->all();
+    }
+
     public function getWebhookInfo(): array
     {
         $webhookInfo = $this->callAndReturn(fn (Api $api) => $api->getWebhookInfo());
