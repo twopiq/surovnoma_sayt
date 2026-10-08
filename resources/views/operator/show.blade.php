@@ -11,7 +11,7 @@
             <h3 class="font-semibold">Fayllar</h3>
             <div class="mt-4 space-y-2 text-sm text-slate-600">
                 @forelse ($ticket->attachments as $attachment)
-                    <div>{{ $attachment->original_name }}</div>
+                    <a href="{{ route('attachments.download', $attachment) }}" class="block font-medium text-sky-700 hover:underline">{{ $attachment->original_name }}</a>
                 @empty
                     <p class="text-slate-500">Fayl mavjud emas.</p>
                 @endforelse

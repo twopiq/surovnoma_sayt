@@ -29,8 +29,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $schedule->command('notifications:purge-expired')
             ->dailyAt('00:00')
-            ->withoutOverlapping();
-    })
+            ->withoutOverlapping();    })
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->alias([
             'approved' => \App\Http\Middleware\EnsureUserIsApproved::class,

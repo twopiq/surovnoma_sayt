@@ -83,7 +83,7 @@ class NotificationAndAttachmentTest extends TestCase
             'attachments' => $this->fakePdfFiles(6),
         ])->assertRedirect(route('guest.create'))
             ->assertSessionHasErrors([
-                'attachments' => TicketFileUpload::tooManyFilesMessage(),
+                'attachments' => TicketFileUpload::tooManyFilesMessage(config('guest_limits.max_files')),
             ]);
 
         $this->actingAs($executor)

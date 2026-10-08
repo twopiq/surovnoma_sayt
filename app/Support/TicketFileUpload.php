@@ -17,11 +17,11 @@ class TicketFileUpload
         'docx',
     ];
 
-    public static function optionalRules(string $field): array
+    public static function optionalRules(string $field, ?int $maxFiles = null, ?int $maxKb = null): array
     {
         return [
-            $field => ['nullable', 'array', 'max:'.self::MAX_FILES],
-            $field.'.*' => ['nullable', 'file', 'max:'.self::MAX_FILE_SIZE_KB, 'mimes:'.self::allowedExtensions()],
+            $field => ['nullable', 'array', 'max:'.($maxFiles ?? self::MAX_FILES)],
+            $field.'.*' => ['nullable', 'file', 'max:'.($maxKb ?? self::MAX_FILE_SIZE_KB), 'mimes:'.self::allowedExtensions()],
         ];
     }
 
@@ -33,16 +33,16 @@ class TicketFileUpload
         ];
     }
 
-    public static function messages(string $field): array
+    public static function messages(string $field, ?int $maxFiles = null, ?int $maxKb = null): array
     {
         return [
             $field.'.required' => 'Kamida bitta tasdiqlovchi fayl yuklash kerak.',
             $field.'.min' => 'Kamida bitta tasdiqlovchi fayl yuklash kerak.',
             $field.'.array' => "Fayllar noto'g'ri yuborildi.",
-            $field.'.max' => self::tooManyFilesMessage(),
+            $field.'.max' => self::tooManyFilesMessage($maxFiles),
             $field.'.*.file' => "Yuklangan fayl noto'g'ri.",
             $field.'.*.mimes' => self::invalidFormatMessage(),
-            $field.'.*.max' => self::fileTooLargeMessage(),
+            $field.'.*.max' => self::fileTooLargeMessage($maxKb),
         ];
     }
 
@@ -65,14 +65,16 @@ class TicketFileUpload
             ->implode('/');
     }
 
-    public static function maxFileSizeMb(): int
+    public static function maxFileSizeMb(?int $maxKb = null): int|float
     {
-        return (int) (self::MAX_FILE_SIZE_KB / 1024);
+        $mb = ($maxKb ?? self::MAX_FILE_SIZE_KB) / 1024;
+
+        return $mb == (int) $mb ? (int) $mb : round($mb, 1);
     }
 
-    public static function maxFileSizeLabel(): string
+    public static function maxFileSizeLabel(?int $maxKb = null): string
     {
-        return self::maxFileSizeMb().' MB';
+        return self::maxFileSizeMb($maxKb).' MB';
     }
 
     public static function maxTotalSizeLabel(): string
@@ -80,9 +82,9 @@ class TicketFileUpload
         return (self::MAX_FILES * self::maxFileSizeMb()).' MB';
     }
 
-    public static function tooManyFilesMessage(): string
+    public static function tooManyFilesMessage(?int $maxFiles = null): string
     {
-        return "Ko'pi bilan ".self::MAX_FILES.' ta fayl yuklash mumkin.';
+        return "Ko'pi bilan ".($maxFiles ?? self::MAX_FILES).' ta fayl yuklash mumkin.';
     }
 
     public static function invalidFormatMessage(): string
@@ -90,8 +92,8 @@ class TicketFileUpload
         return "Fayl formati noto'g'ri. Faqat JPG, JPEG, PNG, PDF, DOC va DOCX formatlariga ruxsat beriladi.";
     }
 
-    public static function fileTooLargeMessage(): string
+    public static function fileTooLargeMessage(?int $maxKb = null): string
     {
-        return 'Har bir fayl hajmi '.self::maxFileSizeLabel().' dan oshmasligi kerak.';
+        return 'Har bir fayl hajmi '.self::maxFileSizeLabel($maxKb).' dan oshmasligi kerak.';
     }
 }

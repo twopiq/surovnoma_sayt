@@ -3,6 +3,8 @@
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\DepartmentController;
 use App\Http\Controllers\Admin\DispatchController;
+use App\Http\Controllers\Admin\GuestBlockController;
+use App\Http\Controllers\Admin\GuestSettingsController;
 use App\Http\Controllers\Admin\SlaSettingsController;
 use App\Http\Controllers\Admin\UserApprovalController;
 use App\Http\Controllers\AppHomeController;
@@ -15,6 +17,7 @@ use App\Http\Controllers\ManagerDashboardController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OperatorTicketController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\TicketAttachmentController;
 use App\Http\Controllers\TicketController;
 use App\Support\TicketFileUpload;
 use Illuminate\Support\Facades\Route;
@@ -44,9 +47,9 @@ Route::get('/_errors/{code}', function (string $code) {
 
 Route::prefix('guest')->name('guest.')->group(function () {
     Route::get('/create', [GuestTicketController::class, 'create'])->name('create');
-    Route::post('/create', [GuestTicketController::class, 'store'])->name('store');
+    Route::post('/create', [GuestTicketController::class, 'store'])->middleware('throttle:guest-post')->name('store');
     Route::get('/track', [GuestTicketController::class, 'track'])->name('track');
-    Route::post('/track', [GuestTicketController::class, 'lookup'])->name('lookup');
+    Route::post('/track', [GuestTicketController::class, 'lookup'])->middleware('throttle:guest-post')->name('lookup');
     Route::get('/track/{ticket}', [GuestTicketController::class, 'show'])->name('tickets.show');
 });
 
@@ -58,6 +61,7 @@ Route::middleware(['auth', 'approved'])->group(function () {
     Route::post('/app/settings/telegram/link-token', [ProfileController::class, 'regenerateTelegramLink'])->name('settings.telegram.regenerate');
     Route::delete('/app/settings/telegram', [ProfileController::class, 'disconnectTelegram'])->name('settings.telegram.disconnect');
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
+    Route::get('/attachments/{attachment}', [TicketAttachmentController::class, 'download'])->name('attachments.download');
     Route::prefix('notifications')->name('notifications.')->group(function () {
         Route::get('/', [NotificationController::class, 'index'])->name('index');
         Route::get('/feed', [NotificationController::class, 'feed'])->name('feed');
@@ -132,6 +136,12 @@ Route::middleware(['auth', 'approved'])->group(function () {
         Route::get('/departments', [DepartmentController::class, 'index'])->name('departments.index');
         Route::post('/departments', [DepartmentController::class, 'store'])->name('departments.store');
         Route::patch('/departments/{department}', [DepartmentController::class, 'update'])->name('departments.update');
+
+        Route::get('/guest-blocks', [GuestBlockController::class, 'index'])->name('guest-blocks.index');
+        Route::post('/guest-blocks', [GuestBlockController::class, 'store'])->name('guest-blocks.store');
+        Route::post('/guest-blocks/{guestBlock}/unblock', [GuestBlockController::class, 'unblock'])->name('guest-blocks.unblock');
+        Route::get('/guest-blocks/settings', [GuestSettingsController::class, 'edit'])->name('guest-blocks.settings');
+        Route::put('/guest-blocks/settings', [GuestSettingsController::class, 'update'])->name('guest-blocks.settings.update');
 
         Route::get('/categories', [CategoryController::class, 'index'])->name('categories.index');
         Route::post('/categories', [CategoryController::class, 'store'])->name('categories.store');

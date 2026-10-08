@@ -454,12 +454,12 @@ class TicketService
 
     protected function storeAttachment(Ticket $ticket, UploadedFile $file, ?User $actor, string $context): void
     {
-        $path = $file->store("tickets/{$ticket->id}", 'public');
+        $path = $file->store("tickets/{$ticket->id}", 'local');
 
         TicketAttachment::create([
             'ticket_id' => $ticket->id,
             'user_id' => $actor?->id,
-            'disk' => 'public',
+            'disk' => 'local',
             'path' => $path,
             'original_name' => $file->getClientOriginalName(),
             'mime_type' => $file->getMimeType(),

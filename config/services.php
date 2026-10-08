@@ -43,4 +43,10 @@ return [
         'verify_ssl' => env('TELEGRAM_VERIFY_SSL', true),
     ],
 
+    // Cloudflare Turnstile — kalitlar bo'sh bo'lsa CAPTCHA o'chirilgan
+    'turnstile' => [
+        'site_key' => env('TURNSTILE_SITE_KEY'),
+        'secret_key' => env('TURNSTILE_SECRET_KEY'),
+    ],
+
 ];

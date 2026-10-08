@@ -40,6 +40,13 @@
             'active' => request()->routeIs('admin.users.*'),
             'icon' => 'users',
         ]] : []),
+        ...($isAdmin ? [[
+            'label' => 'Guest bloklar',
+            'href' => route('admin.guest-blocks.index'),
+            'active' => request()->routeIs('admin.guest-blocks.*'),
+            'icon' => 'shield',
+            'badge' => \Illuminate\Support\Facades\Schema::hasTable('guest_blocks') ? \App\Models\GuestBlock::query()->active()->count() : 0,
+        ]] : []),
         ...($user?->canAccessAppDashboard() ? [[
             'label' => $isManagerWithDashboard ? 'Home' : 'Dashboard',
             'href' => route('app.dashboard'),
@@ -122,6 +129,10 @@
                             <svg class="h-5 w-5 text-cyan-100" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                                 <path d="M7.5 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM2 16.5A5.5 5.5 0 0 1 12.1 13.46a.75.75 0 0 0 1.24-.84 7 7 0 0 0-12.84 3.88.75.75 0 0 0 1.5 0ZM13 8.5a2.5 2.5 0 1 0 0-5 .75.75 0 0 0 0 1.5 1 1 0 1 1 0 2 .75.75 0 0 0 0 1.5ZM13.5 10.5a.75.75 0 0 0 0 1.5 3 3 0 0 1 3 3 .75.75 0 0 0 1.5 0 4.5 4.5 0 0 0-4.5-4.5Z" />
                             </svg>
+                        @elseif ($item['icon'] === 'shield')
+                            <svg class="h-5 w-5 {{ $item['active'] ? 'text-cyan-100' : 'text-cyan-100/75' }}" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                <path fill-rule="evenodd" d="M9.66 1.58a.75.75 0 0 1 .68 0 13.2 13.2 0 0 0 6.1 1.67.75.75 0 0 1 .74.67c.06.53.09 1.06.09 1.58 0 5.16-3.3 9.55-7.9 11.18a.75.75 0 0 1-.5 0C4.27 15.05.97 10.66.97 5.5c0-.52.03-1.05.09-1.58a.75.75 0 0 1 .74-.67 13.2 13.2 0 0 0 6.1-1.67ZM7.03 7.97a.75.75 0 0 0-1.06 1.06L8.94 12a.75.75 0 0 0 1.06 0l4.03-4.03a.75.75 0 0 0-1.06-1.06l-3.5 3.5-2.44-2.44Z" clip-rule="evenodd" />
+                            </svg>
                         @elseif ($item['icon'] === 'tickets')
                             <svg class="h-5 w-5 text-cyan-100" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                                 <path fill-rule="evenodd" d="M4.5 3A2.5 2.5 0 0 0 2 5.5v1.75a.75.75 0 0 0 .75.75 2 2 0 1 1 0 4 .75.75 0 0 0-.75.75v1.75A2.5 2.5 0 0 0 4.5 17h11a2.5 2.5 0 0 0 2.5-2.5v-1.75a.75.75 0 0 0-.75-.75 2 2 0 1 1 0-4 .75.75 0 0 0 .75-.75V5.5A2.5 2.5 0 0 0 15.5 3h-11Zm6.25 3.25a.75.75 0 0 0-1.5 0v1a.75.75 0 0 0 1.5 0v-1Zm0 3.5a.75.75 0 0 0-1.5 0v.5a.75.75 0 0 0 1.5 0v-.5Zm0 3a.75.75 0 0 0-1.5 0v1a.75.75 0 0 0 1.5 0v-1Z" clip-rule="evenodd" />
@@ -150,6 +161,10 @@
                         @elseif ($item['icon'] === 'users')
                             <svg class="h-5 w-5 text-cyan-100/75" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                                 <path d="M7.5 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM2 16.5A5.5 5.5 0 0 1 12.1 13.46a.75.75 0 0 0 1.24-.84 7 7 0 0 0-12.84 3.88.75.75 0 0 0 1.5 0ZM13 8.5a2.5 2.5 0 1 0 0-5 .75.75 0 0 0 0 1.5 1 1 0 1 1 0 2 .75.75 0 0 0 0 1.5ZM13.5 10.5a.75.75 0 0 0 0 1.5 3 3 0 0 1 3 3 .75.75 0 0 0 1.5 0 4.5 4.5 0 0 0-4.5-4.5Z" />
+                            </svg>
+                        @elseif ($item['icon'] === 'shield')
+                            <svg class="h-5 w-5 {{ $item['active'] ? 'text-cyan-100' : 'text-cyan-100/75' }}" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                <path fill-rule="evenodd" d="M9.66 1.58a.75.75 0 0 1 .68 0 13.2 13.2 0 0 0 6.1 1.67.75.75 0 0 1 .74.67c.06.53.09 1.06.09 1.58 0 5.16-3.3 9.55-7.9 11.18a.75.75 0 0 1-.5 0C4.27 15.05.97 10.66.97 5.5c0-.52.03-1.05.09-1.58a.75.75 0 0 1 .74-.67 13.2 13.2 0 0 0 6.1-1.67ZM7.03 7.97a.75.75 0 0 0-1.06 1.06L8.94 12a.75.75 0 0 0 1.06 0l4.03-4.03a.75.75 0 0 0-1.06-1.06l-3.5 3.5-2.44-2.44Z" clip-rule="evenodd" />
                             </svg>
                         @elseif ($item['icon'] === 'tickets')
                             <svg class="h-5 w-5 text-cyan-100/75" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">

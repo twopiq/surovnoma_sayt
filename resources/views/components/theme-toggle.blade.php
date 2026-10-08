@@ -10,7 +10,7 @@
     type="button"
     x-data="{ theme: document.documentElement.dataset.theme || 'light' }"
     x-init="window.addEventListener('theme-changed', event => theme = event.detail)"
-    x-on:click="window.toggleTheme()"
+    x-on:click="window.toggleTheme($event)"
     {{ $attributes->merge(['class' => "inline-flex h-9 w-9 items-center justify-center rounded-md border shadow-sm transition {$buttonClasses}"]) }}
     aria-label="Mavzuni almashtirish"
 >

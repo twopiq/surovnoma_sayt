@@ -15,10 +15,59 @@ window.setTheme = (theme) => {
     window.dispatchEvent(new CustomEvent("theme-changed", { detail: theme }));
 };
 
-window.toggleTheme = () => {
-    window.setTheme(
-        document.documentElement.dataset.theme === "dark" ? "light" : "dark",
+const spawnThemeRipple = (x, y, radius) => {
+    [0, 140].forEach((delay) => {
+        const ring = document.createElement("span");
+        ring.className = "theme-ripple";
+        ring.style.left = `${x}px`;
+        ring.style.top = `${y}px`;
+        ring.style.setProperty("--ripple-size", `${radius * 2}px`);
+        ring.style.animationDelay = `${delay}ms`;
+        document.body.appendChild(ring);
+        ring.addEventListener("animationend", () => ring.remove());
+    });
+};
+
+window.toggleTheme = (event) => {
+    const nextTheme =
+        document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+    const reduceMotion = window.matchMedia(
+        "(prefers-reduced-motion: reduce)",
+    ).matches;
+
+    if (!document.startViewTransition || reduceMotion) {
+        window.setTheme(nextTheme);
+        return;
+    }
+
+    const rect = event?.currentTarget?.getBoundingClientRect?.();
+    const x = rect ? rect.left + rect.width / 2 : window.innerWidth / 2;
+    const y = rect ? rect.top + rect.height / 2 : window.innerHeight / 2;
+    const radius = Math.hypot(
+        Math.max(x, window.innerWidth - x),
+        Math.max(y, window.innerHeight - y),
     );
+
+    const transition = document.startViewTransition(() =>
+        window.setTheme(nextTheme),
+    );
+
+    transition.ready.then(() => {
+        document.documentElement.animate(
+            {
+                clipPath: [
+                    `circle(0px at ${x}px ${y}px)`,
+                    `circle(${radius}px at ${x}px ${y}px)`,
+                ],
+            },
+            {
+                duration: 900,
+                easing: "cubic-bezier(0.22, 1, 0.36, 1)",
+                pseudoElement: "::view-transition-new(root)",
+            },
+        );
+        spawnThemeRipple(x, y, radius);
+    });
 };
 
 window.notificationToasts = ({ feedUrl }) => ({

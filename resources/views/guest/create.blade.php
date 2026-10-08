@@ -9,6 +9,11 @@
 
     <form method="POST" action="{{ route('guest.store') }}" enctype="multipart/form-data" class="space-y-4">
         @csrf
+        <input type="hidden" name="{{ \App\Services\GuestRequestGuard::FORM_TIME_FIELD }}" value="{{ $formStartedToken }}">
+        <div class="absolute -left-[9999px] h-0 w-0 overflow-hidden" aria-hidden="true">
+            <label for="{{ \App\Services\GuestRequestGuard::HONEYPOT_FIELD }}">Veb-sayt</label>
+            <input type="text" id="{{ \App\Services\GuestRequestGuard::HONEYPOT_FIELD }}" name="{{ \App\Services\GuestRequestGuard::HONEYPOT_FIELD }}" tabindex="-1" autocomplete="off">
+        </div>
         @if ($errors->any())
             <div class="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
                 Forma yuborilmadi. Iltimos, xatolarni to'g'rilang.
@@ -54,12 +59,21 @@
             <textarea id="description" name="description" rows="6" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-cyan-500 focus:ring-cyan-500" required>{{ old('description') }}</textarea>
             <x-input-error :messages="$errors->get('description')" class="mt-2" />
         </div>
+        @if (config('guest_limits.max_files') > 0)
         <div>
             <x-input-label for="attachments" value="Fayllar" />
-            <x-file-upload-input id="attachments" name="attachments[]" class="mt-1" />
+            <x-file-upload-input id="attachments" name="attachments[]" class="mt-1" :max-files="config('guest_limits.max_files')" :max-size-kb="config('guest_limits.max_file_size_kb')" />
             <x-input-error :messages="$errors->get('attachments')" class="mt-2" />
             <x-input-error :messages="$errors->get('attachments.*')" class="mt-2" />
         </div>
+        @endif
+        @if ($captchaSiteKey)
+            <div>
+                <div class="cf-turnstile" data-sitekey="{{ $captchaSiteKey }}"></div>
+                <x-input-error :messages="$errors->get('captcha')" class="mt-2" />
+            </div>
+            <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+        @endif
         <div style="align-items: center;" class="flex justify-between">
             <a href="{{ route('home') }}" class="text-sm text-slate-500 underline">Asosiy ekran</a>
             <a href="{{ route('guest.track') }}" class="text-sm text-slate-500 underline">Avvalgi murojaatni kuzatish</a>

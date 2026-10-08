@@ -3,14 +3,17 @@
     'name',
     'required' => false,
     'disabled' => false,
+    'maxFiles' => null,
+    'maxSizeKb' => null,
 ])
 
 @php
     use App\Support\TicketFileUpload;
 
-    $maxFiles = TicketFileUpload::MAX_FILES;
-    $maxFileSizeMb = TicketFileUpload::maxFileSizeMb();
-    $maxFileSizeBytes = TicketFileUpload::MAX_FILE_SIZE_KB * 1024;
+    $maxSizeKb ??= TicketFileUpload::MAX_FILE_SIZE_KB;
+    $maxFiles ??= TicketFileUpload::MAX_FILES;
+    $maxFileSizeMb = TicketFileUpload::maxFileSizeMb($maxSizeKb);
+    $maxFileSizeBytes = $maxSizeKb * 1024;
 @endphp
 
 <div
@@ -21,13 +24,13 @@
             const files = Array.from(event.target.files || []);
 
             if (files.length > {{ $maxFiles }}) {
-                this.error = @js(TicketFileUpload::tooManyFilesMessage());
+                this.error = @js(TicketFileUpload::tooManyFilesMessage($maxFiles));
                 event.target.value = '';
                 return;
             }
 
             if (files.some((file) => file.size > {{ $maxFileSizeBytes }})) {
-                this.error = @js(TicketFileUpload::fileTooLargeMessage());
+                this.error = @js(TicketFileUpload::fileTooLargeMessage($maxSizeKb));
                 event.target.value = '';
             }
         },
