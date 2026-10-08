@@ -33,7 +33,7 @@ class BackupController extends Controller
 
         return view('admin.backups.index', [
             'supported' => $supported,
-            'driver' => config('database.default'),
+            'driver' => $this->backups->driver(),
             'backups' => $list,
             'totalSize' => $list->sum('size'),
             'settings' => [
@@ -74,7 +74,7 @@ class BackupController extends Controller
         $audit->log($request->user()->id, 'backup.downloaded', "Zahira yuklab olindi: {$backup}", null, ['ip' => $request->ip()]);
 
         return response()->download($path, basename($path), [
-            'Content-Type' => 'application/vnd.sqlite3',
+            'Content-Type' => str_ends_with($path, '.gz') ? 'application/gzip' : 'application/vnd.sqlite3',
             'Cache-Control' => 'private, no-store',
         ]);
     }

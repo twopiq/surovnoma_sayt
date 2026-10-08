@@ -10,7 +10,7 @@ class RestoreDatabaseCommand extends Command
 {
     protected $signature = 'db:restore {file=latest : Backup fayl nomi yoki latest} {--no-safety-backup : Restore oldidan qo‘shimcha safety-backup olmaslik} {--force : Tasdiqsiz restore qilish}';
 
-    protected $description = 'Sqlite bazani backup fayldan tiklaydi';
+    protected $description = 'Bazani zahira fayldan tiklaydi (.sqlite yoki .json.gz)';
 
     public function handle(DatabaseBackupManager $manager): int
     {

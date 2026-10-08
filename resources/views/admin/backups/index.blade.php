@@ -39,8 +39,12 @@
 
         @unless ($supported)
             <p class="ui-note mb-4 !bg-orange-50 !text-orange-900">
-                <span>Joriy baza drayveri <b class="ui-mono">{{ $driver }}</b>. Saytdan zahira olish hozircha faqat SQLite uchun ishlaydi —
-                PostgreSQL/MySQL uchun serverda <span class="ui-mono">pg_dump</span> / <span class="ui-mono">mysqldump</span> bilan cron sozlang.</span>
+                <span>Joriy baza drayveri <b class="ui-mono">{{ $driver }}</b> uchun saytdan zahira qo'llab-quvvatlanmaydi (SQLite, MySQL/MariaDB, PostgreSQL ishlaydi).</span>
+            </p>
+        @else
+            <p class="ui-hint mb-3">
+                Baza: <b class="ui-mono">{{ $driver }}</b> —
+                {{ $driver === 'sqlite' ? 'zahira butun baza fayli (.sqlite) sifatida olinadi.' : "zahira barcha jadvallar ma'lumoti sifatida (.json.gz) olinadi; jadval tuzilmasi migratsiyalardan tiklanadi." }}
             </p>
         @endunless
 

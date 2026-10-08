@@ -10,7 +10,7 @@ class BackupDatabaseCommand extends Command
 {
     protected $signature = 'db:backup {--label=manual : Backup nomi uchun qisqa label} {--keep= : Nechta backup saqlab qolish kerak}';
 
-    protected $description = 'Sqlite bazaning zahira nusxasini yaratadi';
+    protected $description = 'Bazaning zahira nusxasini yaratadi (SQLite: .sqlite, MySQL/PostgreSQL: .json.gz)';
 
     public function handle(DatabaseBackupManager $manager): int
     {
