@@ -28,11 +28,11 @@
 
         <div class="mt-4 flex flex-wrap items-center justify-between gap-4">
             <a href="{{ route('login') }}" class="text-sm text-slate-500 underline hover:text-slate-700">
-                Kirish sahifasiga qaytish
+                {{ __('Kirish sahifasiga qaytish') }}
             </a>
 
             <x-primary-button>
-                Parolni yangilash
+                {{ __('Parolni yangilash') }}
             </x-primary-button>
         </div>
     </form>

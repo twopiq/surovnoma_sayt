@@ -1,6 +1,6 @@
 <x-guest-layout>
     <div class="mb-4 text-sm text-gray-600">
-        Parolingizni unutdingizmi? Email manzilingizni kiriting, biz sizga yangi parol o'rnatish havolasini yuboramiz.
+        {{ __('Parolingizni unutdingizmi? Email manzilingizni kiriting, biz sizga yangi parol o\'rnatish havolasini yuboramiz.') }}
     </div>
 
     <!-- Session Status -->
@@ -18,11 +18,11 @@
 
         <div class="mt-4 flex flex-wrap items-center justify-between gap-4">
             <a href="{{ route('login') }}" class="text-sm text-slate-500 underline hover:text-slate-700">
-                Kirish sahifasiga qaytish
+                {{ __('Kirish sahifasiga qaytish') }}
             </a>
 
             <x-primary-button>
-                Havolani yuborish
+                {{ __('Havolani yuborish') }}
             </x-primary-button>
         </div>
     </form>

@@ -33,14 +33,14 @@
     }"
     {{ $attributes }}
 >
-    <label class="ui-field-label" for="login">Login</label>
+    <label class="ui-field-label" for="login">{{ __('Login') }}</label>
     <input id="login" name="login" type="text" x-model="login" @input="touched = true"
            maxlength="{{ \App\Support\LoginSuggester::MAX_LENGTH }}" autocomplete="username" spellcheck="false"
-           pattern="[a-z0-9]+([._][a-z0-9]+)*" placeholder="masalan: behzod.qurbonov"
+           pattern="[a-z0-9]+([._][a-z0-9]+)*" placeholder="{{ __('masalan: behzod.qurbonov') }}"
            class="{{ $inputClass }} font-mono">
 
     <div class="mt-2 flex flex-wrap items-center gap-1.5" x-show="suggestions.length" x-cloak>
-        <span class="text-xs text-muted">Takliflar:</span>
+        <span class="text-xs text-muted">{{ __('Takliflar:') }}</span>
         <template x-for="item in suggestions" :key="item">
             <button type="button" class="ui-chip !px-2.5 !py-0.5 font-mono text-xs"
                     :aria-current="login === item ? 'page' : null"
@@ -48,8 +48,8 @@
         </template>
     </div>
     <p class="ui-hint">
-        F.I. (familiya va ism) dan tuziladi, {{ \App\Support\LoginSuggester::MAX_LENGTH }} belgigacha: kichik lotin harflari, raqam, nuqta yoki pastki chiziq.
-        <span x-show="loading" x-cloak>Takliflar yuklanmoqda…</span>
+        {{ __('F.I. (familiya va ism) dan tuziladi, :max belgigacha: kichik lotin harflari, raqam, nuqta yoki pastki chiziq.', ['max' => \App\Support\LoginSuggester::MAX_LENGTH]) }}
+        <span x-show="loading" x-cloak>{{ __('Takliflar yuklanmoqda…') }}</span>
     </p>
     <x-input-error :messages="$errors->get('login')" class="mt-1" />
 </div>

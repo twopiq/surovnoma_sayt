@@ -28,6 +28,7 @@ class ExecutorTicketController extends Controller
                 TicketStatus::Completed->value,
                 TicketStatus::Closed->value,
                 TicketStatus::Rejected->value,
+                TicketStatus::Cancelled->value,
             ])
             ->latest('deadline_at')
             ->paginate(12, ['*'], 'my_page');

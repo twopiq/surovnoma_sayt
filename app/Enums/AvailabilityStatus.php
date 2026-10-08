@@ -12,10 +12,10 @@ enum AvailabilityStatus: string
     public function label(): string
     {
         return match ($this) {
-            self::Active => 'Faol',
-            self::Busy => 'Band',
-            self::Offline => 'Ishda emas',
-            self::Vacation => "Ta'til",
+            self::Active => __('Faol'),
+            self::Busy => __('Band'),
+            self::Offline => __('Ishda emas'),
+            self::Vacation => __("Ta'til"),
         };
     }
 }

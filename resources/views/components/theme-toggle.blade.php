@@ -18,5 +18,5 @@
     <svg x-show="theme !== 'dark'" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
         <path fill-rule="evenodd" d="M14.5 13.88A6.5 6.5 0 0 1 6.12 5.5a6.5 6.5 0 1 0 8.38 8.38Z" clip-rule="evenodd" />
     </svg>
-    <span class="sr-only">Mavzuni almashtirish</span>
+    <span class="sr-only">{{ __('Mavzuni almashtirish') }}</span>
 </button>

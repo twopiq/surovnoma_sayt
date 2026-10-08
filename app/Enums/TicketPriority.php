@@ -40,11 +40,11 @@ enum TicketPriority: string
     public function label(): string
     {
         return match ($this) {
-            self::Low => 'Past',
-            self::Medium => "O'rta",
-            self::High => 'Yuqori',
-            self::Urgent => 'Shoshilinch',
-            self::Unassigned => 'Belgilanmagan',
+            self::Low => __('Past'),
+            self::Medium => __("O'rta"),
+            self::High => __('Yuqori'),
+            self::Urgent => __('Shoshilinch'),
+            self::Unassigned => __('Belgilanmagan'),
         };
     }
 

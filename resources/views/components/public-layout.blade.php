@@ -1,12 +1,12 @@
 @props(['title' => null, 'footerNote' => "Savol bo'lsa: RTT markaziga murojaat qiling"])
 
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<html lang="{{ app()->getLocale() }}">
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
-        <title>{{ $title ? $title.' · ' : '' }}RTT Markazi Elektron Murojaatlar Tizimi</title>
+        <title>{{ $title ? $title.' · ' : '' }}{{ __('RTT Markazi Elektron Murojaatlar Tizimi') }}</title>
         <link rel="icon" type="image/svg+xml" href="/favicon.svg">
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -22,16 +22,17 @@
                 <a href="{{ route('home') }}" class="flex items-center gap-3">
                     <x-application-logo class="h-10 w-10 shrink-0" />
                     <span>
-                        <b class="block font-display text-[17px] font-bold leading-5 tracking-[.01em]">RTT Markazi</b>
-                        <small class="block text-xs text-muted">Elektron murojaatlar tizimi</small>
+                        <b class="block font-display text-[17px] font-bold leading-5 tracking-[.01em]">{{ __('RTT Markazi') }}</b>
+                        <small class="block text-xs text-muted">{{ __('Elektron murojaatlar tizimi') }}</small>
                     </span>
                 </a>
                 <div class="flex items-center gap-2">
+                    <x-locale-switcher compact />
                     <x-theme-toggle />
                     @auth
-                        <a href="{{ route('app.home') }}" class="btn btn-primary">Kabinet</a>
+                        <a href="{{ route('app.home') }}" class="btn btn-primary">{{ __('Kabinet') }}</a>
                     @else
-                        <a href="{{ route('login') }}" class="btn btn-primary">Kirish</a>
+                        <a href="{{ route('login') }}" class="btn btn-primary">{{ __('Kirish') }}</a>
                     @endauth
                 </div>
             </header>
@@ -42,8 +43,8 @@
             </main>
 
             <footer class="mt-12 flex flex-wrap justify-between gap-2 border-t border-line py-7 text-[13px] text-muted">
-                <span>© RTT Markazi · Raqamli ta'lim texnologiyalari markazi</span>
-                <span>{{ $footerNote }}</span>
+                <span>{{ __('© RTT Markazi · Raqamli ta\'lim texnologiyalari markazi') }}</span>
+                <span>{{ __($footerNote) }}</span>
             </footer>
         </div>
     </body>

@@ -23,12 +23,12 @@
                     <span class="min-w-0 flex-1">
                         <span class="block truncate text-sm font-semibold" x-text="toast.title"></span>
                         <span class="mt-1 block text-xs text-slate-300" x-text="toast.body"></span>
-                        <span class="mt-2 block text-xs font-semibold text-white">Ochish</span>
+                        <span class="mt-2 block text-xs font-semibold text-white">{{ __('Ochish') }}</span>
                     </span>
                     <button
                         type="button"
                         class="shrink-0 rounded p-1 text-slate-400 transition hover:bg-white/10 hover:text-white"
-                        aria-label="Bildirishnomani yopish"
+                        aria-label="{{ __('Bildirishnomani yopish') }}"
                         @click.prevent="dismiss(toast.id)"
                     >
                         <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">

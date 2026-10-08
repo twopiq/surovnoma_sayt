@@ -36,6 +36,8 @@ return Application::configure(basePath: dirname(__DIR__))
             ->dailyAt('00:00')
             ->withoutOverlapping();    })
     ->withMiddleware(function (Middleware $middleware) {
+        $middleware->web(append: [\App\Http\Middleware\SetLocale::class]);
+
         $middleware->alias([
             'approved' => \App\Http\Middleware\EnsureUserIsApproved::class,
             'role' => \Spatie\Permission\Middleware\RoleMiddleware::class,

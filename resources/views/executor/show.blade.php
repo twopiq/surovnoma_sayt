@@ -35,6 +35,7 @@
                     \App\Enums\TicketStatus::Completed,
                     \App\Enums\TicketStatus::Closed,
                     \App\Enums\TicketStatus::Rejected,
+                    \App\Enums\TicketStatus::Cancelled,
                 ], true);
             @endphp
 

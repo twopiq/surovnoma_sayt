@@ -1,10 +1,10 @@
 <x-guest-layout>
     <div class="mb-6 flex items-center justify-between gap-4">
         <div>
-            <h1 class="font-display text-2xl font-bold text-slate-900">Kirish forma</h1>
-            <p class="mt-2 text-sm text-slate-500">Hisobingiz orqali murojaatlarni boshqaring va kuzating.</p>
+            <h1 class="font-display text-2xl font-bold text-slate-900">{{ __('Kirish forma') }}</h1>
+            <p class="mt-2 text-sm text-slate-500">{{ __('Hisobingiz orqali murojaatlarni boshqaring va kuzating.') }}</p>
         </div>
-        <a href="{{ route('home') }}" class="rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100">Bosh sahifa</a>
+        <a href="{{ route('home') }}" class="rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100">{{ __('Bosh sahifa') }}</a>
     </div>
 
     <x-auth-session-status class="mb-4" :status="session('status')" />
@@ -17,7 +17,7 @@
             <x-input-label for="login" value="Email yoki login" />
             <x-text-input id="login" class="block mt-1 w-full" type="text" name="login" :value="old('login')" required autofocus autocomplete="username" />
             <x-input-error :messages="$errors->get('login')" class="mt-2" />
-            <p class="mt-2 text-xs text-slate-400">Kirish uchun email manzil yoki avtomatik yaratilgan login ishlatishingiz mumkin.</p>
+            <p class="mt-2 text-xs text-slate-400">{{ __('Kirish uchun email manzil yoki avtomatik yaratilgan login ishlatishingiz mumkin.') }}</p>
         </div>
 
         <!-- Password -->
@@ -31,20 +31,20 @@
         <div class="block mt-4">
             <label for="remember_me" class="inline-flex items-center">
                 <input id="remember_me" type="checkbox" class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500" name="remember">
-                <span class="ms-2 text-sm text-gray-600">Eslab qolish</span>
+                <span class="ms-2 text-sm text-gray-600">{{ __('Eslab qolish') }}</span>
             </label>
         </div>
 
         <div class="mt-4 flex items-center justify-between">
-            <a href="{{ route('register') }}" class="text-sm text-slate-500 underline hover:text-slate-700">Ro'yxatdan o'tmaganmisiz?</a>
+            <a href="{{ route('register') }}" class="text-sm text-slate-500 underline hover:text-slate-700">{{ __('Ro\'yxatdan o\'tmaganmisiz?') }}</a>
             @if (Route::has('password.request'))
                 <a class="underline text-sm text-gray-500 hover:text-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" href="{{ route('password.request') }}">
-                    Parolni unutdingizmi?
+                    {{ __('Parolni unutdingizmi?') }}
                 </a>
             @endif
 
             <x-primary-button class="ms-3">
-                Kirish
+                {{ __('Kirish') }}
             </x-primary-button>
         </div>
     </form>

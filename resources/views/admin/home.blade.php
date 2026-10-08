@@ -110,7 +110,7 @@
 
                     @if ($executors->isEmpty())
                         <p class="ui-note">
-                            @if (in_array($selected->status, [\App\Enums\TicketStatus::Completed, \App\Enums\TicketStatus::Closed, \App\Enums\TicketStatus::Rejected], true))
+                            @if (in_array($selected->status, [\App\Enums\TicketStatus::Completed, \App\Enums\TicketStatus::Closed, \App\Enums\TicketStatus::Rejected, \App\Enums\TicketStatus::Cancelled], true))
                                 Bu murojaat yakunlangan — tayinlash shart emas.
                             @else
                                 Faol ijrochi topilmadi.

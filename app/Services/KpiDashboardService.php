@@ -480,6 +480,7 @@ class KpiDashboardService
             TicketStatus::Completed->value,
             TicketStatus::Closed->value,
             TicketStatus::Rejected->value,
+            TicketStatus::Cancelled->value,
         ];
     }
 }

@@ -85,7 +85,7 @@ class KpiDashboardController extends KpiBaseController
                     ->whereYear('created_at', $month[0])->whereMonth('created_at', $month[1]))
                     ->whereNotNull('deadline_at')
                     ->where('deadline_at', '<', now())
-                    ->whereNotIn('status', [TicketStatus::Completed->value, TicketStatus::Closed->value, TicketStatus::Rejected->value]),
+                    ->whereNotIn('status', [TicketStatus::Completed->value, TicketStatus::Closed->value, TicketStatus::Rejected->value, TicketStatus::Cancelled->value]),
                 'assignedTickets as on_time' => fn ($q) => $q->when($month, fn ($mq) => $mq
                     ->whereYear('created_at', $month[0])->whereMonth('created_at', $month[1]))
                     ->whereNotNull('completed_at')
@@ -212,6 +212,7 @@ class KpiDashboardController extends KpiBaseController
             TicketStatus::Completed->value  => 'Bajarildi',
             TicketStatus::Closed->value     => 'Yopildi',
             TicketStatus::Rejected->value   => 'Rad etildi',
+            TicketStatus::Cancelled->value  => 'Bekor qilindi',
             default                         => $status,
         };
     }

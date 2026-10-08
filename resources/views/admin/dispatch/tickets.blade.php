@@ -136,7 +136,7 @@
 
                     <div class="mt-4 flex flex-wrap gap-2" x-data="{ reject: false }">
                         <a href="{{ route('admin.dispatch.show', $selected) }}#assign" class="btn btn-primary">Tayinlash</a>
-                        @if (! in_array($selected->status, [\App\Enums\TicketStatus::Rejected, \App\Enums\TicketStatus::Closed], true))
+                        @if (! in_array($selected->status, [\App\Enums\TicketStatus::Rejected, \App\Enums\TicketStatus::Closed, \App\Enums\TicketStatus::Cancelled], true))
                             <button type="button" class="btn btn-secondary" @click="reject = ! reject" :aria-expanded="reject.toString()">Rad etish</button>
                             <form method="POST" action="{{ route('admin.dispatch.close', $selected) }}" onsubmit="return confirm('Murojaat yopilib arxivga o\'tkazilsinmi?')">
                                 @csrf

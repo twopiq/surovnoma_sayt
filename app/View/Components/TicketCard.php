@@ -44,8 +44,8 @@ class TicketCard extends Component
 
     public function filesTitle(): string
     {
-        return 'Biriktirilgan: '.collect($this->files)
-            ->map(fn (array $file) => $file['count'].' '.$file['long'])
+        return __('Biriktirilgan').': '.collect($this->files)
+            ->map(fn (array $file) => $file['count'].' '.__($file['long']))
             ->implode(', ');
     }
 
@@ -54,34 +54,38 @@ class TicketCard extends Component
         $status = $this->ticket->status;
 
         if (in_array($status, [TicketStatus::Completed, TicketStatus::Closed], true)) {
-            return ['done', 'Bajarilgan'];
+            return ['done', __('Bajarilgan')];
         }
 
         if ($status === TicketStatus::Rejected) {
-            return ['rej', 'Rad etilgan'];
+            return ['rej', __('Rad etilgan')];
+        }
+
+        if ($status === TicketStatus::Cancelled) {
+            return ['rej', __('Bekor qilingan')];
         }
 
         $deadline = $this->ticket->deadline_at;
 
         if (! $deadline) {
-            return ['none', 'Muddat belgilanmagan'];
+            return ['none', __('Muddat belgilanmagan')];
         }
 
         $minutes = (int) abs(now()->diffInMinutes($deadline));
 
         if ($deadline->isPast()) {
-            return ['late', $this->humanDuration($minutes).' kechikdi'];
+            return ['late', __(':time kechikdi', ['time' => $this->humanDuration($minutes)])];
         }
 
-        return [$minutes < 24 * 60 ? 'soon' : 'ok', $this->humanDuration($minutes).' qoldi'];
+        return [$minutes < 24 * 60 ? 'soon' : 'ok', __(':time qoldi', ['time' => $this->humanDuration($minutes)])];
     }
 
     private function humanDuration(int $minutes): string
     {
         return match (true) {
-            $minutes < 60 => max($minutes, 1).' daqiqa',
-            $minutes < 24 * 60 => intdiv($minutes, 60).' soat',
-            default => intdiv($minutes, 24 * 60).' kun',
+            $minutes < 60 => __(':n daqiqa', ['n' => max($minutes, 1)]),
+            $minutes < 24 * 60 => __(':n soat', ['n' => intdiv($minutes, 60)]),
+            default => __(':n kun', ['n' => intdiv($minutes, 24 * 60)]),
         };
     }
 
@@ -95,7 +99,7 @@ class TicketCard extends Component
 
         $description = trim((string) $this->ticket->description);
 
-        return $description !== '' ? Str::limit($description, 90) : 'Mavzu kiritilmagan';
+        return $description !== '' ? Str::limit($description, 90) : __('Mavzu kiritilmagan');
     }
 
     private function groupFiles(): array
@@ -114,7 +118,7 @@ class TicketCard extends Component
                 'type' => $type,
                 'count' => $counts[$type],
                 'long' => $meta['long'],
-                'text' => $counts[$type] > 1 ? $meta['label'].' ×'.$counts[$type] : $meta['label'],
+                'text' => $counts[$type] > 1 ? __($meta['label']).' ×'.$counts[$type] : __($meta['label']),
             ])
             ->values()
             ->all();

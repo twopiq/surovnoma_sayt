@@ -157,7 +157,7 @@ class Ticket extends Model
     {
         return $this->deadline_at !== null
             && $this->deadline_at->isPast()
-            && ! in_array($this->status, [TicketStatus::Completed, TicketStatus::Closed, TicketStatus::Rejected], true);
+            && ! in_array($this->status, [TicketStatus::Completed, TicketStatus::Closed, TicketStatus::Rejected, TicketStatus::Cancelled], true);
     }
 
     /** Arxiv uchun: murojaat yakunlangan vaqt (bajarilgan, rad etilgan yoki oxirgi o'zgarish). */
@@ -189,6 +189,7 @@ class Ticket extends Model
     {
         return match (true) {
             $this->status === TicketStatus::Rejected => ['Rad etilgan', 'closed'],
+            $this->status === TicketStatus::Cancelled => ['Bekor qilingan', 'closed'],
             ! $this->deadline_at || ! $this->completed_at => ['Muddatsiz', 'closed'],
             $this->completed_at->lte($this->deadline_at) => ['Muddatida', 'completed'],
             default => ['Kechikib', 'new'],
@@ -218,18 +219,26 @@ class Ticket extends Model
         $minutes = $this->slaProfile?->duration_minutes;
 
         if (! $minutes) {
-            return 'Belgilanmagan';
+            return __('Belgilanmagan');
         }
 
         $workdays = app(SlaCalculator::class)->workdaysFromMinutes($minutes);
         $label = rtrim(rtrim(number_format($workdays, 2, '.', ''), '0'), '.');
 
-        return $label.' ish kuni';
+        return __(':n ish kuni', ['n' => $label]);
     }
 
     public function deadlineLabel(): string
     {
-        return $this->deadline_at?->format('d.m.Y H:i') ?? 'Belgilanmagan';
+        return $this->deadline_at?->format('d.m.Y H:i') ?? __('Belgilanmagan');
+    }
+
+    /** Murojaatchi faqat o'z, hali yakunlanmagan murojaatini bekor qila oladi. */
+    public function canBeCancelledBy(User $user): bool
+    {
+        return $this->requester_id !== null
+            && $this->requester_id === $user->id
+            && in_array($this->status, [TicketStatus::New, TicketStatus::Assigned, TicketStatus::InProgress, TicketStatus::Returned, TicketStatus::Overdue], true);
     }
 
     public function canExecutorClaim(): bool
@@ -273,6 +282,7 @@ class Ticket extends Model
             TicketStatus::Completed => 'Bajarilgan',
             TicketStatus::Closed => 'Yopilgan',
             TicketStatus::Rejected => 'Rad etilgan',
+            TicketStatus::Cancelled => 'Bekor qilingan',
             default => 'Mavjud emas',
         };
     }

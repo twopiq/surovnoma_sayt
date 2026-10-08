@@ -92,13 +92,13 @@
     <div class="sticky top-0 flex h-14 items-center justify-between border-b border-line bg-sunken px-4 lg:hidden">
         <a href="{{ $homeHref }}" class="flex items-center gap-2.5">
             <x-application-logo class="h-8 w-8" />
-            <span class="font-display text-[17px] font-semibold leading-6 text-ink">RTT Markazi</span>
+            <span class="font-display text-[17px] font-semibold leading-6 text-ink">{{ __('RTT Markazi') }}</span>
             <span class="role-chip">{{ $user->display_role }}</span>
         </a>
         <div class="flex items-center gap-2">
             <x-theme-toggle />
             <button type="button" @click="open = ! open" class="inline-flex h-9 w-9 items-center justify-center rounded-md border border-line-strong bg-surface text-ink" :aria-expanded="open.toString()">
-                <span class="sr-only">Menyu</span>
+                <span class="sr-only">{{ __('Menyu') }}</span>
                 <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 20 20" stroke-width="1.6" stroke-linecap="round" aria-hidden="true">
                     <path d="M3.5 5.5h13M3.5 10h13M3.5 14.5h13" />
                 </svg>
@@ -121,26 +121,30 @@
         <div class="flex items-center justify-between gap-2 px-5 pb-4 pt-5">
             <a href="{{ $homeHref }}" class="flex min-w-0 items-center gap-2.5">
                 <x-application-logo class="h-8 w-8 shrink-0" />
-                <span class="truncate font-display text-[17px] font-semibold leading-6 text-ink">RTT Markazi</span>
+                <span class="truncate font-display text-[17px] font-semibold leading-6 text-ink">{{ __('RTT Markazi') }}</span>
             </a>
             <span class="role-chip">{{ $user->display_role }}</span>
         </div>
 
-        <nav class="flex flex-1 flex-col gap-0.5 overflow-y-auto px-3 pb-3" aria-label="Asosiy menyu">
+        <nav class="flex flex-1 flex-col gap-0.5 overflow-y-auto px-3 pb-3" aria-label="{{ __('Asosiy menyu') }}">
             @foreach ($sidebarItems as $item)
                 @if (array_key_exists('group', $item))
-                    <div class="side-nav__group" @if ($item['group'] === '') aria-hidden="true" @endif>{{ $item['group'] }}</div>
+                    <div class="side-nav__group" @if ($item['group'] === '') aria-hidden="true" @endif>{{ $item['group'] !== '' ? __($item['group']) : '' }}</div>
                     @continue
                 @endif
                 <a href="{{ $item['href'] }}" class="side-nav__item" @if ($item['active']) aria-current="page" @endif>
                     <svg class="h-[18px] w-[18px] shrink-0" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">{!! $sidebarIcons[$item['icon']] ?? '' !!}</svg>
-                    <span class="min-w-0 flex-1 truncate">{{ $item['label'] }}</span>
+                    <span class="min-w-0 flex-1 truncate">{{ __($item['label']) }}</span>
                     @if (($item['badge'] ?? 0) > 0)
                         <span @class(['side-nav__count', 'side-nav__count--alert' => ($item['badgeTone'] ?? null) === 'alert'])>{{ $item['badge'] }}</span>
                     @endif
                 </a>
             @endforeach
         </nav>
+
+        <div class="px-3 pb-2 pt-1">
+            <x-locale-switcher />
+        </div>
 
         <div class="relative border-t border-line p-3" x-data="{ userMenuOpen: false }" @click.outside="userMenuOpen = false">
             <div
@@ -157,17 +161,17 @@
             >
                 <a href="{{ route('profile.edit') }}" class="side-nav__item">
                     <svg class="h-4 w-4" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10" cy="7" r="3"/><path d="M4 17c.6-3 3-4.5 6-4.5s5.4 1.5 6 4.5"/></svg>
-                    <span>Profil</span>
+                    <span>{{ __('Profil') }}</span>
                 </a>
                 <a href="{{ route('app.settings') }}" class="side-nav__item">
                     <svg class="h-4 w-4" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10" cy="10" r="2.5"/><path d="M10 2.5v2M10 15.5v2M2.5 10h2M15.5 10h2M4.7 4.7l1.4 1.4M13.9 13.9l1.4 1.4M4.7 15.3l1.4-1.4M13.9 6.1l1.4-1.4"/></svg>
-                    <span>Sozlamalar</span>
+                    <span>{{ __('Sozlamalar') }}</span>
                 </a>
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
                     <button type="submit" class="side-nav__item w-full text-left !text-red-700 hover:!bg-red-50">
                         <svg class="h-4 w-4" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4.5V4a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-.5M9 10h8M14.5 7.5 17 10l-2.5 2.5"/></svg>
-                        <span>Chiqish</span>
+                        <span>{{ __('Chiqish') }}</span>
                     </button>
                 </form>
             </div>

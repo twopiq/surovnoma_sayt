@@ -73,7 +73,7 @@ class AdminHomeService
     private function tabQuery(string $tab): Builder
     {
         return match ($tab) {
-            'archive' => Ticket::query()->whereIn('status', [TicketStatus::Completed->value, TicketStatus::Closed->value, TicketStatus::Rejected->value]),
+            'archive' => Ticket::query()->whereIn('status', [TicketStatus::Completed->value, TicketStatus::Closed->value, TicketStatus::Rejected->value, TicketStatus::Cancelled->value]),
             'unassigned' => Ticket::query()->whereIn('status', $this->activeStatuses())->whereNull('assigned_executor_id'),
             'overdue' => Ticket::query()->whereIn('status', $this->activeStatuses())->whereNotNull('deadline_at')->where('deadline_at', '<', now()),
             default => Ticket::query()->whereIn('status', $this->activeStatuses()),

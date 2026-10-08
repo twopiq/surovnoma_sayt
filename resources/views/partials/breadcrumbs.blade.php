@@ -58,7 +58,7 @@
 @endphp
 
 @if ($crumbs !== [])
-    <nav class="pg-crumb mb-1" aria-label="Yo'l ko'rsatkich">
+    <nav class="pg-crumb mb-1" aria-label="{{ __('Yo\'l ko\'rsatkich') }}">
         <ol class="flex flex-wrap items-center gap-1.5">
             @foreach ($crumbs as [$label, $url])
                 <li class="flex items-center gap-1.5">
@@ -66,9 +66,9 @@
                         <span aria-hidden="true">›</span>
                     @endif
                     @if ($url && ! $loop->last)
-                        <a href="{{ $url }}" class="hover:text-ink hover:underline">{{ $label }}</a>
+                        <a href="{{ $url }}" class="hover:text-ink hover:underline">{{ __($label) }}</a>
                     @else
-                        <span @class(['text-ink' => $loop->last]) @if ($loop->last) aria-current="page"@endif>{{ $label }}</span>
+                        <span @class(['text-ink' => $loop->last]) @if ($loop->last) aria-current="page"@endif>{{ __($label) }}</span>
                     @endif
                 </li>
             @endforeach

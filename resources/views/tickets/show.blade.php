@@ -17,6 +17,37 @@
                     <x-primary-button class="bg-cyan-700 hover:bg-cyan-800">Izoh yuborish</x-primary-button>
                 </form>
             </div>
+
+            @if ($ticket->canBeCancelledBy(auth()->user()))
+                <div class="rounded-2xl border border-red-200 bg-white p-6" x-data="{ open: {{ $errors->has('reason') ? 'true' : 'false' }} }">
+                    <div class="flex flex-wrap items-center justify-between gap-3">
+                        <div>
+                            <h3 class="font-semibold text-slate-900">{{ __('Murojaatni bekor qilish') }}</h3>
+                            <p class="mt-1 text-sm text-slate-500">{{ __("Muammo hal bo'lgan yoki murojaat endi kerak bo'lmasa, uni bekor qiling — ijrochi ishni to'xtatadi.") }}</p>
+                        </div>
+                        <button type="button" class="btn btn-danger" x-show="! open" @click="open = true">{{ __('Bekor qilish') }}</button>
+                    </div>
+
+                    <form method="POST" action="{{ route('tickets.cancel', $ticket) }}" class="mt-4 space-y-3" x-show="open" x-cloak>
+                        @csrf
+                        <label for="cancel-reason" class="block text-sm font-medium text-slate-700">{{ __('Sabab (ixtiyoriy)') }}</label>
+                        <textarea id="cancel-reason" name="reason" rows="2" maxlength="500" class="block w-full rounded-md border-slate-300 shadow-sm focus:border-cyan-500 focus:ring-cyan-500">{{ old('reason') }}</textarea>
+                        <x-input-error :messages="$errors->get('reason')" />
+                        <p class="text-sm text-red-700">{{ __('Bekor qilingan murojaatni qayta tiklab bo\'lmaydi.') }}</p>
+                        <div class="flex flex-wrap gap-2">
+                            <button type="submit" class="btn btn-danger">{{ __('Ha, bekor qilish') }}</button>
+                            <button type="button" class="btn btn-secondary" @click="open = false">{{ __('Yo\'q') }}</button>
+                        </div>
+                    </form>
+                </div>
+            @elseif ($ticket->status === \App\Enums\TicketStatus::Cancelled)
+                <div class="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-600">
+                    {{ __('Bu murojaat siz tomondan bekor qilingan.') }}
+                    @if ($ticket->metadata['cancel_reason'] ?? null)
+                        <span class="block mt-1">{{ __('Sabab') }}: {{ $ticket->metadata['cancel_reason'] }}</span>
+                    @endif
+                </div>
+            @endif
         </div>
 
         <div class="space-y-6">

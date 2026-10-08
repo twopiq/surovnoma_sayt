@@ -333,6 +333,52 @@ class TicketService
         });
     }
 
+    /**
+     * Murojaatchi o'z murojaatini bekor qiladi (aktual bo'lmay qolgan). Bazadan o'chirilmaydi —
+     * "Bekor qilindi" holatida arxivda qoladi, barcha ish ro'yxatlaridan chiqadi, KPI'ga bajarilgan bo'lib kirmaydi.
+     */
+    public function cancelByRequester(Ticket $ticket, User $requester, ?string $reason = null): Ticket
+    {
+        return DB::transaction(function () use ($ticket, $requester, $reason): Ticket {
+            $ticket->refresh();
+
+            if (! $ticket->canBeCancelledBy($requester)) {
+                throw new \DomainException('Bu murojaatni bekor qilib bo\'lmaydi.');
+            }
+
+            $fromStatus = $ticket->status;
+            $fromExternal = $ticket->external_status;
+            $note = 'Murojaatchi bekor qildi'.($reason ? ": {$reason}" : '.');
+
+            $ticket->forceFill([
+                'status' => TicketStatus::Cancelled,
+                'external_status' => ExternalStatus::Cancelled,
+                'closed_at' => now(),
+                'metadata' => [...($ticket->metadata ?? []), 'cancelled_by_requester' => true, 'cancel_reason' => $reason],
+            ])->save();
+
+            $this->recordHistory($ticket, $requester, $fromStatus, TicketStatus::Cancelled, $fromExternal, ExternalStatus::Cancelled, $note);
+            $this->auditService->log($requester->id, 'ticket.cancelled', 'Murojaatchi murojaatni bekor qildi', $ticket, [
+                'reason' => $reason,
+            ]);
+            $this->resolvePendingReturnRequests($ticket, $requester);
+
+            $body = "{$ticket->reference}: {$note}";
+            $meta = ['kind' => 'ticket_cancelled', 'ticket_id' => $ticket->id, 'ticket_reference' => $ticket->reference];
+
+            $ticket->assignedExecutor?->notify(new TicketStatusNotification(
+                'Murojaat bekor qilindi',
+                $body,
+                route('executor.tickets.show', $ticket),
+                $meta,
+            ));
+
+            $this->notifyAdmins('Murojaat bekor qilindi', $body, route('admin.dispatch.show', $ticket), $meta);
+
+            return $ticket->fresh();
+        });
+    }
+
     public function addComment(Ticket $ticket, ?User $user, string $body, bool $isPublic): TicketComment
     {
         $comment = TicketComment::create([
@@ -346,7 +392,52 @@ class TicketService
             'public' => $isPublic,
         ]);
 
+        if ($isPublic) {
+            $this->notifyAboutComment($ticket, $user, $body);
+        }
+
         return $comment;
+    }
+
+    /**
+     * Ommaviy izoh: xodim yozsa — murojaatchiga (yoki operatorga), murojaatchi yozsa — biriktirilgan ijrochiga.
+     */
+    protected function notifyAboutComment(Ticket $ticket, ?User $author, string $body): void
+    {
+        $ticket->loadMissing(['requester', 'operator', 'assignedExecutor']);
+        $preview = \Illuminate\Support\Str::limit($body, 300);
+        $authorName = $author?->name ?? 'Xodim';
+
+        if ($author && $author->id === $ticket->requester_id) {
+            $ticket->assignedExecutor?->notify(new TicketStatusNotification(
+                'Murojaatga yangi izoh',
+                "{$ticket->reference}: {$authorName}: {$preview}",
+                route('executor.tickets.show', $ticket),
+                ['kind' => 'ticket_comment', 'ticket_id' => $ticket->id, 'ticket_reference' => $ticket->reference],
+            ));
+
+            return;
+        }
+
+        $recipients = collect([
+            $ticket->requester ? [$ticket->requester, route('tickets.show', $ticket)] : null,
+            $ticket->operator && $ticket->operator_id !== $ticket->requester_id
+                ? [$ticket->operator, route('operator.tickets.show', $ticket)]
+                : null,
+        ])->filter();
+
+        foreach ($recipients as [$recipient, $url]) {
+            if ($author && $recipient->id === $author->id) {
+                continue;
+            }
+
+            $recipient->notify(new TicketStatusNotification(
+                'Murojaatingizga javob keldi',
+                "{$ticket->reference}: {$authorName}: {$preview}",
+                $url,
+                ['kind' => 'ticket_comment', 'ticket_id' => $ticket->id, 'ticket_reference' => $ticket->reference],
+            ));
+        }
     }
 
     public function verifyGuestCode(Ticket $ticket, string $code): bool

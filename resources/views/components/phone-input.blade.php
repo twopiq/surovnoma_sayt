@@ -50,7 +50,7 @@
         }
     }"
 >
-    <x-input-label :for="$displayId" :value="$label" />
+    <x-input-label :for="$displayId" :value="__($label)" />
     <input type="hidden" name="{{ $name }}" :value="fullPhone()">
     <div class="mt-1 flex rounded-md border border-slate-300 bg-white shadow-sm focus-within:border-cyan-500 focus-within:ring-1 focus-within:ring-cyan-500">
         <span class="inline-flex items-center rounded-l-md border-r border-slate-300 bg-slate-50 px-3 text-sm font-semibold text-slate-600">+998</span>
@@ -70,7 +70,7 @@
         >
     </div>
     @if ($hint)
-        <p class="mt-2 text-xs text-slate-400">{{ $hint }}</p>
+        <p class="mt-2 text-xs text-slate-400">{{ __($hint) }}</p>
     @endif
     <x-input-error :messages="$errors->get($name)" class="mt-2" />
 </div>

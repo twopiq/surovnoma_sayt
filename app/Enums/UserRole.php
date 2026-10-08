@@ -13,11 +13,11 @@ enum UserRole: string
     public function label(): string
     {
         return match ($this) {
-            self::Requester => 'Murojaatchi',
-            self::Operator => 'Operator',
-            self::Admin => 'Admin',
-            self::Executor => 'Ijrochi',
-            self::Manager => 'Rahbar',
+            self::Requester => __('Murojaatchi'),
+            self::Operator => __('Operator'),
+            self::Admin => __('Admin'),
+            self::Executor => __('Ijrochi'),
+            self::Manager => __('Rahbar'),
         };
     }
 

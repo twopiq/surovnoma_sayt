@@ -5,7 +5,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
-        <title>{{ config('app.name', 'RTT Markazi Elektron Murojaatlar Tizimi') }}</title>
+        <title>{{ __('RTT Markazi Elektron Murojaatlar Tizimi') }}</title>
 
         <link rel="icon" type="image/svg+xml" href="/favicon.svg">
         <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -23,11 +23,12 @@
                 <a href="{{ route('home') }}" class="flex items-center gap-3 text-slate-800">
                     <x-application-logo class="h-12 w-12" />
                     <div>
-                        <div class="font-display text-lg font-bold theme-ink">RTT Markazi</div>
-                        <div class="text-sm theme-muted">Elektron murojaatlar tizimi</div>
+                        <div class="font-display text-lg font-bold theme-ink">{{ __('RTT Markazi') }}</div>
+                        <div class="text-sm theme-muted">{{ __('Elektron murojaatlar tizimi') }}</div>
                     </div>
                 </a>
-                <div>
+                <div class="flex items-center gap-2">
+                    <x-locale-switcher compact />
                     <x-theme-toggle />
                 </div>
             </div>

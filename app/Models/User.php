@@ -34,6 +34,7 @@ class User extends Authenticatable
         'job_title',
         'department_id',
         'availability_status',
+        'locale',
         'telegram_chat_id',
         'telegram_username',
         'telegram_link_token',

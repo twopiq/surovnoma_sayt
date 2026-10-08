@@ -10,7 +10,7 @@
             @endif
             {{ $pill }}
         </span>
-        <span class="tk-card__deadline">Tugash {{ $ticket->deadline_at ? $ticket->deadlineLabel() : 'belgilanmagan' }}</span>
+        <span class="tk-card__deadline">{{ __('Tugash') }} {{ $ticket->deadline_at ? $ticket->deadlineLabel() : __('belgilanmagan') }}</span>
     </div>
 
     <div class="tk-card__body">
@@ -20,15 +20,15 @@
                 @if ($showStatus)
                     <x-ticket-status-badge :status="$ticket->status" />
                 @endif
-                <span class="tk-chip">{{ $ticket->category?->name ?? 'Kategoriyasiz' }}</span>
+                <span class="tk-chip">{{ $ticket->category?->name ?? __('Kategoriyasiz') }}</span>
             </span>
         </div>
         <h3 class="tk-card__subject">{{ $subject }}</h3>
         <span class="tk-card__name">{{ $ticket->requester_name }}</span>
         <span class="tk-card__meta">
-            Qabul {{ $ticket->receivedAtLabel() }} · Muddat {{ $ticket->slaDurationLabel() }}
+            {{ __('Qabul') }} {{ $ticket->receivedAtLabel() }} · {{ __('Muddat') }} {{ $ticket->slaDurationLabel() }}
             @if ($ticket->assignedExecutor)
-                · Ijrochi: {{ $ticket->assignedExecutor->name }}
+                · {{ __('Ijrochi') }}: {{ $ticket->assignedExecutor->name }}
             @endif
         </span>
     </div>
@@ -37,7 +37,7 @@
         <div class="tk-card__files" title="{{ $filesTitle() }}">
             <span class="tk-card__files-total">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.4 11.6l-9.2 9.2a6 6 0 0 1-8.5-8.5l9.2-9.2a4 4 0 0 1 5.7 5.7l-9.2 9.2a2 2 0 0 1-2.8-2.8l8.5-8.5"/></svg>
-                {{ $filesTotal }} ta fayl
+                {{ __(':n ta fayl', ['n' => $filesTotal]) }}
             </span>
             @foreach ($files as $file)
                 <span class="tk-file tk-file--{{ $file['type'] }}">

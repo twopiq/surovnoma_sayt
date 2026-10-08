@@ -54,6 +54,7 @@ class DeadlineMonitorService
                 TicketStatus::Completed,
                 TicketStatus::Closed,
                 TicketStatus::Rejected,
+                TicketStatus::Cancelled,
                 TicketStatus::Overdue,
             ], true)) {
                 return false;
@@ -152,6 +153,7 @@ class DeadlineMonitorService
             TicketStatus::Completed->value,
             TicketStatus::Closed->value,
             TicketStatus::Rejected->value,
+            TicketStatus::Cancelled->value,
             TicketStatus::Overdue->value,
         ];
     }

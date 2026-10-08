@@ -97,4 +97,21 @@ class TicketController extends Controller
 
         return back()->with('status', "Izoh qo'shildi.");
     }
+
+    public function cancel(Request $request, Ticket $ticket): RedirectResponse
+    {
+        abort_unless($ticket->requester_id === auth()->id(), 403);
+
+        if (! $ticket->canBeCancelledBy(auth()->user())) {
+            return back()->with('status', __("Yakunlangan murojaatni bekor qilib bo'lmaydi."));
+        }
+
+        $data = $request->validate([
+            'reason' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        $this->ticketService->cancelByRequester($ticket, auth()->user(), filled($data['reason'] ?? null) ? trim($data['reason']) : null);
+
+        return redirect()->route('tickets.show', $ticket)->with('status', __('Murojaat bekor qilindi.'));
+    }
 }

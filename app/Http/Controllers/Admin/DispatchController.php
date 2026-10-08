@@ -315,6 +315,7 @@ class DispatchController extends Controller
                 ->whereNotIn('status', [
                     TicketStatus::Closed->value,
                     TicketStatus::Rejected->value,
+                    TicketStatus::Cancelled->value,
                 ]);
         }
 
@@ -338,6 +339,7 @@ class DispatchController extends Controller
             TicketStatus::Completed,
             TicketStatus::Closed,
             TicketStatus::Rejected,
+            TicketStatus::Cancelled,
         ];
     }
 

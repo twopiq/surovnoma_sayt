@@ -23,6 +23,7 @@ class SendDeadlineAlertsCommand extends Command
                 TicketStatus::Completed->value,
                 TicketStatus::Closed->value,
                 TicketStatus::Rejected->value,
+                TicketStatus::Cancelled->value,
                 TicketStatus::Overdue->value,
             ])
             ->get();

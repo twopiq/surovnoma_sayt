@@ -15,7 +15,7 @@
 
         <div class="flex justify-end mt-4">
             <x-primary-button>
-                Tasdiqlash
+                {{ __('Tasdiqlash') }}
             </x-primary-button>
         </div>
     </form>

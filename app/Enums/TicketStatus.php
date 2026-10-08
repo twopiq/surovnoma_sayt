@@ -12,25 +12,27 @@ enum TicketStatus: string
     case Completed = 'completed';
     case Closed = 'closed';
     case Rejected = 'rejected';
+    case Cancelled = 'cancelled';
 
     public function label(): string
     {
         return match ($this) {
-            self::New => 'Yangi',
-            self::Assigned => 'Taqsimlandi',
-            self::InProgress => 'Jarayonda',
-            self::Returned => 'Qaytarildi',
-            self::Overdue => 'Kechikkan',
-            self::Completed => 'Bajarildi',
-            self::Closed => 'Yopildi',
-            self::Rejected => 'Rad etildi',
+            self::New => __('Yangi'),
+            self::Assigned => __('Taqsimlandi'),
+            self::InProgress => __('Jarayonda'),
+            self::Returned => __('Qaytarildi'),
+            self::Overdue => __('Kechikkan'),
+            self::Completed => __('Bajarildi'),
+            self::Closed => __('Yopildi'),
+            self::Rejected => __('Rad etildi'),
+            self::Cancelled => __('Bekor qilindi'),
         };
     }
 
     public function badgeClasses(): string
     {
         return match ($this) {
-            self::Closed, self::Rejected => 'bg-slate-100 text-slate-800 ring-slate-300',
+            self::Closed, self::Rejected, self::Cancelled => 'bg-slate-100 text-slate-800 ring-slate-300',
             self::Assigned => 'bg-yellow-100 text-yellow-900 ring-yellow-300',
             self::InProgress => 'bg-orange-100 text-orange-900 ring-orange-300',
             self::New, self::Returned, self::Overdue => 'bg-red-100 text-red-800 ring-red-300',
@@ -41,7 +43,7 @@ enum TicketStatus: string
     public function textClasses(): string
     {
         return match ($this) {
-            self::Closed, self::Rejected => 'text-slate-500',
+            self::Closed, self::Rejected, self::Cancelled => 'text-slate-500',
             self::Assigned => 'text-yellow-500',
             self::InProgress => 'text-orange-500',
             self::New, self::Returned, self::Overdue => 'text-red-600',
@@ -52,7 +54,7 @@ enum TicketStatus: string
     public function boardClasses(): string
     {
         return match ($this) {
-            self::Closed, self::Rejected => 'border-slate-300 bg-slate-100/80',
+            self::Closed, self::Rejected, self::Cancelled => 'border-slate-300 bg-slate-100/80',
             self::Assigned => 'border-yellow-200 bg-yellow-50/70',
             self::InProgress => 'border-orange-200 bg-orange-50/70',
             self::New, self::Returned, self::Overdue => 'border-red-200 bg-red-50/70',
@@ -70,7 +72,7 @@ enum TicketStatus: string
             self::Assigned => 'assigned',
             self::InProgress => 'in-progress',
             self::Completed => 'completed',
-            self::Closed, self::Rejected => 'closed',
+            self::Closed, self::Rejected, self::Cancelled => 'closed',
         };
     }
 

@@ -13,7 +13,7 @@
             'notification-deleted' => "Bildirishnoma o'chirildi.",
             'notifications-cleared' => 'Bildirishnomalar tozalandi.',
         ];
-        $message = $messages[$status] ?? $status;
+        $message = __($messages[$status] ?? $status);
         $isWarning = in_array($status, ['telegram-migration-required'], true);
     @endphp
 
@@ -50,7 +50,7 @@
                 <button
                     type="button"
                     class="shrink-0 rounded p-1 opacity-70 transition hover:bg-black/5 hover:opacity-100"
-                    aria-label="Xabarni yopish"
+                    aria-label="{{ __('Xabarni yopish') }}"
                     @click="show = false"
                 >
                     <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">

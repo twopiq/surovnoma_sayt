@@ -19,14 +19,14 @@ class PublicPagesTest extends TestCase
 
         $this->get(route('home'))
             ->assertOk()
-            ->assertSee("Qaysi yo'l sizga mos?", false)
+            ->assertSee("Qaysi yo'l sizga mos?")
             ->assertSee('Akkauntsiz murojaat yuboring')
             ->assertSee(route('guest.create'), false);
 
         $this->get(route('guest.create'))
             ->assertOk()
             ->assertSee('Murojaat yuborish')
-            ->assertSee("Keyin nima bo'ladi?", false);
+            ->assertSee("Keyin nima bo'ladi?");
 
         $this->get(route('guest.track'))
             ->assertOk()
@@ -45,7 +45,7 @@ class PublicPagesTest extends TestCase
             ->assertOk()
             ->assertSee($ticket->reference)
             ->assertSee('aria-current="step"', false)
-            ->assertSee("Ma'lumotlar", false);
+            ->assertSee("Ma'lumotlar");
     }
 
     public function test_blocked_page_shows_block_number(): void

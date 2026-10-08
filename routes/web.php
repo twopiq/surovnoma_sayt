@@ -27,6 +27,11 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/pending-approval', [HomeController::class, 'pendingApproval'])->name('pending-approval');
+// Til almashtirish (O'zbekcha / Русский / English) — mehmon va foydalanuvchi uchun
+Route::post('/locale/{locale}', \App\Http\Controllers\LocaleController::class)
+    ->whereIn('locale', array_keys(\App\Support\Locales::AVAILABLE))
+    ->middleware('throttle:30,1')
+    ->name('locale.switch');
 // Ro'yxatdan o'tish va admin "Yangi foydalanuvchi" formasida login takliflari (F.I. dan)
 Route::get('/login-suggestions', \App\Http\Controllers\LoginSuggestionController::class)
     ->middleware('throttle:30,1')
@@ -95,6 +100,7 @@ Route::middleware(['auth', 'approved'])->group(function () {
         Route::post('/', [TicketController::class, 'store'])->name('store');
         Route::get('/{ticket}', [TicketController::class, 'show'])->name('show');
         Route::post('/{ticket}/comments', [TicketController::class, 'comment'])->name('comment');
+        Route::post('/{ticket}/cancel', [TicketController::class, 'cancel'])->middleware('throttle:10,1')->name('cancel');
     });
 
     Route::prefix('operator/tickets')->name('operator.tickets.')->middleware('role:operator')->group(function () {

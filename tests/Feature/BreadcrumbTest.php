@@ -12,7 +12,7 @@ class BreadcrumbTest extends TestCase
 {
     use RefreshDatabase;
 
-    private const NAV = "aria-label=\"Yo'l ko'rsatkich\"";
+    private const NAV = 'aria-label="Yo&#039;l ko&#039;rsatkich"';
 
     public function test_breadcrumb_shows_only_on_inner_pages_with_working_parent_link(): void
     {

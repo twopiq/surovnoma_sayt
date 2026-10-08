@@ -80,7 +80,7 @@ class KpiTicketsController extends KpiBaseController
                 'date'          => $t->created_at?->format('Y-m-d H:i:s') ?: '',
                 'deadline'      => $t->deadline_at?->format('Y-m-d H:i:s'),
                 'isOverdue'     => $t->deadline_at && $t->deadline_at->isPast()
-                    && ! in_array($status, [TicketStatus::Completed->value, TicketStatus::Closed->value, TicketStatus::Rejected->value]),
+                    && ! in_array($status, [TicketStatus::Completed->value, TicketStatus::Closed->value, TicketStatus::Rejected->value, TicketStatus::Cancelled->value]),
             ];
         })->values();
 
@@ -112,6 +112,7 @@ class KpiTicketsController extends KpiBaseController
             TicketStatus::Completed->value  => 'Bajarildi',
             TicketStatus::Closed->value     => 'Yopildi',
             TicketStatus::Rejected->value   => 'Rad etildi',
+            TicketStatus::Cancelled->value  => 'Bekor qilindi',
             default                         => $status,
         };
     }
