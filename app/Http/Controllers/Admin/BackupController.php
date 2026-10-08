@@ -42,7 +42,7 @@ class BackupController extends Controller
                 'daily_at' => BackupSchedule::dailyAt(),
                 'keep' => BackupSchedule::keep(),
             ],
-            'frequencies' => BackupSchedule::FREQUENCIES,
+            'frequencies' => array_map(fn (string $label) => __($label), BackupSchedule::FREQUENCIES),
             'lastScheduledAt' => $lastScheduledAt,
             'health' => BackupSchedule::health($lastScheduledAt),
             'backupPath' => config('database-backup.path'),
@@ -58,9 +58,9 @@ class BackupController extends Controller
         }
 
         $name = basename($backup['path']);
-        $audit->log($request->user()->id, 'backup.created', "Zahira nusxa olindi: {$name}", null, ['size' => $backup['size']]);
+        $audit->log($request->user()->id, 'backup.created', __('Zahira nusxa olindi: :name', ['name' => $name], 'uz'), null, ['size' => $backup['size']]);
 
-        return back()->with('status', "Zahira nusxa olindi: {$name}");
+        return back()->with('status', __('Zahira nusxa olindi: :name', ['name' => $name]));
     }
 
     public function download(Request $request, string $backup, AuditService $audit): BinaryFileResponse
@@ -71,7 +71,7 @@ class BackupController extends Controller
             abort(404);
         }
 
-        $audit->log($request->user()->id, 'backup.downloaded', "Zahira yuklab olindi: {$backup}", null, ['ip' => $request->ip()]);
+        $audit->log($request->user()->id, 'backup.downloaded', __('Zahira yuklab olindi: :name', ['name' => $backup], 'uz'), null, ['ip' => $request->ip()]);
 
         return response()->download($path, basename($path), [
             'Content-Type' => str_ends_with($path, '.gz') ? 'application/gzip' : 'application/vnd.sqlite3',
@@ -86,7 +86,7 @@ class BackupController extends Controller
         $user = $request->user();
 
         if (! Hash::check($request->input('password'), $user->password)) {
-            return back()->withErrors(['restore' => "Parol noto'g'ri — tiklash bekor qilindi."]);
+            return back()->withErrors(['restore' => __("Parol noto'g'ri — tiklash bekor qilindi.")]);
         }
 
         try {
@@ -109,8 +109,10 @@ class BackupController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect()->route('login')->with('status', "Baza «{$backup}» nusxasidan tiklandi. Xavfsizlik nusxasi: "
-            .($result['safety_backup'] ? basename($result['safety_backup']) : '—').'. Qaytadan kiring.');
+        return redirect()->route('login')->with('status', __('Baza «:backup» nusxasidan tiklandi. Xavfsizlik nusxasi: :safety. Qaytadan kiring.', [
+            'backup' => $backup,
+            'safety' => $result['safety_backup'] ? basename($result['safety_backup']) : '—',
+        ]));
     }
 
     public function destroy(Request $request, string $backup, AuditService $audit): RedirectResponse
@@ -121,9 +123,9 @@ class BackupController extends Controller
             abort(404);
         }
 
-        $audit->log($request->user()->id, 'backup.deleted', "Zahira o'chirildi: {$backup}");
+        $audit->log($request->user()->id, 'backup.deleted', __("Zahira o'chirildi: :name", ['name' => $backup], 'uz'));
 
-        return back()->with('status', "Zahira o'chirildi: {$backup}");
+        return back()->with('status', __("Zahira o'chirildi: :name", ['name' => $backup]));
     }
 
     public function updateSettings(Request $request, AuditService $audit): RedirectResponse
@@ -140,8 +142,8 @@ class BackupController extends Controller
         SystemSetting::put('backup.daily_at', $data['daily_at'] ?? '02:00');
         SystemSetting::put('backup.keep', (int) $data['keep']);
 
-        $audit->log($request->user()->id, 'backup.settings', 'Avtomatik zahira sozlamalari yangilandi', null, $data);
+        $audit->log($request->user()->id, 'backup.settings', __('Avtomatik zahira sozlamalari yangilandi', [], 'uz'), null, $data);
 
-        return back()->with('status', 'Avtomatik zahira sozlamalari saqlandi.');
+        return back()->with('status', __('Avtomatik zahira sozlamalari saqlandi.'));
     }
 }

@@ -10,14 +10,14 @@ enum UserRole: string
     case Executor = 'executor';
     case Manager = 'manager';
 
-    public function label(): string
+    public function label(?string $locale = null): string
     {
         return match ($this) {
-            self::Requester => __('Murojaatchi'),
-            self::Operator => __('Operator'),
-            self::Admin => __('Admin'),
-            self::Executor => __('Ijrochi'),
-            self::Manager => __('Rahbar'),
+            self::Requester => __('Murojaatchi', [], $locale),
+            self::Operator => __('Operator', [], $locale),
+            self::Admin => __('Admin', [], $locale),
+            self::Executor => __('Ijrochi', [], $locale),
+            self::Manager => __('Rahbar', [], $locale),
         };
     }
 

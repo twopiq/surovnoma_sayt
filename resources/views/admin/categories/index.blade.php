@@ -1,16 +1,16 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-display text-2xl font-bold">Muammo kategoriyalari</h2>
+        <h2 class="font-display text-2xl font-bold">{{ __('Muammo kategoriyalari') }}</h2>
     </x-slot>
 
     <div class="mx-auto max-w-none space-y-6 px-4 pt-8 sm:px-6 lg:px-8">
         <form method="POST" action="{{ route('admin.categories.store') }}" class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             @csrf
-            <h3 class="font-semibold">Yangi kategoriya</h3>
-            <p class="mt-2 text-sm text-slate-500">Bu ro'yxat murojaatdagi muammo turini bildiradi. Bo'limlar esa xodim yoki murojaatchi ishlaydigan bo'lim sifatida qoladi.</p>
+            <h3 class="font-semibold">{{ __('Yangi kategoriya') }}</h3>
+            <p class="mt-2 text-sm text-slate-500">{{ __('Bu ro\'yxat murojaatdagi muammo turini bildiradi. Bo\'limlar esa xodim yoki murojaatchi ishlaydigan bo\'lim sifatida qoladi.') }}</p>
             <div class="mt-4 grid gap-3 md:grid-cols-[1fr_1fr_220px]">
-                <input name="name" value="{{ old('name') }}" placeholder="Kategoriya nomi" class="rounded-md border-slate-300 shadow-sm" />
-                <input name="description" value="{{ old('description') }}" placeholder="Tavsif" class="rounded-md border-slate-300 shadow-sm" />
+                <input name="name" value="{{ old('name') }}" placeholder="{{ __('Kategoriya nomi') }}" class="rounded-md border-slate-300 shadow-sm" />
+                <input name="description" value="{{ old('description') }}" placeholder="{{ __('Tavsif') }}" class="rounded-md border-slate-300 shadow-sm" />
                 <select name="default_priority" class="rounded-md border-slate-300 shadow-sm">
                     @foreach ($priorities as $priority)
                         <option value="{{ $priority->value }}" @selected(old('default_priority', \App\Enums\TicketPriority::Medium->value) === $priority->value)>{{ $priority->label() }}</option>
@@ -19,7 +19,7 @@
             </div>
             <x-input-error :messages="$errors->get('name')" class="mt-2" />
             <x-input-error :messages="$errors->get('default_priority')" class="mt-2" />
-            <button class="mt-4 rounded-md bg-cyan-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-cyan-800">Qo'shish</button>
+            <button class="mt-4 rounded-md bg-cyan-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-cyan-800">{{ __('Qo\'shish') }}</button>
         </form>
 
         <div class="space-y-4">
@@ -37,14 +37,14 @@
                         </select>
                         <label class="inline-flex items-center gap-2 text-sm text-slate-600">
                             <input type="checkbox" name="is_active" value="1" @checked($category->is_active)>
-                            Faol
+                            {{ __('Faol') }}
                         </label>
                     </div>
-                    <button class="mt-4 rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700">Yangilash</button>
+                    <button class="mt-4 rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700">{{ __('Yangilash') }}</button>
                 </form>
             @empty
                 <div class="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-500">
-                    Hozircha kategoriya yo'q.
+                    {{ __('Hozircha kategoriya yo\'q.') }}
                 </div>
             @endforelse
         </div>

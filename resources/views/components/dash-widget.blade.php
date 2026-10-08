@@ -20,10 +20,10 @@
             <form method="POST" action="{{ route('app.dashboard.widgets.toggle', $key) }}" class="shrink-0">
                 @csrf
                 <button type="submit" @class(['dash-vis', 'dash-vis--on' => $visible, 'dash-vis--icon' => $compact])
-                    title="{{ $visible ? 'Rahbarda ko\'rinadi — yashirish' : 'Rahbarda yashirin — ko\'rsatish' }}"
+                    title="{{ $visible ? __('Rahbarda ko\'rinadi — yashirish') : __('Rahbarda yashirin — ko\'rsatish') }}"
                     aria-pressed="{{ $visible ? 'true' : 'false' }}">
                     <i aria-hidden="true"></i>
-                    <span @class(['sr-only' => $compact])>{{ $visible ? "Rahbarda ko'rinadi" : 'Rahbarda yashirin' }}</span>
+                    <span @class(['sr-only' => $compact])>{{ $visible ? __("Rahbarda ko'rinadi") : __('Rahbarda yashirin') }}</span>
                 </button>
             </form>
         @endif

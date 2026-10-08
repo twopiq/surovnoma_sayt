@@ -2,10 +2,10 @@
     <div class="mx-auto max-w-none px-4 py-8 sm:px-6 lg:px-8">
         <div class="mb-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div>
-                <p class="text-sm font-semibold uppercase tracking-wide text-cyan-700">Bildirishnomalar</p>
-                <h1 class="mt-2 font-display text-3xl font-bold text-slate-950">Barcha xabarlar</h1>
+                <p class="text-sm font-semibold uppercase tracking-wide text-cyan-700">{{ __('Bildirishnomalar') }}</p>
+                <h1 class="mt-2 font-display text-3xl font-bold text-slate-950">{{ __('Barcha xabarlar') }}</h1>
                 <p class="mt-2 max-w-2xl text-sm text-slate-600">
-                    Sizga yuborilgan tizim xabarlari shu yerda saqlanadi. Xabarni bosib unga bog'liq sahifaga o'ting.
+                    {{ __('Sizga yuborilgan tizim xabarlari shu yerda saqlanadi. Xabarni bosib unga bog\'liq sahifaga o\'ting.') }}
                 </p>
             </div>
 
@@ -14,7 +14,7 @@
                     <form method="POST" action="{{ route('notifications.read-all') }}">
                         @csrf
                         <button type="submit" class="rounded-md border border-cyan-200 bg-cyan-50 px-4 py-2 text-sm font-semibold text-cyan-800 transition hover:bg-cyan-100">
-                            Hammasini o'qildi qilish
+                            {{ __('Hammasini o\'qildi qilish') }}
                         </button>
                     </form>
                 @endif
@@ -23,7 +23,7 @@
                     <form method="POST" action="{{ route('notifications.clear-all') }}">
                         @csrf
                         <button type="submit" class="rounded-md border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-100">
-                            Tozalash
+                            {{ __('Tozalash') }}
                         </button>
                     </form>
                 @endif
@@ -33,7 +33,7 @@
         <section class="overflow-hidden rounded-md border border-slate-200 bg-white shadow-sm">
             <div class="border-b border-slate-100 px-5 py-4">
                 <div class="text-sm font-semibold text-slate-800">
-                    O'qilmagan xabarlar: <span class="text-cyan-700">{{ $unreadCount }}</span>
+                    {{ __('O\'qilmagan xabarlar:') }} <span class="text-cyan-700">{{ $unreadCount }}</span>
                 </div>
             </div>
 
@@ -43,12 +43,12 @@
                         <a href="{{ route('notifications.show', $notification->id) }}" class="flex min-w-0 flex-1 items-start gap-4 transition hover:opacity-90">
                             <span class="mt-2 h-2.5 w-2.5 shrink-0 rounded-full {{ is_null($notification->read_at) ? 'bg-cyan-600' : 'bg-slate-300' }}"></span>
                             <span class="min-w-0 flex-1">
-                                <span class="block text-base font-bold text-slate-950">{{ $notification->data['title'] ?? 'Bildirishnoma' }}</span>
-                                <span class="mt-1 block text-sm leading-6 text-slate-600">{{ $notification->data['body'] ?? '' }}</span>
+                                <span class="block text-base font-bold text-slate-950">{{ \App\Support\StoredText::translate($notification->data['title'] ?? 'Bildirishnoma') }}</span>
+                                <span class="mt-1 block text-sm leading-6 text-slate-600">{{ \App\Support\StoredText::translateLines($notification->data['body'] ?? '') }}</span>
                                 <span class="mt-3 flex flex-wrap items-center gap-3 text-xs font-semibold text-slate-500">
                                     <span>{{ $notification->created_at?->format('d.m.Y H:i') }}</span>
                                     @if (! empty($notification->data['url']))
-                                        <span class="text-cyan-700">Bog'liq sahifani ochish</span>
+                                        <span class="text-cyan-700">{{ __('Bog\'liq sahifani ochish') }}</span>
                                     @endif
                                 </span>
                             </span>
@@ -57,7 +57,7 @@
                         <form method="POST" action="{{ route('notifications.destroy', $notification->id) }}" class="shrink-0">
                             @csrf
                             @method('DELETE')
-                            <button type="submit" class="rounded-md p-2 text-slate-400 transition hover:bg-red-50 hover:text-red-600" aria-label="Bildirishnomani o'chirish">
+                            <button type="submit" class="rounded-md p-2 text-slate-400 transition hover:bg-red-50 hover:text-red-600" aria-label="{{ __('Bildirishnomani o\'chirish') }}">
                                 <svg viewBox="0 0 20 20" fill="currentColor" class="h-5 w-5" aria-hidden="true">
                                     <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 0 1 1.414 0L10 8.586l4.293-4.293a1 1 0 1 1 1.414 1.414L11.414 10l4.293 4.293a1 1 0 0 1-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 0 1-1.414-1.414L8.586 10 4.293 5.707a1 1 0 0 1 0-1.414Z" clip-rule="evenodd" />
                                 </svg>
@@ -72,8 +72,8 @@
                                 <path d="M8 15a2 2 0 1 0 4 0H8Z" />
                             </svg>
                         </div>
-                        <h2 class="mt-4 text-lg font-bold text-slate-950">Bildirishnoma yo'q</h2>
-                        <p class="mt-1 text-sm text-slate-500">Yangi tizim xabarlari kelganda shu yerda ko'rinadi.</p>
+                        <h2 class="mt-4 text-lg font-bold text-slate-950">{{ __('Bildirishnoma yo\'q') }}</h2>
+                        <p class="mt-1 text-sm text-slate-500">{{ __('Yangi tizim xabarlari kelganda shu yerda ko\'rinadi.') }}</p>
                     </div>
                 @endforelse
             </div>

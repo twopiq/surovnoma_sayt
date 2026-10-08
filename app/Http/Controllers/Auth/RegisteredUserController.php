@@ -40,9 +40,9 @@ class RegisteredUserController extends Controller
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ], [
             ...\App\Support\LoginSuggester::messages(),
-            'name.regex' => "F.I.Sh. kamida ism va familiyadan iborat bo'lishi kerak.",
-            'phone.required' => 'Telefon raqamini kiriting.',
-            'phone.regex' => "Telefon raqami +998 99 999 99 99 ko'rinishida bo'lishi va 9 ta raqamdan iborat bo'lishi kerak.",
+            'name.regex' => __("F.I.Sh. kamida ism va familiyadan iborat bo'lishi kerak."),
+            'phone.required' => __('Telefon raqamini kiriting.'),
+            'phone.regex' => __("Telefon raqami +998 99 999 99 99 ko'rinishida bo'lishi va 9 ta raqamdan iborat bo'lishi kerak."),
         ]);
 
         $user = User::create([
@@ -61,8 +61,8 @@ class RegisteredUserController extends Controller
         if (Role::query()->where('name', UserRole::Admin->value)->where('guard_name', 'web')->exists()) {
             User::role(UserRole::Admin->value)->get()->each(
                 fn (User $admin) => $admin->notify(new TicketStatusNotification(
-                    "Yangi foydalanuvchi ro'yxatdan o'tdi",
-                    "{$user->name} ({$user->email}) tasdiqlash uchun kutilmoqda.",
+                    __("Yangi foydalanuvchi ro'yxatdan o'tdi", [], 'uz'),
+                    __(':name (:email) tasdiqlash uchun kutilmoqda.', ['name' => $user->name, 'email' => $user->email], 'uz'),
                     route('admin.users.index'),
                     ['kind' => 'user_registration_pending', 'user_id' => $user->id],
                 ))

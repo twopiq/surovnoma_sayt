@@ -22,7 +22,12 @@ class SystemHealth
     {
         $production = app()->environment('production');
         $checks = [];
+        // Guruh, nom, qiymat va maslahat o'zbekcha kalit — joriy tilga o'giriladi (texnik qiymatlar o'zgarmaydi)
         $add = function (string $group, string $label, string $value, string $status = 'info', ?string $hint = null) use (&$checks): void {
+            $group = __($group);
+            $label = StoredText::translate($label);
+            $value = __($value);
+            $hint = $hint === null ? null : __($hint);
             $checks[] = compact('group', 'label', 'value', 'status', 'hint');
         };
 

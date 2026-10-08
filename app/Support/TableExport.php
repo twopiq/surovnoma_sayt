@@ -20,6 +20,11 @@ class TableExport
         iterable $rows,
         array $meta = [],
     ): StreamedResponse {
+        // Sarlavha, ustun nomlari va meta kalitlari o'zbekcha kalit — joriy tilga o'giriladi
+        $title = StoredText::translate($title);
+        $headings = array_map(fn ($heading) => __((string) $heading), $headings);
+        $meta = collect($meta)->mapWithKeys(fn ($value, $key) => [__((string) $key) => $value])->all();
+
         return self::isCsv($format)
             ? self::csv($filename, $headings, $rows)
             : self::excel($filename, $title, $headings, $rows, $meta);

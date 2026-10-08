@@ -60,7 +60,7 @@ class UserApprovalController extends Controller
         return view('admin.users.list', [
             'users' => $users,
             'filters' => $this->userListFilters($request),
-            'segments' => self::SEGMENTS,
+            'segments' => array_map(fn (string $label) => __($label), self::SEGMENTS),
             'counts' => $this->counts(),
             'roles' => UserRole::cases(),
             'departments' => Department::query()->where('is_active', true)->orderBy('name')->get(),
@@ -117,7 +117,7 @@ class UserApprovalController extends Controller
             'can_access_app_dashboard' => $data['role'] === UserRole::Manager->value && (bool) ($data['can_access_app_dashboard'] ?? false),
         ])->save();
 
-        return redirect()->route('admin.users.list', ['user' => $user->id])->with('status', 'Foydalanuvchi yaratildi.');
+        return redirect()->route('admin.users.list', ['user' => $user->id])->with('status', __('Foydalanuvchi yaratildi.'));
     }
 
     public function export(Request $request)
@@ -227,7 +227,7 @@ class UserApprovalController extends Controller
             ])
             : redirect()->route('admin.users.profile', ['user' => $user->id]);
 
-        return $redirect->with('status', 'Foydalanuvchi maʼlumotlari yangilandi.');
+        return $redirect->with('status', __('Foydalanuvchi maʼlumotlari yangilandi.'));
     }
 
     public function sendPasswordReset(User $user): RedirectResponse
@@ -235,7 +235,7 @@ class UserApprovalController extends Controller
         $status = Password::sendResetLink(['email' => $user->email]);
 
         return back()->with('status', $status === Password::RESET_LINK_SENT
-            ? "Parolni tiklash havolasi {$user->email} manziliga yuborildi."
+            ? __('Parolni tiklash havolasi :email manziliga yuborildi.', ['email' => $user->email])
             : __($status));
     }
 
@@ -258,7 +258,7 @@ class UserApprovalController extends Controller
                 'is_active' => true,
             ])->save();
 
-            return back()->with('status', 'Foydalanuvchi tasdiqlandi.');
+            return back()->with('status', __('Foydalanuvchi tasdiqlandi.'));
         }
 
         $user->forceFill([
@@ -266,7 +266,7 @@ class UserApprovalController extends Controller
             'is_active' => false,
         ])->save();
 
-        return back()->with('status', "Ro'yxatdan o'tish so'rovi rad etildi.");
+        return back()->with('status', __("Ro'yxatdan o'tish so'rovi rad etildi."));
     }
 
     /** Tasodifiy o'chirishga qarshi: foydalanuvchi loginini qo'lda yozib, oxiriga shu so'zni qo'shish shart. */
@@ -283,18 +283,18 @@ class UserApprovalController extends Controller
         $phrase = trim((string) $request->input('confirmation'));
 
         if ($user->is($admin)) {
-            return back()->withErrors(['delete' => "O'z hisobingizni o'chira olmaysiz."]);
+            return back()->withErrors(['delete' => __("O'z hisobingizni o'chira olmaysiz.")]);
         }
 
         if ($phrase !== self::deletePhrase($user)) {
-            return back()->withErrors(['delete' => "Tasdiqlash matni mos kelmadi — o'chirish bekor qilindi. Aynan «".self::deletePhrase($user)."» deb yozing."]);
+            return back()->withErrors(['delete' => __("Tasdiqlash matni mos kelmadi — o'chirish bekor qilindi. Aynan «:phrase» deb yozing.", ['phrase' => self::deletePhrase($user)])]);
         }
 
         $isLastAdmin = $user->hasRole(UserRole::Admin->value)
             && User::role(UserRole::Admin->value)->where('is_active', true)->whereKeyNot($user->id)->doesntExist();
 
         if ($isLastAdmin) {
-            return back()->withErrors(['delete' => "Bu oxirgi faol administrator — uni o'chirib bo'lmaydi."]);
+            return back()->withErrors(['delete' => __("Bu oxirgi faol administrator — uni o'chirib bo'lmaydi.")]);
         }
 
         $snapshot = [
@@ -313,12 +313,12 @@ class UserApprovalController extends Controller
             $user->delete(); // murojaat, izoh, tarix va h.k. saqlanadi — bog'lanish nullOnDelete
         });
 
-        $audit->log($admin->id, 'user.deleted', "Foydalanuvchi o'chirildi: {$snapshot['name']} ({$snapshot['login']})", null, [
+        $audit->log($admin->id, 'user.deleted', __("Foydalanuvchi o'chirildi: :name (:login)", ['name' => $snapshot['name'], 'login' => $snapshot['login']], 'uz'), null, [
             ...$snapshot,
             'ip' => $request->ip(),
         ]);
 
-        return redirect()->route('admin.users.list')->with('status', "«{$snapshot['name']}» foydalanuvchisi o'chirildi.");
+        return redirect()->route('admin.users.list')->with('status', __("«:name» foydalanuvchisi o'chirildi.", ['name' => $snapshot['name']]));
     }
 
     public function updateDashboardAccess(Request $request, User $user): RedirectResponse
@@ -333,7 +333,7 @@ class UserApprovalController extends Controller
             'can_access_app_dashboard' => (bool) ($data['can_access_app_dashboard'] ?? false),
         ])->save();
 
-        return back()->with('status', 'Rahbar uchun dashboard ruxsati yangilandi.');
+        return back()->with('status', __('Rahbar uchun dashboard ruxsati yangilandi.'));
     }
 
     protected function counts(): array
@@ -425,8 +425,8 @@ class UserApprovalController extends Controller
     protected function messages(): array
     {
         return [
-            'name.regex' => "F.I.Sh. kamida ism va familiyadan iborat bo'lishi kerak.",
-            'phone.regex' => "Telefon raqami +998 99 999 99 99 ko'rinishida bo'lishi kerak.",
+            'name.regex' => __("F.I.Sh. kamida ism va familiyadan iborat bo'lishi kerak."),
+            'phone.regex' => __("Telefon raqami +998 99 999 99 99 ko'rinishida bo'lishi kerak."),
         ];
     }
 }

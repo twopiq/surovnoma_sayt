@@ -42,14 +42,14 @@ class GuestSettingsController extends Controller
             'turnstile_secret_key' => ['nullable', 'string', 'max:255'],
             'turnstile_clear' => ['nullable', 'boolean'],
         ], [
-            'max_file_size_mb.max' => "Fayl hajmi 20 MB dan oshmasligi kerak.",
+            'max_file_size_mb.max' => __('Fayl hajmi 20 MB dan oshmasligi kerak.'),
         ]);
 
         $whitelist = $this->parseIpList((string) ($data['whitelist_ips'] ?? ''));
 
         if ($whitelist['invalid'] !== []) {
             return back()->withInput()->withErrors([
-                'whitelist_ips' => "Noto'g'ri IP yoki tarmoq: ".implode(', ', $whitelist['invalid']),
+                'whitelist_ips' => __("Noto'g'ri IP yoki tarmoq: :list", ['list' => implode(', ', $whitelist['invalid'])]),
             ]);
         }
 
@@ -73,11 +73,11 @@ class GuestSettingsController extends Controller
 
         GuestSetting::store($values);
 
-        $audit->log($request->user()->id, 'guest_settings.updated', 'Guest himoya sozlamalari yangilandi', null, [
+        $audit->log($request->user()->id, 'guest_settings.updated', __('Mehmon himoyasi sozlamalari yangilandi', [], 'uz'), null, [
             'whitelist_ips' => $whitelist['valid'],
         ]);
 
-        return back()->with('status', 'Sozlamalar saqlandi.');
+        return back()->with('status', __('Sozlamalar saqlandi.'));
     }
 
     /**

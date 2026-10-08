@@ -2,7 +2,7 @@
     'items',
     'max' => null,
     'accent' => 'rgb(var(--c-accent))',
-    'emptyText' => "Ma'lumot yo'q.",
+    'emptyText' => __("Ma'lumot yo'q."),
     'minWidth' => 760,
     'height' => 320,
     'slotSize' => 72,
@@ -37,7 +37,7 @@
                 style="min-width: {{ $width }}px;"
             @endunless
             role="img"
-            aria-label="Diagramma"
+            aria-label="{{ __('Diagramma') }}"
         >
             <defs>
                 <linearGradient id="{{ $gradientId }}" x1="0" x2="0" y1="0" y2="1">

@@ -12,7 +12,7 @@
     ]);
 @endphp
 
-<x-public-layout title="{{ __('Murojaat yuborildi') }}">
+<x-public-layout :title="__('Murojaat yuborildi')">
     <div class="grid items-start gap-6 py-6 lg:grid-cols-[1.1fr_1fr]">
         <div>
             <span class="status-badge status--completed">{{ __('Qabul qilindi') }}</span>

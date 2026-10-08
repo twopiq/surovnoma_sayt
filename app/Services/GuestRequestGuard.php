@@ -149,7 +149,7 @@ class GuestRequestGuard
         if (filled($request->input(self::HONEYPOT_FIELD))) {
             $scope = $whitelisted ? GuestBlock::SCOPE_DEVICE : GuestBlock::SCOPE_IP;
 
-            return $this->block($request, $scope, 'bot', "Yashirin maydon to'ldirilgan");
+            return $this->block($request, $scope, 'bot', __("Yashirin maydon to'ldirilgan", [], 'uz'));
         }
 
         $deviceId = $this->deviceId($request);
@@ -168,7 +168,7 @@ class GuestRequestGuard
 
         foreach ($checks as [$key, $max, $scope, $reason]) {
             if (RateLimiter::tooManyAttempts($key, $max)) {
-                return $this->block($request, $scope, $reason, "Limit: {$max} ta murojaat");
+                return $this->block($request, $scope, $reason, __('Limit: :max ta murojaat', ['max' => $max], 'uz'));
             }
         }
 
@@ -190,7 +190,7 @@ class GuestRequestGuard
 
         foreach (array_filter([$this->contactKey($email), $phone ? $this->contactKey($phone) : null]) as $key) {
             if (RateLimiter::tooManyAttempts($key, $max)) {
-                return $this->block($request, GuestBlock::SCOPE_CONTACT, 'contact_daily', "Limit: {$max} ta murojaat", $email, $phone);
+                return $this->block($request, GuestBlock::SCOPE_CONTACT, 'contact_daily', __('Limit: :max ta murojaat', ['max' => $max], 'uz'), $email, $phone);
             }
         }
 
@@ -299,20 +299,24 @@ class GuestRequestGuard
             return;
         }
 
-        $lines = array_filter([
-            'Sabab: '.$block->reasonLabel(),
-            'Turi: '.$block->scopeLabel(),
-            'IP: '.$block->ip,
-            'Qurilma: '.$block->deviceLabel(),
-            $block->email ? 'Email: '.$block->email : null,
-            $block->phone ? 'Telefon: '.$block->phone : null,
-        ]);
+        // Har bir admin o'z tilida oladi
+        $message = function (?string $locale) use ($block): TelegramMessage {
+            $lines = array_filter([
+                __('Sabab', [], $locale).': '.$block->reasonLabel($locale),
+                __('Turi', [], $locale).': '.$block->scopeLabel($locale),
+                'IP: '.$block->ip,
+                __('Qurilma', [], $locale).': '.$block->deviceLabel($locale),
+                $block->email ? 'Email: '.$block->email : null,
+                $block->phone ? __('Telefon', [], $locale).': '.$block->phone : null,
+            ]);
 
-        $message = new TelegramMessage(
-            "Yangi mehmon bloki: BLOK-{$block->id}",
-            implode("\n", $lines),
-            route('admin.guest-blocks.index'),
-        );
+            return new TelegramMessage(
+                __('Yangi mehmon bloki: :block', ['block' => "BLOK-{$block->id}"], $locale),
+                implode("\n", $lines),
+                route('admin.guest-blocks.index'),
+                locale: $locale,
+            );
+        };
 
         // Javob qaytgandan keyin yuboriladi — foydalanuvchi Telegramni kutmaydi
         dispatch(function () use ($message) {
@@ -322,7 +326,7 @@ class GuestRequestGuard
                 ->get()
                 ->each(function (User $admin) use ($bot, $message) {
                     foreach ($admin->telegramChatIds() as $chatId) {
-                        $bot->sendMessage((string) $chatId, $message);
+                        $bot->sendMessage((string) $chatId, $message($admin->preferredLocale()));
                     }
                 });
         })->afterResponse();

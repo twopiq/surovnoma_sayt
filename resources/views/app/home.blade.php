@@ -16,15 +16,15 @@
         <x-slot name="header">
             <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div>
-                    <h2 class="font-display text-2xl font-bold">Ijrochi bosh sahifasi</h2>
-                    <p class="mt-1 text-sm text-slate-500">Joriy ishlar, muddatlar va qabul qilish mumkin bo'lgan murojaatlar.</p>
+                    <h2 class="font-display text-2xl font-bold">{{ __('Ijrochi bosh sahifasi') }}</h2>
+                    <p class="mt-1 text-sm text-slate-500">{{ __('Joriy ishlar, muddatlar va qabul qilish mumkin bo\'lgan murojaatlar.') }}</p>
                 </div>
                 <div class="flex flex-wrap gap-2">
                     <a href="{{ route('executor.tickets.index') }}" class="rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800">
-                        Barcha vazifalar
+                        {{ __('Barcha vazifalar') }}
                     </a>
                     <a href="{{ route('executor.tickets.archive') }}" class="rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
-                        Arxiv
+                        {{ __('Arxiv') }}
                     </a>
                 </div>
             </div>
@@ -33,54 +33,54 @@
         <div class="mx-auto max-w-none space-y-6 px-4 pt-8 sm:px-6 lg:px-8">
             <section class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                 <div class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-                    <div class="text-sm font-medium text-slate-500">Menga biriktirilgan</div>
+                    <div class="text-sm font-medium text-slate-500">{{ __('Menga biriktirilgan') }}</div>
                     <div class="mt-4 font-display text-4xl font-bold text-slate-900">{{ $stats['active_count'] }}</div>
-                    <div class="mt-2 text-sm text-slate-500">Faol ishlar soni</div>
+                    <div class="mt-2 text-sm text-slate-500">{{ __('Faol ishlar soni') }}</div>
                 </div>
 
                 <div class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-                    <div class="text-sm font-medium text-slate-500">Jarayonda</div>
+                    <div class="text-sm font-medium text-slate-500">{{ __('Jarayonda') }}</div>
                     <div class="mt-4 font-display text-4xl font-bold text-slate-900">{{ $stats['in_progress_count'] }}</div>
-                    <div class="mt-2 text-sm text-slate-500">Hozir bajarilayotgan vazifalar</div>
+                    <div class="mt-2 text-sm text-slate-500">{{ __('Hozir bajarilayotgan vazifalar') }}</div>
                 </div>
 
                 <div class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-                    <div class="text-sm font-medium text-slate-500">Bugungi muddat</div>
+                    <div class="text-sm font-medium text-slate-500">{{ __('Bugungi muddat') }}</div>
                     <div class="mt-4 font-display text-4xl font-bold {{ $stats['due_today_count'] > 0 ? 'text-orange-700' : 'text-slate-900' }}">{{ $stats['due_today_count'] }}</div>
-                    <div class="mt-2 text-sm text-slate-500">Bugun tugaydigan ishlar</div>
+                    <div class="mt-2 text-sm text-slate-500">{{ __('Bugun tugaydigan ishlar') }}</div>
                 </div>
 
                 <div class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-                    <div class="text-sm font-medium text-slate-500">Kechikkan bo'shlar</div>
+                    <div class="text-sm font-medium text-slate-500">{{ __('Kechikkan bo\'shlar') }}</div>
                     <div class="mt-4 font-display text-4xl font-bold {{ $stats['overdue_count'] > 0 ? 'text-rose-700' : 'text-slate-900' }}">
                         {{ $stats['overdue_count'] }}
                     </div>
-                    <div class="mt-2 text-sm text-slate-500">Qabul qilish mumkin</div>
+                    <div class="mt-2 text-sm text-slate-500">{{ __('Qabul qilish mumkin') }}</div>
                 </div>
             </section>
 
             <section class="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
                 <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                     <div>
-                    <h3 class="font-display text-lg font-bold text-slate-900">Joriy yuklama</h3>
-                    <p class="mt-1 text-sm text-slate-500">Faol ishlar muhimlik darajasiga qarab hisoblanadi.</p>
+                    <h3 class="font-display text-lg font-bold text-slate-900">{{ __('Joriy yuklama') }}</h3>
+                    <p class="mt-1 text-sm text-slate-500">{{ __('Faol ishlar muhimlik darajasiga qarab hisoblanadi.') }}</p>
                     </div>
                     <div class="rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white">
-                        {{ $workloadSummary['used_units'] }}/{{ $workloadSummary['max_units'] }} birlik
+                        {{ $workloadSummary['used_units'] }}/{{ $workloadSummary['max_units'] }} {{ __('birlik') }}
                     </div>
                 </div>
 
                 <div class="mt-5 grid gap-4 md:grid-cols-3">
                     <div class="rounded-lg border border-slate-200 bg-slate-50 p-4">
-                        <div class="text-sm text-slate-500">Ishlatilgan yuklama</div>
+                        <div class="text-sm text-slate-500">{{ __('Ishlatilgan yuklama') }}</div>
                         <div class="mt-3 font-display text-3xl font-bold text-slate-900">{{ $workloadSummary['used_units'] }}</div>
                     </div>
                     <div class="rounded-lg border border-slate-200 bg-slate-50 p-4">
-                        <div class="text-sm text-slate-500">Qolgan yuklama</div>
+                        <div class="text-sm text-slate-500">{{ __('Qolgan yuklama') }}</div>
                         <div class="mt-3 font-display text-3xl font-bold text-emerald-700">{{ $workloadSummary['remaining_units'] }}</div>
                     </div>
                     <div class="rounded-lg border border-slate-200 bg-slate-50 p-4">
-                        <div class="text-sm text-slate-500">Ortiqcha yuklama</div>
+                        <div class="text-sm text-slate-500">{{ __('Ortiqcha yuklama') }}</div>
                         <div class="mt-3 font-display text-3xl font-bold {{ $workloadSummary['overload_units'] > 0 ? 'text-orange-700' : 'text-slate-900' }}">
                             {{ $workloadSummary['overload_units'] }}
                         </div>
@@ -89,15 +89,15 @@
 
                 @if ($workloadSummary['overload_units'] > 0)
                     <div class="mt-4 rounded-lg border border-orange-200 bg-orange-50 p-4 text-sm text-orange-900">
-                        <div class="font-semibold">Ortiqcha yuklama bor</div>
+                        <div class="font-semibold">{{ __('Ortiqcha yuklama bor') }}</div>
                         <p class="mt-1">
-                            Sizda limitdan {{ $workloadSummary['overload_units'] }} birlik ko'p faol ish bor. Admin tomonidan tasdiqlangan ortiqcha yuklama shu yerda ko'rinadi.
+                            {{ __("Sizda limitdan :n birlik ko'p faol ish bor.", ['n' => $workloadSummary['overload_units']]) }} {{ __("Admin tomonidan tasdiqlangan ortiqcha yuklama shu yerda ko'rinadi.") }}
                         </p>
                     </div>
                 @endif
 
                 <p class="mt-4 text-xs text-slate-400">
-                    Limit: 1 ta shoshilinch va 1 ta past, yoki 2 ta yuqori, yoki 3 ta o'rta, yoki 5 ta past topshiriq.
+                    {{ __('Limit: 1 ta shoshilinch va 1 ta past, yoki 2 ta yuqori, yoki 3 ta o\'rta, yoki 5 ta past topshiriq.') }}
                 </p>
             </section>
 
@@ -105,10 +105,10 @@
                 <section class="space-y-4">
                     <div class="flex flex-wrap items-center justify-between gap-3">
                         <div>
-                            <h3 class="font-semibold text-rose-800">Kechikkan murojaatlar</h3>
-                            <p class="mt-1 text-sm text-slate-500">Ijrochidan yechilgan va qayta qabul qilish mumkin bo'lgan murojaatlar.</p>
+                            <h3 class="font-semibold text-rose-800">{{ __('Kechikkan murojaatlar') }}</h3>
+                            <p class="mt-1 text-sm text-slate-500">{{ __('Ijrochidan yechilgan va qayta qabul qilish mumkin bo\'lgan murojaatlar.') }}</p>
                         </div>
-                        <span class="rounded-full bg-rose-100 px-3 py-1 text-sm font-semibold text-rose-800">{{ $overdueTickets->count() }} ta</span>
+                        <span class="rounded-full bg-rose-100 px-3 py-1 text-sm font-semibold text-rose-800">{{ __(':n ta', ['n' => $overdueTickets->count()]) }}</span>
                     </div>
 
                     <div class="grid gap-4 xl:grid-cols-2">
@@ -124,8 +124,8 @@
             <div class="grid gap-6 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
                 <section class="space-y-4">
                     <div class="flex items-center justify-between">
-                        <h3 class="font-semibold text-slate-900">Bugungi vazifalar</h3>
-                        <span class="text-sm text-slate-500">{{ $todayTasks->count() }} ta</span>
+                        <h3 class="font-semibold text-slate-900">{{ __('Bugungi vazifalar') }}</h3>
+                        <span class="text-sm text-slate-500">{{ __(':n ta', ['n' => $todayTasks->count()]) }}</span>
                     </div>
 
                     @forelse ($todayTasks as $ticket)
@@ -134,27 +134,27 @@
                         </a>
                     @empty
                         <div class="rounded-lg border border-dashed border-slate-300 bg-white p-8 text-center text-slate-500">
-                            Bugun uchun alohida ajratilgan vazifalar topilmadi.
+                            {{ __('Bugun uchun alohida ajratilgan vazifalar topilmadi.') }}
                         </div>
                     @endforelse
                 </section>
 
                 <section class="space-y-4">
                     <div class="flex items-center justify-between">
-                        <h3 class="font-semibold text-slate-900">Bo'sh murojaatlar</h3>
+                        <h3 class="font-semibold text-slate-900">{{ __('Bo\'sh murojaatlar') }}</h3>
                         <a href="{{ route('executor.tickets.index') }}" class="text-sm font-semibold text-cyan-700 transition hover:text-cyan-800">
-                            {{ $stats['available_count'] }} ta
+                            {{ __(':n ta', ['n' => $stats['available_count']]) }}
                         </a>
                     </div>
 
                     @forelse ($availableTickets as $ticket)
                         <a href="{{ route('executor.tickets.show', ['ticket' => $ticket, 'source' => 'home']) }}" class="block">
-                            <div class="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-cyan-700">Tanlash uchun ochiq</div>
+                            <div class="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-cyan-700">{{ __('Tanlash uchun ochiq') }}</div>
                             @include('partials.ticket-card', ['ticket' => $ticket])
                         </a>
                     @empty
                         <div class="rounded-lg border border-dashed border-slate-300 bg-white p-8 text-center text-slate-500">
-                            Hozircha bo'sh murojaatlar mavjud emas.
+                            {{ __('Hozircha bo\'sh murojaatlar mavjud emas.') }}
                         </div>
                     @endforelse
                 </section>
@@ -162,9 +162,9 @@
 
             <section class="space-y-4">
                 <div class="flex items-center justify-between">
-                    <h3 class="font-semibold text-slate-900">Menga biriktirilgan murojaatlar</h3>
+                    <h3 class="font-semibold text-slate-900">{{ __('Menga biriktirilgan murojaatlar') }}</h3>
                     <a href="{{ route('executor.tickets.index') }}" class="text-sm font-semibold text-cyan-700 transition hover:text-cyan-800">
-                        To'liq ro'yxat
+                        {{ __('To\'liq ro\'yxat') }}
                     </a>
                 </div>
 
@@ -174,7 +174,7 @@
                     </a>
                 @empty
                     <div class="rounded-lg border border-dashed border-slate-300 bg-white p-8 text-center text-slate-500">
-                        Sizga biriktirilgan murojaatlar hozircha yo'q.
+                        {{ __('Sizga biriktirilgan murojaatlar hozircha yo\'q.') }}
                     </div>
                 @endforelse
             </section>
@@ -182,16 +182,16 @@
     @else
         <x-slot name="header">
             <div>
-                <h2 class="font-display text-2xl font-bold">Bosh sahifa</h2>
-                <p class="mt-1 text-sm text-slate-500">Sizning ish maydoningizga mos asosiy yo'nalishlar.</p>
+                <h2 class="font-display text-2xl font-bold">{{ __('Bosh sahifa') }}</h2>
+                <p class="mt-1 text-sm text-slate-500">{{ __('Sizning ish maydoningizga mos asosiy yo\'nalishlar.') }}</p>
             </div>
         </x-slot>
 
         <div class="mx-auto max-w-none px-4 pt-8 sm:px-6 lg:px-8">
             <div class="rounded-lg border border-slate-200 bg-white p-8 text-center shadow-sm">
-                <h3 class="font-display text-xl font-bold text-slate-900">Sahifa tayyorlanmoqda</h3>
+                <h3 class="font-display text-xl font-bold text-slate-900">{{ __('Sahifa tayyorlanmoqda') }}</h3>
                 <p class="mt-3 text-sm leading-6 text-slate-500">
-                    Sizning rol uchun Home sahifasi keyingi bosqichda boyitiladi. Hozircha chap menyudagi tegishli bo'limlardan foydalanishingiz mumkin.
+                    {{ __('Sizning rol uchun Home sahifasi keyingi bosqichda boyitiladi. Hozircha chap menyudagi tegishli bo\'limlardan foydalanishingiz mumkin.') }}
                 </p>
             </div>
         </div>

@@ -11,15 +11,15 @@ enum ExternalStatus: string
     case Rejected = 'rejected';
     case Cancelled = 'cancelled';
 
-    public function label(): string
+    public function label(?string $locale = null): string
     {
         return match ($this) {
-            self::Accepted => __('Qabul qilindi'),
-            self::InProgress => __('Jarayonda'),
-            self::Overdue => __('Kechikkan'),
-            self::Closed => __('Yopildi'),
-            self::Rejected => __('Rad etildi'),
-            self::Cancelled => __('Bekor qilindi'),
+            self::Accepted => __('Qabul qilindi', [], $locale),
+            self::InProgress => __('Jarayonda', [], $locale),
+            self::Overdue => __('Kechikkan', [], $locale),
+            self::Closed => __('Yopildi', [], $locale),
+            self::Rejected => __('Rad etildi', [], $locale),
+            self::Cancelled => __('Bekor qilindi', [], $locale),
         };
     }
 }

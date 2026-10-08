@@ -10,9 +10,9 @@
     <x-slot name="header">
         <div class="flex flex-wrap items-start justify-between gap-3">
             <div>
-                <div class="pg-crumb">Ish</div>
-                <h2>Murojaatlar arxivi</h2>
-                <p class="pg-sub">Bajarilgan, yopilgan va rad etilgan murojaatlar shu yerda saqlanadi.</p>
+                <div class="pg-crumb">{{ __('Ish') }}</div>
+                <h2>{{ __('Murojaatlar arxivi') }}</h2>
+                <p class="pg-sub">{{ __('Bajarilgan, yopilgan va rad etilgan murojaatlar shu yerda saqlanadi.') }}</p>
             </div>
             <div class="flex flex-wrap gap-2">
                 <a href="{{ route('admin.dispatch.export', array_merge($query, ['archive' => 1, 'format' => 'csv'])) }}" class="btn btn-secondary">CSV</a>
@@ -24,7 +24,7 @@
     <div class="mx-auto max-w-none px-4 pt-6 sm:px-6 lg:px-8">
         <div class="ui-card mb-3 !p-3">
             <div class="mb-2.5 flex flex-wrap gap-2">
-                <a href="{{ route('admin.dispatch.archive', \Illuminate\Support\Arr::except($query, ['status'])) }}" class="ui-chip" @if (! $currentStatus) aria-current="page" @endif>Barchasi <b>{{ $allCount }}</b></a>
+                <a href="{{ route('admin.dispatch.archive', \Illuminate\Support\Arr::except($query, ['status'])) }}" class="ui-chip" @if (! $currentStatus) aria-current="page" @endif>{{ __('Barchasi') }} <b>{{ $allCount }}</b></a>
                 @foreach ($statuses as $status)
                     <a href="{{ route('admin.dispatch.archive', array_merge($query, ['status' => $status->value])) }}" class="ui-chip" @if ($currentStatus === $status->value) aria-current="page" @endif>{{ $status->label() }} <b>{{ $statusCounts[$status->value] ?? 0 }}</b></a>
                 @endforeach
@@ -35,35 +35,35 @@
                     <input type="hidden" name="status" value="{{ $currentStatus }}">
                 @endif
                 <label class="relative block w-full sm:w-[260px]">
-                    <span class="sr-only">Qidirish</span>
+                    <span class="sr-only">{{ __('Qidirish') }}</span>
                     <svg class="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><circle cx="9" cy="9" r="5.5"/><path d="m13.5 13.5 3 3"/></svg>
-                    <input name="q" value="{{ request('q') }}" placeholder="Raqam, mavzu yoki murojaatchi" class="ui-input pl-8">
+                    <input name="q" value="{{ request('q') }}" placeholder="{{ __('Raqam, mavzu yoki murojaatchi') }}" class="ui-input pl-8">
                 </label>
-                <select name="priority" aria-label="Muhimlik" class="py-1.5 pr-8 text-[13px]">
-                    <option value="">Muhimlik: Barchasi</option>
+                <select name="priority" aria-label="{{ __('Muhimlik') }}" class="py-1.5 pr-8 text-[13px]">
+                    <option value="">{{ __('Muhimlik: Barchasi') }}</option>
                     @foreach ($priorities as $priority)
                         <option value="{{ $priority->value }}" @selected(request('priority') === $priority->value)>{{ $priority->label() }}</option>
                     @endforeach
                 </select>
-                <select name="category_id" aria-label="Kategoriya" class="py-1.5 pr-8 text-[13px]">
-                    <option value="">Kategoriya: Barchasi</option>
+                <select name="category_id" aria-label="{{ __('Kategoriya') }}" class="py-1.5 pr-8 text-[13px]">
+                    <option value="">{{ __('Kategoriya: Barchasi') }}</option>
                     @foreach ($categories as $category)
                         <option value="{{ $category->id }}" @selected((string) request('category_id') === (string) $category->id)>{{ $category->name }}</option>
                     @endforeach
                 </select>
-                <select name="executor_id" aria-label="Ijrochi" class="py-1.5 pr-8 text-[13px]">
-                    <option value="">Ijrochi: Barchasi</option>
+                <select name="executor_id" aria-label="{{ __('Ijrochi') }}" class="py-1.5 pr-8 text-[13px]">
+                    <option value="">{{ __('Ijrochi: Barchasi') }}</option>
                     @foreach ($executors as $executor)
                         <option value="{{ $executor->id }}" @selected((string) request('executor_id') === (string) $executor->id)>{{ $executor->name }}</option>
                     @endforeach
                 </select>
-                <select name="period" aria-label="Davr" class="py-1.5 pr-8 text-[13px]">
+                <select name="period" aria-label="{{ __('Davr') }}" class="py-1.5 pr-8 text-[13px]">
                     @foreach ($periods as $value => $label)
-                        <option value="{{ $value }}" @selected($period === (string) $value)>Davr: {{ $label }}</option>
+                        <option value="{{ $value }}" @selected($period === (string) $value)>{{ __('Davr: :label', ['label' => __($label)]) }}</option>
                     @endforeach
                 </select>
                 @if ($hasFilters)
-                    <a href="{{ route('admin.dispatch.archive') }}" class="text-[13px] text-muted hover:text-ink sm:ml-auto">Filtrlarni tozalash</a>
+                    <a href="{{ route('admin.dispatch.archive') }}" class="text-[13px] text-muted hover:text-ink sm:ml-auto">{{ __('Filtrlarni tozalash') }}</a>
                 @endif
             </form>
         </div>
@@ -88,7 +88,7 @@
                         </a>
                     @endforeach
                 @empty
-                    <div class="px-4 py-10 text-center text-muted">Arxivda murojaat topilmadi.</div>
+                    <div class="px-4 py-10 text-center text-muted">{{ __('Arxivda murojaat topilmadi.') }}</div>
                 @endforelse
                 @if ($tickets->hasPages())
                     <div class="border-t border-line px-3 py-2.5">{{ $tickets->onEachSide(1)->links() }}</div>
@@ -105,47 +105,47 @@
                         </div>
                         <h3 class="mb-3 mt-2 font-display text-[20px] font-semibold leading-[26px]">{{ $subjectOf($selected) }}</h3>
                         <dl class="ui-kv">
-                            <dt>Murojaatchi</dt>
+                            <dt>{{ __('Murojaatchi') }}</dt>
                             <dd>{{ $selected->requester_name }}</dd>
-                            <dt>Ijrochi</dt>
-                            <dd @class(['text-muted' => ! $selected->assignedExecutor])>{{ $selected->assignedExecutor?->name ?? 'Belgilanmagan' }}</dd>
-                            <dt>Davomiyligi</dt>
+                            <dt>{{ __('Ijrochi') }}</dt>
+                            <dd @class(['text-muted' => ! $selected->assignedExecutor])>{{ $selected->assignedExecutor?->name ?? __('Belgilanmagan') }}</dd>
+                            <dt>{{ __('Davomiyligi') }}</dt>
                             <dd class="ui-mono">{{ $selected->resolutionLabel() }}</dd>
-                            <dt>Natija</dt>
+                            <dt>{{ __('Natija') }}</dt>
                             <dd><span class="status-badge status--{{ $resultTone }}">{{ $resultLabel }}</span></dd>
                             @if ($selected->rejection_reason)
-                                <dt>Rad sababi</dt>
+                                <dt>{{ __('Rad sababi') }}</dt>
                                 <dd>{{ $selected->rejection_reason }}</dd>
                             @endif
                         </dl>
-                        <a href="{{ route('admin.dispatch.show', ['ticket' => $selected, 'source' => 'archive']) }}" class="btn btn-secondary mt-3.5">Batafsil</a>
+                        <a href="{{ route('admin.dispatch.show', ['ticket' => $selected, 'source' => 'archive']) }}" class="btn btn-secondary mt-3.5">{{ __('Batafsil') }}</a>
                     </div>
 
                     <div class="ui-card">
-                        <h3 class="ui-card__title mb-3">Holat tarixi</h3>
+                        <h3 class="ui-card__title mb-3">{{ __('Holat tarixi') }}</h3>
                         @if ($selected->histories->isNotEmpty())
                             <ol class="ui-timeline">
                                 <li>
-                                    <b>Yangi</b>
+                                    <b>{{ __('Yangi') }}</b>
                                     <span>{{ $selected->created_at?->format('d.m H:i') }} · {{ $selected->requester_name }}</span>
                                 </li>
                                 @foreach ($selected->histories->sortBy('created_at') as $history)
                                     @if ($history->to_status && $history->to_status !== $history->from_status)
                                         <li @class(['is-last' => $loop->last])>
                                             <b>{{ $history->to_status->label() }}</b>
-                                            <span>{{ $history->created_at?->format('d.m H:i') }} · {{ $history->user?->name ?? 'Tizim' }}</span>
+                                            <span>{{ $history->created_at?->format('d.m H:i') }} · {{ $history->user?->name ?? __('Tizim') }}</span>
                                         </li>
                                     @endif
                                 @endforeach
                             </ol>
                         @else
-                            <p class="text-[13px] text-muted">Tarix yozilmagan.</p>
+                            <p class="text-[13px] text-muted">{{ __('Tarix yozilmagan.') }}</p>
                         @endif
                     </div>
                 @else
                     <div class="ui-card py-6 text-center">
-                        <p class="ui-card__title">Murojaat tanlanmagan</p>
-                        <p class="ui-card__sub mt-1">Ro'yxatdan murojaatni bosing.</p>
+                        <p class="ui-card__title">{{ __('Murojaat tanlanmagan') }}</p>
+                        <p class="ui-card__sub mt-1">{{ __('Ro\'yxatdan murojaatni bosing.') }}</p>
                     </div>
                 @endif
             </div>

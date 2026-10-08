@@ -14,18 +14,18 @@ enum TicketStatus: string
     case Rejected = 'rejected';
     case Cancelled = 'cancelled';
 
-    public function label(): string
+    public function label(?string $locale = null): string
     {
         return match ($this) {
-            self::New => __('Yangi'),
-            self::Assigned => __('Taqsimlandi'),
-            self::InProgress => __('Jarayonda'),
-            self::Returned => __('Qaytarildi'),
-            self::Overdue => __('Kechikkan'),
-            self::Completed => __('Bajarildi'),
-            self::Closed => __('Yopildi'),
-            self::Rejected => __('Rad etildi'),
-            self::Cancelled => __('Bekor qilindi'),
+            self::New => __('Yangi', [], $locale),
+            self::Assigned => __('Taqsimlandi', [], $locale),
+            self::InProgress => __('Jarayonda', [], $locale),
+            self::Returned => __('Qaytarildi', [], $locale),
+            self::Overdue => __('Kechikkan', [], $locale),
+            self::Completed => __('Bajarildi', [], $locale),
+            self::Closed => __('Yopildi', [], $locale),
+            self::Rejected => __('Rad etildi', [], $locale),
+            self::Cancelled => __('Bekor qilindi', [], $locale),
         };
     }
 

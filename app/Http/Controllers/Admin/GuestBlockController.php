@@ -57,7 +57,7 @@ class GuestBlockController extends Controller
             ],
             'maxAttempts' => max(1, (int) GuestBlock::query()->max('attempts_count')),
             'topReasons' => $topReasons->map(fn ($row) => [
-                'label' => GuestBlock::REASONS[$row->reason] ?? $row->reason,
+                'label' => isset(GuestBlock::REASONS[$row->reason]) ? __(GuestBlock::REASONS[$row->reason]) : $row->reason,
                 'total' => (int) $row->total,
                 'tone' => $row->reason === 'manual' ? 'line-strong' : (str_starts_with((string) $row->reason, 'bot') ? 'status-in-progress-dot' : 'status-new-dot'),
             ]),
@@ -87,9 +87,9 @@ class GuestBlockController extends Controller
         };
 
         if (! $valid) {
-            $hint = $data['type'] === 'phone' ? ' Format: +998 90 123 45 67' : '';
+            $hint = $data['type'] === 'phone' ? ' '.__('Format: :format', ['format' => '+998 90 123 45 67']) : '';
 
-            return back()->withInput()->withErrors(['value' => "Qiymat noto'g'ri.{$hint}"]);
+            return back()->withInput()->withErrors(['value' => __("Qiymat noto'g'ri.").$hint]);
         }
 
         $block = GuestBlock::create([
@@ -103,12 +103,12 @@ class GuestBlockController extends Controller
             'blocked_at' => now(),
         ]);
 
-        $audit->log($request->user()->id, 'guest_block.created', "BLOK-{$block->id} qo'lda yaratildi", $block, [
+        $audit->log($request->user()->id, 'guest_block.created', __(":block qo'lda yaratildi", ['block' => "BLOK-{$block->id}"], 'uz'), $block, [
             'type' => $data['type'],
             'value' => $value,
         ]);
 
-        return back()->with('status', "BLOK-{$block->id} yaratildi.");
+        return back()->with('status', __(':block yaratildi.', ['block' => "BLOK-{$block->id}"]));
     }
 
     public function unblock(Request $request, GuestBlock $guestBlock, GuestRequestGuard $guard, AuditService $audit): RedirectResponse
@@ -116,12 +116,12 @@ class GuestBlockController extends Controller
         if ($guestBlock->isActive()) {
             $guard->unblock($guestBlock, $request->user()->id);
 
-            $audit->log($request->user()->id, 'guest_block.unblocked', "BLOK-{$guestBlock->id} blokdan chiqarildi", $guestBlock, [
+            $audit->log($request->user()->id, 'guest_block.unblocked', __(':block blokdan chiqarildi', ['block' => "BLOK-{$guestBlock->id}"], 'uz'), $guestBlock, [
                 'ip' => $guestBlock->ip,
                 'device_id' => $guestBlock->device_id,
             ]);
         }
 
-        return back()->with('status', "BLOK-{$guestBlock->id} blokdan chiqarildi.");
+        return back()->with('status', __(':block blokdan chiqarildi.', ['block' => "BLOK-{$guestBlock->id}"]));
     }
 }

@@ -18,7 +18,7 @@
     }
 @endphp
 
-<x-public-layout title="{{ __('Holatni kuzatish') }}">
+<x-public-layout :title="__('Holatni kuzatish')">
     <div class="grid items-start gap-6 pt-4 lg:grid-cols-[320px_minmax(0,1fr)]">
         <form method="POST" action="{{ route('guest.lookup') }}" class="rounded-3xl border border-line bg-surface p-5">
             @csrf
@@ -51,9 +51,9 @@
                     <h2 class="mb-1 mt-3.5 text-base font-semibold">{{ $subject }}</h2>
                     <p class="mb-5 text-sm text-muted">
                         {{ $ticket->category?->name ?? __('Kategoriyasiz') }}
-                        · Yuborilgan: {{ $ticket->created_at?->format('d.m.Y H:i') }}
+                        · {{ __('Yuborilgan') }}: {{ $ticket->created_at?->format('d.m.Y H:i') }}
                         @if ($ticket->deadline_at)
-                            · Muddat: {{ $ticket->deadline_at->format('d.m.Y H:i') }}
+                            · {{ __('Muddat') }}: {{ $ticket->deadline_at->format('d.m.Y H:i') }}
                         @endif
                     </p>
 
@@ -85,7 +85,7 @@
                         <ul class="pub-list text-sm">
                             <li><span class="w-24 shrink-0 text-muted">{{ __('Kategoriya') }}</span>{{ $ticket->category?->name ?? '—' }}</li>
                             <li><span class="w-24 shrink-0 text-muted">{{ __('Bo\'lim') }}</span>{{ $ticket->assignedDepartment?->name ?? '—' }}</li>
-                            <li><span class="w-24 shrink-0 text-muted">{{ __('Ijrochi') }}</span>{{ $ticket->assignedExecutor?->name ?? 'Hali tayinlanmagan' }}</li>
+                            <li><span class="w-24 shrink-0 text-muted">{{ __('Ijrochi') }}</span>{{ $ticket->assignedExecutor?->name ?? __('Hali tayinlanmagan') }}</li>
                         </ul>
                     </section>
                     <section class="rounded-3xl border border-line bg-surface p-5 sm:p-6">
@@ -94,8 +94,8 @@
                             <div class="pub-feed">
                                 @foreach ($ticket->comments as $comment)
                                     <div>
-                                        <b>{{ $comment->user?->display_role ?? 'RTT markazi' }}</b>
-                                        {{ $comment->body }}
+                                        <b>{{ $comment->user?->display_role ?? __('RTT markazi') }}</b>
+                                        {{ \App\Support\StoredText::translate($comment->body) }}
                                         <small>{{ $comment->created_at?->format('d.m H:i') }}</small>
                                     </div>
                                 @endforeach

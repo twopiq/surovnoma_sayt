@@ -43,13 +43,13 @@ class GuestTicketController extends Controller
 
         if ($this->guard->submittedTooFast($request)) {
             return back()->withInput()->withErrors([
-                'description' => "Forma juda tez yuborildi. Iltimos, bir necha soniyadan keyin qayta urinib ko'ring.",
+                'description' => __("Forma juda tez yuborildi. Iltimos, bir necha soniyadan keyin qayta urinib ko'ring."),
             ]);
         }
 
         if (! $this->guard->captchaPassed($request)) {
             return back()->withInput()->withErrors([
-                'captcha' => "Tekshiruvdan o'tilmadi. Iltimos, qayta urinib ko'ring.",
+                'captcha' => __("Tekshiruvdan o'tilmadi. Iltimos, qayta urinib ko'ring."),
             ]);
         }
 
@@ -66,12 +66,12 @@ class GuestTicketController extends Controller
             'description' => ['required', 'string', 'min:30'],
             ...TicketFileUpload::optionalRules('attachments', $maxFiles, $maxKb),
         ], array_merge([
-            'name.regex' => "F.I.Sh. kamida ism va familiyadan iborat bo'lishi kerak.",
-            'email.required' => 'Email manzilini kiriting.',
-            'phone.required' => 'Telefon raqamini kiriting.',
-            'phone.regex' => "Telefon raqami +998 99 999 99 99 ko'rinishida bo'lishi va 9 ta raqamdan iborat bo'lishi kerak.",
-            'category_id.required' => 'Muammo kategoriyasini tanlang.',
-            'category_id.exists' => "Tanlangan kategoriya topilmadi yoki faol emas.",
+            'name.regex' => __("F.I.Sh. kamida ism va familiyadan iborat bo'lishi kerak."),
+            'email.required' => __('Email manzilini kiriting.'),
+            'phone.required' => __('Telefon raqamini kiriting.'),
+            'phone.regex' => __("Telefon raqami +998 99 999 99 99 ko'rinishida bo'lishi va 9 ta raqamdan iborat bo'lishi kerak."),
+            'category_id.required' => __('Muammo kategoriyasini tanlang.'),
+            'category_id.exists' => __("Tanlangan kategoriya topilmadi yoki faol emas."),
         ], TicketFileUpload::messages('attachments', $maxFiles, $maxKb)));
 
         if ($block = $this->guard->inspectContact($request, $data['email'], $data['phone'] ?? null)) {
@@ -80,7 +80,7 @@ class GuestTicketController extends Controller
 
         if ($this->guard->isDuplicateDescription($data['description'])) {
             return back()->withInput()->withErrors([
-                'description' => "Bunday murojaat yaqinda yuborilgan. Holatini «Avvalgi murojaatni kuzatish» orqali tekshiring.",
+                'description' => __("Bunday murojaat yaqinda yuborilgan. Holatini «Avvalgi murojaatni kuzatish» orqali tekshiring."),
             ]);
         }
 
@@ -119,7 +119,7 @@ class GuestTicketController extends Controller
 
         if (! $ticket || ! $this->ticketService->verifyGuestCode($ticket, $data['tracking_code'])) {
             return back()->withErrors([
-                'reference' => "Kiritilgan ID yoki maxfiy kod noto'g'ri.",
+                'reference' => __("Kiritilgan ID yoki maxfiy kod noto'g'ri."),
             ])->withInput();
         }
 

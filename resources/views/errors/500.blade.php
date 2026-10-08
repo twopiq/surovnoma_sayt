@@ -4,7 +4,7 @@
     'headline' => "Nimadir noto'g'ri ketdi",
     'lead' => "Tizim so'rovni yakunlay olmadi. Muammo qaytalansa, administratorga vaqt va amal tafsilotlarini yuboring.",
     'details' => [
-        'Service' => 'RTT Markazi',
-        'Status' => 'Internal server error',
+        'Xizmat' => 'RTT Markazi',
+        'Holat' => 'Ichki server xatoligi',
     ],
 ])

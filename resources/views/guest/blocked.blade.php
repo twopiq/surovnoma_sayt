@@ -1,4 +1,4 @@
-<x-public-layout title="{{ __('Cheklangan') }}">
+<x-public-layout :title="__('Cheklangan')">
     <div class="grid items-start gap-6 py-8 lg:grid-cols-2">
         <div>
             <span class="status-badge status--new">{{ __('Cheklangan') }}</span>

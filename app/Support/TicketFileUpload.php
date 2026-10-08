@@ -36,11 +36,11 @@ class TicketFileUpload
     public static function messages(string $field, ?int $maxFiles = null, ?int $maxKb = null): array
     {
         return [
-            $field.'.required' => 'Kamida bitta tasdiqlovchi fayl yuklash kerak.',
-            $field.'.min' => 'Kamida bitta tasdiqlovchi fayl yuklash kerak.',
-            $field.'.array' => "Fayllar noto'g'ri yuborildi.",
+            $field.'.required' => __('Kamida bitta tasdiqlovchi fayl yuklash kerak.'),
+            $field.'.min' => __('Kamida bitta tasdiqlovchi fayl yuklash kerak.'),
+            $field.'.array' => __("Fayllar noto'g'ri yuborildi."),
             $field.'.max' => self::tooManyFilesMessage($maxFiles),
-            $field.'.*.file' => "Yuklangan fayl noto'g'ri.",
+            $field.'.*.file' => __("Yuklangan fayl noto'g'ri."),
             $field.'.*.mimes' => self::invalidFormatMessage(),
             $field.'.*.max' => self::fileTooLargeMessage($maxKb),
         ];
@@ -84,16 +84,16 @@ class TicketFileUpload
 
     public static function tooManyFilesMessage(?int $maxFiles = null): string
     {
-        return "Ko'pi bilan ".($maxFiles ?? self::MAX_FILES).' ta fayl yuklash mumkin.';
+        return __("Ko'pi bilan :n ta fayl yuklash mumkin.", ['n' => $maxFiles ?? self::MAX_FILES]);
     }
 
     public static function invalidFormatMessage(): string
     {
-        return "Fayl formati noto'g'ri. Faqat JPG, JPEG, PNG, PDF, DOC va DOCX formatlariga ruxsat beriladi.";
+        return __("Fayl formati noto'g'ri. Faqat JPG, JPEG, PNG, PDF, DOC va DOCX formatlariga ruxsat beriladi.");
     }
 
     public static function fileTooLargeMessage(?int $maxKb = null): string
     {
-        return 'Har bir fayl hajmi '.self::maxFileSizeLabel($maxKb).' dan oshmasligi kerak.';
+        return __('Har bir fayl hajmi :size dan oshmasligi kerak.', ['size' => self::maxFileSizeLabel($maxKb)]);
     }
 }

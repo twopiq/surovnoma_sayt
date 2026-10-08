@@ -59,7 +59,7 @@ class AppDashboardTest extends TestCase
         $this->actingAs($admin)->get(route('app.dashboard', ['view' => 'manager']))
             ->assertOk()
             ->assertDontSee('<h3>Kunlik trend</h3>', false)
-            ->assertSee("Rahbar shu ko'rinishni ko'radi", false);
+            ->assertSee("Rahbar shu ko'rinishni ko'radi");
 
         $this->actingAs($manager)->post(route('app.dashboard.widgets.toggle', 'executors'))->assertForbidden();
     }

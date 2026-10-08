@@ -27,7 +27,7 @@ class DepartmentController extends Controller
 
         Department::create($data);
 
-        return back()->with('status', 'Bo‘lim qo‘shildi.');
+        return back()->with('status', __('Bo‘lim qo‘shildi.'));
     }
 
     public function update(Request $request, Department $department): RedirectResponse
@@ -44,6 +44,6 @@ class DepartmentController extends Controller
             'is_active' => $request->boolean('is_active'),
         ]);
 
-        return back()->with('status', 'Bo‘lim yangilandi.');
+        return back()->with('status', __('Bo‘lim yangilandi.'));
     }
 }

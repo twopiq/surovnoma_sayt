@@ -38,8 +38,8 @@ class ProfileUpdateRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'name.regex' => "F.I.Sh. kamida ism va familiyadan iborat bo'lishi kerak.",
-            'phone.regex' => "Telefon raqami +998 99 999 99 99 ko'rinishida bo'lishi kerak.",
+            'name.regex' => __("F.I.Sh. kamida ism va familiyadan iborat bo'lishi kerak."),
+            'phone.regex' => __("Telefon raqami +998 99 999 99 99 ko'rinishida bo'lishi kerak."),
         ];
     }
 }

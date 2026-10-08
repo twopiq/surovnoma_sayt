@@ -1,11 +1,11 @@
 <section>
     <header>
         <h2 class="text-lg font-bold text-slate-950">
-            Pochta manzili
+            {{ __('Pochta manzili') }}
         </h2>
 
         <p class="mt-1 text-sm text-slate-600">
-            Email akkauntga kirish va bildirishnomalar uchun ishlatiladi.
+            {{ __('Email akkauntga kirish va bildirishnomalar uchun ishlatiladi.') }}
         </p>
     </header>
 
@@ -25,16 +25,16 @@
             @if ($user instanceof \Illuminate\Contracts\Auth\MustVerifyEmail && ! $user->hasVerifiedEmail())
                 <div>
                     <p class="mt-2 text-sm text-slate-700">
-                        Email manzilingiz tasdiqlanmagan.
+                        {{ __('Email manzilingiz tasdiqlanmagan.') }}
 
                         <button form="send-verification" class="rounded-md text-sm font-semibold text-cyan-700 underline transition hover:text-cyan-900 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2">
-                            Tasdiqlash xatini qayta yuborish
+                            {{ __('Tasdiqlash xatini qayta yuborish') }}
                         </button>
                     </p>
 
                     @if (session('status') === 'verification-link-sent')
                         <p class="mt-2 text-sm font-medium text-emerald-600">
-                            Yangi tasdiqlash xati emailingizga yuborildi.
+                            {{ __('Yangi tasdiqlash xati emailingizga yuborildi.') }}
                         </p>
                     @endif
                 </div>
@@ -42,7 +42,7 @@
         </div>
 
         <div class="flex items-center gap-4">
-            <x-primary-button>Saqlash</x-primary-button>
+            <x-primary-button>{{ __('Saqlash') }}</x-primary-button>
 
             @if (session('status') === 'email-updated')
                 <p
@@ -51,7 +51,7 @@
                     x-transition
                     x-init="setTimeout(() => show = false, 2000)"
                     class="text-sm font-medium text-emerald-600"
-                >Pochta manzili saqlandi.</p>
+                >{{ __('Pochta manzili saqlandi.') }}</p>
             @endif
         </div>
     </form>

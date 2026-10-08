@@ -91,6 +91,7 @@ class DashboardReportService extends KpiDashboardService
     {
         return collect(self::KPI_CARDS)->map(function (array $card) use ($summary, $previous): array {
             [$label, $key, $upIsGood] = $card;
+            $label = __($label);
             $value = (int) $summary[$key];
             $delta = null;
             $tone = 'neu';
@@ -201,7 +202,7 @@ class DashboardReportService extends KpiDashboardService
         $colors = ['accent', 'role-operator', 'role-ijrochi', 'role-rahbar'];
 
         return $counts->keys()->values()->map(fn (string $channel, int $i): array => [
-            'label' => self::CHANNELS[$channel] ?? ucfirst($channel),
+            'label' => isset(self::CHANNELS[$channel]) ? __(self::CHANNELS[$channel]) : ucfirst($channel),
             'value' => (int) $counts[$channel],
             'width' => (int) round($counts[$channel] / $max * 100),
             'color' => $colors[$i % count($colors)],
@@ -224,7 +225,7 @@ class DashboardReportService extends KpiDashboardService
         return [
             'max' => array_sum($counts) > 0 ? $max : 0,
             'rows' => collect(self::WEEKDAYS)->map(fn (string $label, int $day): array => [
-                'label' => $label,
+                'label' => __($label),
                 'cells' => collect(self::HEATMAP_HOURS)->map(fn (int $hour): array => [
                     'hour' => $hour,
                     'value' => $counts["{$day}-{$hour}"] ?? 0,
@@ -302,7 +303,7 @@ class DashboardReportService extends KpiDashboardService
 
         return [
             'rows' => collect(self::SCORE_WEIGHTS)->map(fn (int $weight, string $key): array => [
-                'label' => $labels[$key][0],
+                'label' => __($labels[$key][0]),
                 'color' => $labels[$key][1],
                 'value' => round((float) ($summary['score_parts'][$key] ?? 0), 1),
                 'weight' => $weight,

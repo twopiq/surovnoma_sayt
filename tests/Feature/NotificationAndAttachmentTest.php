@@ -386,7 +386,7 @@ class NotificationAndAttachmentTest extends TestCase
         $this->actingAs($executor)
             ->get(route('executor.tickets.index'))
             ->assertOk()
-            ->assertSeeText("Bo'sh murojaatlar", false)
+            ->assertSeeText("Bo'sh murojaatlar")
             ->assertSeeText('RTT-TEST-UNASSIGNED');
 
         $this->actingAs($executor)

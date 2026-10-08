@@ -47,9 +47,9 @@ class OperatorTicketController extends Controller
             'description' => ['required', 'string', 'min:30'],
             ...TicketFileUpload::optionalRules('attachments'),
         ], array_merge([
-            'category_id.required' => 'Muammo kategoriyasini tanlang.',
-            'category_id.exists' => "Tanlangan kategoriya topilmadi yoki faol emas.",
-            'phone.regex' => "Telefon raqami +998 99 999 99 99 ko'rinishida bo'lishi kerak.",
+            'category_id.required' => __('Muammo kategoriyasini tanlang.'),
+            'category_id.exists' => __("Tanlangan kategoriya topilmadi yoki faol emas."),
+            'phone.regex' => __("Telefon raqami +998 99 999 99 99 ko'rinishida bo'lishi kerak."),
         ], TicketFileUpload::messages('attachments')));
 
         [$ticket] = $this->ticketService->create([
@@ -64,7 +64,7 @@ class OperatorTicketController extends Controller
             'description' => $data['description'],
         ], auth()->user(), $request->file('attachments', []));
 
-        return redirect()->route('operator.tickets.show', $ticket)->with('status', 'Murojaat operator orqali yaratildi.');
+        return redirect()->route('operator.tickets.show', $ticket)->with('status', __('Murojaat operator orqali yaratildi.'));
     }
 
     public function show(Ticket $ticket): View

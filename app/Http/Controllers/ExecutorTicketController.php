@@ -84,7 +84,7 @@ class ExecutorTicketController extends Controller
 
         if (! $ticket->canExecutorClaimBy($executor)) {
             return back()->withErrors([
-                'claim' => "Bu murojaatni hozir qabul qilib bo'lmaydi.",
+                'claim' => __("Bu murojaatni hozir qabul qilib bo'lmaydi."),
             ]);
         }
 
@@ -97,7 +97,7 @@ class ExecutorTicketController extends Controller
             return back()->withErrors($exception->errors());
         }
 
-        return back()->with('status', $wasOverdue ? 'Kechikkan murojaat qabul qilindi.' : ($wasReturned ? 'Murojaat qayta qabul qilindi.' : 'Murojaat qabul qilindi.'));
+        return back()->with('status', $wasOverdue ? __('Kechikkan murojaat qabul qilindi.') : ($wasReturned ? __('Murojaat qayta qabul qilindi.') : __('Murojaat qabul qilindi.')));
     }
 
     public function complete(Request $request, Ticket $ticket): RedirectResponse
@@ -108,7 +108,7 @@ class ExecutorTicketController extends Controller
 
         if (! $ticket->canExecutorCompleteBy($executor)) {
             return back()->withErrors([
-                'complete' => "Bu murojaatni hozir bajarildi deb yuborib bo'lmaydi.",
+                'complete' => __("Bu murojaatni hozir bajarildi deb yuborib bo'lmaydi."),
             ]);
         }
 
@@ -121,7 +121,7 @@ class ExecutorTicketController extends Controller
 
         return redirect()
             ->route('executor.tickets.index')
-            ->with('status', 'Murojaat bajarildi deb yuborildi.');
+            ->with('status', __('Murojaat bajarildi deb yuborildi.'));
     }
 
     public function requestReturn(Request $request, Ticket $ticket): RedirectResponse
@@ -136,7 +136,7 @@ class ExecutorTicketController extends Controller
 
         return redirect()
             ->route('executor.tickets.index')
-            ->with('status', "{$ticket->reference} umumiy navbatga qaytarildi.");
+            ->with('status', __(':ref umumiy navbatga qaytarildi.', ['ref' => $ticket->reference]));
     }
 
     public function comment(Request $request, Ticket $ticket): RedirectResponse
@@ -150,6 +150,6 @@ class ExecutorTicketController extends Controller
 
         $this->ticketService->addComment($ticket, auth()->user(), $data['body'], $request->boolean('is_public'));
 
-        return back()->with('status', "Izoh qo'shildi.");
+        return back()->with('status', __("Izoh qo'shildi."));
     }
 }

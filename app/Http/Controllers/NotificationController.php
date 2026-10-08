@@ -29,8 +29,8 @@ class NotificationController extends Controller
             ->get()
             ->map(fn ($notification) => [
                 'id' => $notification->id,
-                'title' => $notification->data['title'] ?? 'Bildirishnoma',
-                'body' => $notification->data['body'] ?? '',
+                'title' => \App\Support\StoredText::translate($notification->data['title'] ?? 'Bildirishnoma'),
+                'body' => \App\Support\StoredText::translateLines($notification->data['body'] ?? ''),
                 'href' => route('notifications.show', $notification->id),
                 'created_at' => $notification->created_at?->diffForHumans(),
             ])

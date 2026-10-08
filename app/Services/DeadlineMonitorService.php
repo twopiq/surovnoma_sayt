@@ -92,7 +92,7 @@ class DeadlineMonitorService
                 'to_status' => TicketStatus::Overdue,
                 'from_external_status' => $fromExternalStatus,
                 'to_external_status' => ExternalStatus::Overdue,
-                'note' => 'Deadline tugagani uchun ijrochidan yechildi.',
+                'note' => __('Deadline tugagani uchun ijrochidan yechildi.', [], 'uz'),
             ]);
 
             return true;
@@ -112,8 +112,8 @@ class DeadlineMonitorService
 
         foreach ($admins as $admin) {
             $admin->notify(new TicketStatusNotification(
-                'Kechikkan murojaat',
-                "{$ticket->reference} deadline vaqtidan o'tib ketdi va ijrochidan yechildi.",
+                __('Kechikkan murojaat', [], 'uz'),
+                __(":ref deadline vaqtidan o'tib ketdi va ijrochidan yechildi.", ['ref' => $ticket->reference], 'uz'),
                 route('admin.dispatch.show', $ticket),
                 ['kind' => 'deadline_overdue', 'ticket_id' => $ticket->id],
             ));

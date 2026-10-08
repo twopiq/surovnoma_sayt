@@ -35,7 +35,7 @@ class CategoryController extends Controller
             'is_active' => true,
         ]);
 
-        return back()->with('status', "Kategoriya qo'shildi.");
+        return back()->with('status', __("Kategoriya qo'shildi."));
     }
 
     public function update(Request $request, Category $category): RedirectResponse
@@ -53,7 +53,7 @@ class CategoryController extends Controller
             'is_active' => $request->boolean('is_active'),
         ]);
 
-        return back()->with('status', "Kategoriya yangilandi.");
+        return back()->with('status', __("Kategoriya yangilandi."));
     }
 
     protected function uniqueSlug(string $name, ?Category $ignore = null): string

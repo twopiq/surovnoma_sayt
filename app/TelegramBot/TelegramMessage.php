@@ -12,6 +12,7 @@ class TelegramMessage
         public readonly ?string $url = null,
         public readonly array $buttons = [],
         public readonly array $replyKeyboard = [],
+        public readonly ?string $locale = null,
     ) {
     }
 
@@ -29,7 +30,7 @@ class TelegramMessage
         if ($this->url) {
             $buttons[] = [
                 [
-                    'text' => 'Ochish',
+                    'text' => __('Ochish', [], $this->locale),
                     'url' => $this->absoluteUrl(),
                 ],
             ];

@@ -51,8 +51,8 @@ class TicketController extends Controller
             'description' => ['required', 'string', 'min:30'],
             ...TicketFileUpload::optionalRules('attachments'),
         ], array_merge([
-            'category_id.required' => 'Muammo kategoriyasini tanlang.',
-            'category_id.exists' => "Tanlangan kategoriya topilmadi yoki faol emas.",
+            'category_id.required' => __('Muammo kategoriyasini tanlang.'),
+            'category_id.exists' => __("Tanlangan kategoriya topilmadi yoki faol emas."),
         ], TicketFileUpload::messages('attachments')));
 
         [$ticket] = $this->ticketService->create([
@@ -67,7 +67,7 @@ class TicketController extends Controller
             'description' => $data['description'],
         ], auth()->user(), $request->file('attachments', []));
 
-        return redirect()->route('tickets.show', $ticket)->with('status', 'Murojaat yuborildi.');
+        return redirect()->route('tickets.show', $ticket)->with('status', __('Murojaat yuborildi.'));
     }
 
     public function show(Ticket $ticket): View
@@ -95,7 +95,7 @@ class TicketController extends Controller
 
         $this->ticketService->addComment($ticket, auth()->user(), $data['body'], true);
 
-        return back()->with('status', "Izoh qo'shildi.");
+        return back()->with('status', __("Izoh qo'shildi."));
     }
 
     public function cancel(Request $request, Ticket $ticket): RedirectResponse

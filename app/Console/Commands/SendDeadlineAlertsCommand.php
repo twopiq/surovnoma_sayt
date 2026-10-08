@@ -52,8 +52,8 @@ class SendDeadlineAlertsCommand extends Command
             ) {
                 foreach ($admins as $admin) {
                     $admin->notify(new TicketStatusNotification(
-                        'Deadline yaqinlashmoqda',
-                        "{$ticket->reference} uchun {$minutesLeft} daqiqa qoldi.",
+                        __('Deadline yaqinlashmoqda', [], 'uz'),
+                        __(':ref uchun :n daqiqa qoldi.', ['ref' => $ticket->reference, 'n' => $minutesLeft], 'uz'),
                         route('admin.dispatch.show', $ticket),
                         ['kind' => 'deadline_warning', 'ticket_id' => $ticket->id],
                     ));

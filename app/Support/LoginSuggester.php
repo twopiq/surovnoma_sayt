@@ -77,10 +77,10 @@ class LoginSuggester
     public static function messages(): array
     {
         return [
-            'login.min' => 'Login kamida '.self::MIN_LENGTH.' belgidan iborat bo\'lsin.',
-            'login.max' => 'Login '.self::MAX_LENGTH.' belgidan oshmasin.',
-            'login.regex' => "Loginda faqat kichik lotin harflari, raqamlar, nuqta yoki pastki chiziq bo'lsin (masalan: behzod.qurbonov).",
-            'login.unique' => 'Bu login band. Takliflardan birini tanlang.',
+            'login.min' => __("Login kamida :n belgidan iborat bo'lsin.", ['n' => self::MIN_LENGTH]),
+            'login.max' => __('Login :n belgidan oshmasin.', ['n' => self::MAX_LENGTH]),
+            'login.regex' => __("Loginda faqat kichik lotin harflari, raqamlar, nuqta yoki pastki chiziq bo'lsin (masalan: behzod.qurbonov)."),
+            'login.unique' => __('Bu login band. Takliflardan birini tanlang.'),
         ];
     }
 

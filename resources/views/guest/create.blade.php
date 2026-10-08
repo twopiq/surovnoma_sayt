@@ -1,4 +1,4 @@
-<x-public-layout title="{{ __('Murojaat yuborish') }}">
+<x-public-layout :title="__('Murojaat yuborish')">
     <h1 class="pb-5 pt-4 font-display text-[30px] font-semibold leading-9">{{ __('Murojaat yuborish') }}</h1>
 
     <div class="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
@@ -62,7 +62,7 @@
                 <div class="mt-4">
                     <label class="ui-field-label" for="attachments">
                         {{ __('Fayllar') }}
-                        <span class="font-normal text-muted">(ixtiyoriy, {{ config('guest_limits.max_files') }} tagacha, har biri {{ \App\Support\TicketFileUpload::maxFileSizeLabel(config('guest_limits.max_file_size_kb')) }})</span>
+                        <span class="font-normal text-muted">({{ __('ixtiyoriy, :n tagacha, har biri :size', ['n' => config('guest_limits.max_files'), 'size' => \App\Support\TicketFileUpload::maxFileSizeLabel(config('guest_limits.max_file_size_kb'))]) }})</span>
                     </label>
                     <x-file-upload-input id="attachments" name="attachments[]" :max-files="config('guest_limits.max_files')" :max-size-kb="config('guest_limits.max_file_size_kb')" />
                     <x-input-error :messages="$errors->get('attachments')" class="mt-1" />

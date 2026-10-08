@@ -40,7 +40,7 @@ class SystemController extends Controller
         $path = $reader->path($file);
         abort_unless($path, 404);
 
-        $audit->log($request->user()->id, 'system.log_downloaded', "Log fayli yuklab olindi: {$file}", null, ['ip' => $request->ip()]);
+        $audit->log($request->user()->id, 'system.log_downloaded', __('Log fayli yuklab olindi: :name', ['name' => $file], 'uz'), null, ['ip' => $request->ip()]);
 
         return response()->download($path, basename($path), ['Cache-Control' => 'private, no-store']);
     }

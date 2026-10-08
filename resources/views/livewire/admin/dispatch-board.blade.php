@@ -16,7 +16,7 @@
                     <span class="rounded-full bg-white/80 px-2 py-1 text-xs font-semibold text-slate-600 ring-1 ring-slate-200">{{ $total }}</span>
                 </div>
                 <a href="{{ $statusUrl }}" class="rounded-full bg-white/90 px-3 py-1 text-xs font-bold text-slate-700 shadow-sm ring-1 ring-slate-200 transition hover:bg-cyan-50 hover:text-cyan-800">
-                    Barchasi
+                    {{ __('Barchasi') }}
                 </a>
             </div>
             <div class="space-y-3">
@@ -25,7 +25,7 @@
                         <x-ticket-card :ticket="$ticket" :show-status="false" />
                     </a>
                 @empty
-                    <div class="rounded-xl border border-dashed border-slate-200 p-4 text-sm text-slate-400">Bo'sh</div>
+                    <div class="rounded-xl border border-dashed border-slate-200 p-4 text-sm text-slate-400">{{ __('Bo\'sh') }}</div>
                 @endforelse
             </div>
         </div>

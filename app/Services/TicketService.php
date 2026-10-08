@@ -71,8 +71,8 @@ class TicketService
                 $this->storeAttachment($ticket, $attachment, $actor, 'request');
             }
 
-            $this->recordHistory($ticket, $actor, null, TicketStatus::New, null, ExternalStatus::Accepted, 'Murojaat yaratildi');
-            $this->auditService->log($actor?->id, 'ticket.created', 'Murojaat yaratildi', $ticket, [
+            $this->recordHistory($ticket, $actor, null, TicketStatus::New, null, ExternalStatus::Accepted, __('Murojaat yaratildi', [], 'uz'));
+            $this->auditService->log($actor?->id, 'ticket.created', __('Murojaat yaratildi', [], 'uz'), $ticket, [
                 'channel' => $ticket->channel,
             ]);
             $this->notifyAdminsAboutNewTicket($ticket);
@@ -131,7 +131,7 @@ class TicketService
             $this->resolvePendingReturnRequests($ticket, $admin);
 
             $this->recordHistory($ticket, $admin, $fromStatus, $toStatus, $fromExternalStatus, $toExternalStatus, $note);
-            $this->auditService->log($admin->id, 'ticket.assigned', 'Murojaat taqsimlandi', $ticket, [
+            $this->auditService->log($admin->id, 'ticket.assigned', __('Murojaat taqsimlandi', [], 'uz'), $ticket, [
                 'executor_id' => $executorId,
                 'department_id' => $departmentId,
                 'priority' => $priority->value,
@@ -139,8 +139,8 @@ class TicketService
 
             if ($ticket->assignedExecutor) {
                 $ticket->assignedExecutor->notify(new TicketStatusNotification(
-                    'Yangi murojaat biriktirildi',
-                    "{$ticket->reference} sizga biriktirildi.",
+                    __('Yangi murojaat biriktirildi', [], 'uz'),
+                    __(':ref sizga biriktirildi.', ['ref' => $ticket->reference], 'uz'),
                     route('executor.tickets.show', $ticket),
                 ));
             }
@@ -151,7 +151,7 @@ class TicketService
 
     public function markInProgress(Ticket $ticket, User $executor, ?string $note = null): Ticket
     {
-        return $this->transition($ticket, $executor, TicketStatus::InProgress, ExternalStatus::InProgress, $note, 'ticket.in_progress', 'Ijrochi ishni boshladi');
+        return $this->transition($ticket, $executor, TicketStatus::InProgress, ExternalStatus::InProgress, $note, 'ticket.in_progress', __('Ijrochi ishni boshladi', [], 'uz'));
     }
 
     /**
@@ -162,7 +162,7 @@ class TicketService
         if (! $ticket->canExecutorClaimBy($executor)) {
             return [
                 'allowed' => false,
-                'message' => "Bu murojaatni hozir qabul qilib bo'lmaydi.",
+                'message' => __("Bu murojaatni hozir qabul qilib bo'lmaydi."),
             ];
         }
 
@@ -174,7 +174,7 @@ class TicketService
         ) {
             return [
                 'allowed' => false,
-                'message' => "Joriy yuklama limiti oshib ketadi. Bir vaqtning o'zida ko'pi bilan 1 ta shoshilinch va 1 ta past, yoki 2 ta yuqori, yoki 3 ta o'rta, yoki 5 ta past topshiriqni olish mumkin.",
+                'message' => __("Joriy yuklama limiti oshib ketadi. Bir vaqtning o'zida ko'pi bilan 1 ta shoshilinch va 1 ta past, yoki 2 ta yuqori, yoki 3 ta o'rta, yoki 5 ta past topshiriqni olish mumkin."),
             ];
         }
 
@@ -201,7 +201,7 @@ class TicketService
 
             if (! $slaProfile) {
                 throw ValidationException::withMessages([
-                    'claim' => "{$priority->label()} muhimlik darajasi uchun deadline sozlamasi topilmadi.",
+                    'claim' => __(':priority muhimlik darajasi uchun deadline sozlamasi topilmadi.', ['priority' => $priority->label()]),
                 ]);
             }
 
@@ -248,7 +248,7 @@ class TicketService
                 ExternalStatus::InProgress,
                 $note,
                 'ticket.completed',
-                'Ijrochi murojaatni bajardi',
+                __('Ijrochi murojaatni bajardi', [], 'uz'),
             );
 
             $updated->forceFill([
@@ -256,8 +256,8 @@ class TicketService
             ])->save();
 
             $this->notifyAdmins(
-                'Murojaat bajarildi',
-                "{$updated->reference} ijrochi tomonidan bajarildi.",
+                __('Murojaat bajarildi', [], 'uz'),
+                __(':ref ijrochi tomonidan bajarildi.', ['ref' => $updated->reference], 'uz'),
                 route('admin.dispatch.show', $updated),
                 [
                     'kind' => 'ticket_completed',
@@ -273,7 +273,7 @@ class TicketService
 
     public function close(Ticket $ticket, User $admin, ?string $note = null): Ticket
     {
-        $updated = $this->transition($ticket, $admin, TicketStatus::Closed, ExternalStatus::Closed, $note, 'ticket.closed', 'Murojaat yopildi');
+        $updated = $this->transition($ticket, $admin, TicketStatus::Closed, ExternalStatus::Closed, $note, 'ticket.closed', __('Murojaat yopildi', [], 'uz'));
         $updated->forceFill(['closed_at' => now()])->save();
         $this->resolvePendingReturnRequests($updated, $admin);
 
@@ -282,7 +282,7 @@ class TicketService
 
     public function reject(Ticket $ticket, User $admin, string $reason): Ticket
     {
-        $updated = $this->transition($ticket, $admin, TicketStatus::Rejected, ExternalStatus::Rejected, $reason, 'ticket.rejected', 'Murojaat rad etildi');
+        $updated = $this->transition($ticket, $admin, TicketStatus::Rejected, ExternalStatus::Rejected, $reason, 'ticket.rejected', __('Murojaat rad etildi', [], 'uz'));
         $updated->forceFill([
             'rejected_at' => now(),
             'rejection_reason' => $reason,
@@ -314,11 +314,11 @@ class TicketService
                 'metadata' => array_merge($ticket->metadata ?? [], ['deadline_notifications' => []]),
             ])->save();
 
-            $updated = $this->transition($ticket, $executor, TicketStatus::New, ExternalStatus::Accepted, $reason, 'ticket.returned', 'Ijrochi murojaatni umumiy navbatga qaytardi');
+            $updated = $this->transition($ticket, $executor, TicketStatus::New, ExternalStatus::Accepted, $reason, 'ticket.returned', __('Ijrochi murojaatni umumiy navbatga qaytardi', [], 'uz'));
 
             $this->notifyAdmins(
-                'Murojaat navbatga qaytdi',
-                "{$updated->reference}: {$executor->name} murojaatni qaytardi. Sabab: {$reason}",
+                __('Murojaat navbatga qaytdi', [], 'uz'),
+                __(':ref: :name murojaatni qaytardi. Sabab: :reason', ['ref' => $updated->reference, 'name' => $executor->name, 'reason' => $reason], 'uz'),
                 route('admin.dispatch.show', $updated),
                 [
                     'kind' => 'ticket_returned',
@@ -343,12 +343,14 @@ class TicketService
             $ticket->refresh();
 
             if (! $ticket->canBeCancelledBy($requester)) {
-                throw new \DomainException('Bu murojaatni bekor qilib bo\'lmaydi.');
+                throw new \DomainException(__("Bu murojaatni bekor qilib bo'lmaydi."));
             }
 
             $fromStatus = $ticket->status;
             $fromExternal = $ticket->external_status;
-            $note = 'Murojaatchi bekor qildi'.($reason ? ": {$reason}" : '.');
+            $note = $reason
+                ? __('Murojaatchi bekor qildi: :reason', ['reason' => $reason], 'uz')
+                : __('Murojaatchi bekor qildi.', [], 'uz');
 
             $ticket->forceFill([
                 'status' => TicketStatus::Cancelled,
@@ -358,7 +360,7 @@ class TicketService
             ])->save();
 
             $this->recordHistory($ticket, $requester, $fromStatus, TicketStatus::Cancelled, $fromExternal, ExternalStatus::Cancelled, $note);
-            $this->auditService->log($requester->id, 'ticket.cancelled', 'Murojaatchi murojaatni bekor qildi', $ticket, [
+            $this->auditService->log($requester->id, 'ticket.cancelled', __('Murojaatchi murojaatni bekor qildi', [], 'uz'), $ticket, [
                 'reason' => $reason,
             ]);
             $this->resolvePendingReturnRequests($ticket, $requester);
@@ -367,13 +369,13 @@ class TicketService
             $meta = ['kind' => 'ticket_cancelled', 'ticket_id' => $ticket->id, 'ticket_reference' => $ticket->reference];
 
             $ticket->assignedExecutor?->notify(new TicketStatusNotification(
-                'Murojaat bekor qilindi',
+                __('Murojaat bekor qilindi', [], 'uz'),
                 $body,
                 route('executor.tickets.show', $ticket),
                 $meta,
             ));
 
-            $this->notifyAdmins('Murojaat bekor qilindi', $body, route('admin.dispatch.show', $ticket), $meta);
+            $this->notifyAdmins(__('Murojaat bekor qilindi', [], 'uz'), $body, route('admin.dispatch.show', $ticket), $meta);
 
             return $ticket->fresh();
         });
@@ -388,7 +390,7 @@ class TicketService
             'is_public' => $isPublic,
         ]);
 
-        $this->auditService->log($user?->id, 'ticket.commented', 'Izoh qoldirildi', $ticket, [
+        $this->auditService->log($user?->id, 'ticket.commented', __('Izoh qoldirildi', [], 'uz'), $ticket, [
             'public' => $isPublic,
         ]);
 
@@ -410,7 +412,7 @@ class TicketService
 
         if ($author && $author->id === $ticket->requester_id) {
             $ticket->assignedExecutor?->notify(new TicketStatusNotification(
-                'Murojaatga yangi izoh',
+                __('Murojaatga yangi izoh', [], 'uz'),
                 "{$ticket->reference}: {$authorName}: {$preview}",
                 route('executor.tickets.show', $ticket),
                 ['kind' => 'ticket_comment', 'ticket_id' => $ticket->id, 'ticket_reference' => $ticket->reference],
@@ -432,7 +434,7 @@ class TicketService
             }
 
             $recipient->notify(new TicketStatusNotification(
-                'Murojaatingizga javob keldi',
+                __('Murojaatingizga javob keldi', [], 'uz'),
                 "{$ticket->reference}: {$authorName}: {$preview}",
                 $url,
                 ['kind' => 'ticket_comment', 'ticket_id' => $ticket->id, 'ticket_reference' => $ticket->reference],
@@ -474,8 +476,8 @@ class TicketService
 
             if ($ticket->requester) {
                 $ticket->requester->notify(new TicketStatusNotification(
-                    'Murojaat holati yangilandi',
-                    "{$ticket->reference} holati: {$ticket->external_status->label()}",
+                    __('Murojaat holati yangilandi', [], 'uz'),
+                    __(':ref holati: :status', ['ref' => $ticket->reference, 'status' => $ticket->external_status->label('uz')], 'uz'),
                     route('tickets.show', $ticket),
                 ));
             }
@@ -534,8 +536,8 @@ class TicketService
     protected function notifyAdminsAboutNewTicket(Ticket $ticket): void
     {
         $this->notifyAdmins(
-            'Yangi murojaat keldi',
-            "{$ticket->reference} bo'yicha yangi murojaat qabul qilindi.",
+            __('Yangi murojaat keldi', [], 'uz'),
+            __(":ref bo'yicha yangi murojaat qabul qilindi.", ['ref' => $ticket->reference], 'uz'),
             route('admin.dispatch.show', $ticket),
             [
                 'kind' => 'ticket_created',

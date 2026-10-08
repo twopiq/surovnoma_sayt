@@ -47,7 +47,7 @@ class AdminHomeService
 
         return [
             'tab' => $tab,
-            'tabs' => self::TABS,
+            'tabs' => array_map(fn (string $label) => __($label), self::TABS),
             'search' => $search,
             'tickets' => $tickets,
             'selected' => $selected,

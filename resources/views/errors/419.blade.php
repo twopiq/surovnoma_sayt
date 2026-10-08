@@ -4,7 +4,7 @@
     'headline' => "Sahifani yangilang",
     'lead' => "Forma yuborish vaqti tugagan bo'lishi mumkin. Sahifani yangilab, ma'lumotlarni qayta yuboring.",
     'details' => [
-        'Action' => 'Refresh and retry',
-        'Status' => 'Page expired',
+        'Amal' => 'Sahifani yangilab, qayta urining',
+        'Holat' => 'Sahifa eskirgan',
     ],
 ])

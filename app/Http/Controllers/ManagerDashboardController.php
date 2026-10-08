@@ -76,8 +76,8 @@ class ManagerDashboardController extends Controller
 
         $monthlyIndicators = collect([
             ['label' => 'Yakunlangan', 'value' => $completedCount, 'hex' => 'rgb(var(--c-status-completed-dot))'],
-            ['label' => 'Shikoyatlar', 'value' => $complaintsCount, 'hex' => 'rgb(var(--c-status-new-dot))'],
-            ['label' => 'Reyting x10', 'value' => (int) round($averageRating * 10), 'hex' => 'rgb(var(--c-role-admin))'],
+            ['label' => __('Shikoyatlar'), 'value' => $complaintsCount, 'hex' => 'rgb(var(--c-status-new-dot))'],
+            ['label' => __('Reyting x10'), 'value' => (int) round($averageRating * 10), 'hex' => 'rgb(var(--c-role-admin))'],
         ]);
 
         $indicatorMax = max(1, (int) $monthlyIndicators->max('value'));
@@ -347,8 +347,8 @@ class ManagerDashboardController extends Controller
             $items,
             [
                 'period_label' => $this->completionPeriodLabel($options['period']),
-                'scope_label' => $options['scope'] === 'employees' ? 'Xodimlar kesimida' : 'Butun bajaruvchilar kesimida',
-                'executor_label' => $executorName ?: 'Barcha bajaruvchilar',
+                'scope_label' => $options['scope'] === 'employees' ? __('Xodimlar kesimida') : __('Butun bajaruvchilar kesimida'),
+                'executor_label' => $executorName ?: __('Barcha bajaruvchilar'),
                 'range_label' => $start->format('d.m.Y').' - '.$end->format('d.m.Y'),
             ],
         ];
@@ -424,10 +424,10 @@ class ManagerDashboardController extends Controller
     protected function completionPeriodLabel(string $period): string
     {
         return match ($period) {
-            'day' => 'Kunlik',
-            'week' => 'Haftalik',
-            'year' => 'Yillik',
-            default => 'Oylik',
+            'day' => __('Kunlik'),
+            'week' => __('Haftalik'),
+            'year' => __('Yillik'),
+            default => __('Oylik'),
         };
     }
 
@@ -445,7 +445,7 @@ class ManagerDashboardController extends Controller
             'created_at' => $ticket->created_at?->toDateTimeString(),
             'completed_at' => $ticket->completed_at?->toDateTimeString(),
             'deadline_at' => $ticket->deadline_at?->toDateTimeString(),
-            'sla_result' => $ticket->deadline_at && $ticket->completed_at?->greaterThan($ticket->deadline_at) ? 'Kechikkan' : 'Muddatida',
+            'sla_result' => $ticket->deadline_at && $ticket->completed_at?->greaterThan($ticket->deadline_at) ? __('Kechikkan') : __('Muddatida'),
         ];
     }
 
@@ -453,20 +453,20 @@ class ManagerDashboardController extends Controller
     {
         return [
             'selected' => [
-                'label' => 'Tanlangan ishlar',
-                'description' => 'Tanlangan oyda yakunlangan ishlar.',
+                'label' => __('Tanlangan ishlar'),
+                'description' => __('Tanlangan oyda yakunlangan ishlar.'),
                 'accent' => 'bg-emerald-100 text-emerald-700',
                 'icon' => 'check',
             ],
             'rating' => [
-                'label' => "O'rtacha reyting",
-                'description' => 'SLA asosida 5 ballik baho.',
+                'label' => __("O'rtacha reyting"),
+                'description' => __('SLA asosida 5 ballik baho.'),
                 'accent' => 'bg-orange-100 text-orange-700',
                 'icon' => 'star',
             ],
             'complaints' => [
-                'label' => 'Shikoyatlar',
-                'description' => 'Qaytarilgan yoki rad etilgan murojaatlar.',
+                'label' => __('Shikoyatlar'),
+                'description' => __('Qaytarilgan yoki rad etilgan murojaatlar.'),
                 'accent' => 'bg-rose-100 text-rose-700',
                 'icon' => 'alert',
             ],

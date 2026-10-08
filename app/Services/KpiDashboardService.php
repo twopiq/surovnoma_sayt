@@ -437,7 +437,7 @@ class KpiDashboardService
             $ticket->created_at?->format('d.m.Y H:i'),
             $ticket->completed_at?->format('d.m.Y H:i') ?? '-',
             $ticket->deadline_at?->format('d.m.Y H:i') ?? '-',
-            $ticket->deadline_at && $ticket->completed_at?->greaterThan($ticket->deadline_at) ? 'Kechikkan' : 'Muddatida',
+            $ticket->deadline_at && $ticket->completed_at?->greaterThan($ticket->deadline_at) ? __('Kechikkan') : __('Muddatida'),
             $ticket->description,
         ];
     }
@@ -456,10 +456,10 @@ class KpiDashboardService
     protected function grade(float $score): string
     {
         return match (true) {
-            $score >= 90 => 'Juda yaxshi',
-            $score >= 75 => 'Yaxshi',
+            $score >= 90 => __('Juda yaxshi'),
+            $score >= 75 => __('Yaxshi'),
             $score >= 60 => 'Qoniqarli',
-            default => "E'tibor kerak",
+            default => __("E'tibor kerak"),
         };
     }
 

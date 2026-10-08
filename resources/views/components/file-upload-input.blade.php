@@ -48,7 +48,7 @@
         {{ $attributes->merge(['class' => 'block w-full text-sm text-slate-500']) }}
     />
     <p class="mt-2 text-xs text-slate-400">
-        Ko'pi bilan {{ $maxFiles }} ta fayl. Har biri {{ $maxFileSizeMb }} MB dan oshmasin. Ruxsat: {{ TicketFileUpload::allowedFormatsLabel() }}.
+        {{ __("Ko'pi bilan :n ta fayl. Har biri :mb MB dan oshmasin. Ruxsat: :formats.", ['n' => $maxFiles, 'mb' => $maxFileSizeMb, 'formats' => TicketFileUpload::allowedFormatsLabel()]) }}
     </p>
     <p x-show="error" x-text="error" class="mt-2 text-sm text-red-600"></p>
 </div>

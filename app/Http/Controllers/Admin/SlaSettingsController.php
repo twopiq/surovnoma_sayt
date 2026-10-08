@@ -46,21 +46,21 @@ class SlaSettingsController extends Controller
         $this->updateDeadlineProfiles($request);
         $this->updateWorkScheduleRows($request);
 
-        return back()->with('status', 'SLA sozlamalari saqlandi.');
+        return back()->with('status', __('SLA sozlamalari saqlandi.'));
     }
 
     public function updateDeadlines(Request $request): RedirectResponse
     {
         $this->updateDeadlineProfiles($request);
 
-        return back()->with('status', 'Deadline sozlamalari saqlandi.');
+        return back()->with('status', __('Deadline sozlamalari saqlandi.'));
     }
 
     public function updateWorkSchedule(Request $request): RedirectResponse
     {
         $this->updateWorkScheduleRows($request);
 
-        return back()->with('status', 'Ish kunlari saqlandi.');
+        return back()->with('status', __('Ish kunlari saqlandi.'));
     }
 
     protected function updateDeadlineProfiles(Request $request): void
@@ -114,14 +114,14 @@ class SlaSettingsController extends Controller
             ['name' => $data['name'], 'is_working_override' => (bool) ($data['is_working_override'] ?? false)],
         );
 
-        return back()->with('status', 'Istisno kun saqlandi.');
+        return back()->with('status', __('Istisno kun saqlandi.'));
     }
 
     public function destroyHoliday(HolidayException $holiday): RedirectResponse
     {
         $holiday->delete();
 
-        return back()->with('status', "Istisno kun o'chirildi.");
+        return back()->with('status', __("Istisno kun o'chirildi."));
     }
 
     public function bootstrapDefaults(): RedirectResponse
@@ -133,19 +133,19 @@ class SlaSettingsController extends Controller
             );
         }
 
-        return back()->with('status', 'Standart ish kalendari yaratildi.');
+        return back()->with('status', __('Standart ish kalendari yaratildi.'));
     }
 
     protected function weekdayLabels(): array
     {
         return [
-            1 => 'Dushanba',
-            2 => 'Seshanba',
-            3 => 'Chorshanba',
-            4 => 'Payshanba',
-            5 => 'Juma',
-            6 => 'Shanba',
-            7 => 'Yakshanba',
+            1 => __('Dushanba'),
+            2 => __('Seshanba'),
+            3 => __('Chorshanba'),
+            4 => __('Payshanba'),
+            5 => __('Juma'),
+            6 => __('Shanba'),
+            7 => __('Yakshanba'),
         ];
     }
 }

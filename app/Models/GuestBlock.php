@@ -12,6 +12,7 @@ class GuestBlock extends Model
     public const SCOPE_IP = 'ip';
     public const SCOPE_CONTACT = 'contact';
 
+    /** Qiymatlar tarjima kaliti: __(self::REASONS[...]) — lang/{ru,en}.json da bor. */
     public const REASONS = [
         'device_hourly' => 'Qurilma: soatlik limit',
         'device_daily' => 'Qurilma: kunlik limit',
@@ -67,27 +68,27 @@ class GuestBlock extends Model
         $this->increment('attempts_count', 1, ['last_attempt_at' => now()]);
     }
 
-    public function reasonLabel(): string
+    public function reasonLabel(?string $locale = null): string
     {
-        return self::REASONS[$this->reason] ?? $this->reason;
+        return isset(self::REASONS[$this->reason]) ? __(self::REASONS[$this->reason], [], $locale) : $this->reason;
     }
 
-    public function scopeLabel(): string
+    public function scopeLabel(?string $locale = null): string
     {
         return match ($this->scope) {
-            self::SCOPE_DEVICE => 'Qurilma',
-            self::SCOPE_IP => 'IP manzil',
-            self::SCOPE_CONTACT => 'Email/telefon',
+            self::SCOPE_DEVICE => __('Qurilma', [], $locale),
+            self::SCOPE_IP => __('IP manzil', [], $locale),
+            self::SCOPE_CONTACT => __('Email/telefon', [], $locale),
             default => $this->scope,
         };
     }
 
-    public function deviceLabel(): string
+    public function deviceLabel(?string $locale = null): string
     {
         $ua = (string) $this->user_agent;
 
         if ($ua === '') {
-            return "Noma'lum";
+            return __("Noma'lum", [], $locale);
         }
 
         $browser = match (true) {
@@ -97,8 +98,8 @@ class GuestBlock extends Model
             str_contains($ua, 'Firefox/') => 'Firefox',
             str_contains($ua, 'Chrome/') => 'Chrome',
             str_contains($ua, 'Safari/') => 'Safari',
-            str_contains(strtolower($ua), 'curl') || str_contains(strtolower($ua), 'python') || str_contains(strtolower($ua), 'bot') => 'Skript/bot',
-            default => 'Boshqa',
+            str_contains(strtolower($ua), 'curl') || str_contains(strtolower($ua), 'python') || str_contains(strtolower($ua), 'bot') => __('Skript/bot', [], $locale),
+            default => __('Boshqa', [], $locale),
         };
 
         $os = match (true) {

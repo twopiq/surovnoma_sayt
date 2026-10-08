@@ -6,6 +6,8 @@ use App\Enums\AvailabilityStatus;
 use App\Enums\TicketStatus;
 use App\Enums\UserRole;
 use App\Notifications\ResetPasswordNotification;
+use App\Support\Locales;
+use Illuminate\Contracts\Translation\HasLocalePreference;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -15,7 +17,7 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
 use Spatie\Permission\Traits\HasRoles;
 
-class User extends Authenticatable
+class User extends Authenticatable implements HasLocalePreference
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory;
@@ -163,6 +165,12 @@ class User extends Authenticatable
         ];
     }
 
+    /** Email va bildirishnomalar foydalanuvchi tanlagan tilda yuboriladi. */
+    public function preferredLocale(): string
+    {
+        return Locales::isSupported($this->locale) ? $this->locale : (string) config('app.locale', 'uz');
+    }
+
     public function sendPasswordResetNotification($token): void
     {
         $this->notify(new ResetPasswordNotification($token));
@@ -295,7 +303,7 @@ class User extends Authenticatable
             $firstRole = $this->getRoleNames()->first();
 
             if (! $firstRole) {
-                return 'Tasdiqlanmagan';
+                return __('Tasdiqlanmagan');
             }
 
             return UserRole::from($firstRole)->label();

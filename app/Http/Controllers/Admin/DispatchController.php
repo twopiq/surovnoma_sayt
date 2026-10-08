@@ -98,12 +98,12 @@ class DispatchController extends Controller
     private function archiveGroup(?\Illuminate\Support\Carbon $date): string
     {
         return match (true) {
-            $date === null => 'Avvalroq',
-            $date->isToday() => 'Bugun',
-            $date->isYesterday() => 'Kecha',
-            $date->gte(now()->startOfWeek()) => 'Shu hafta',
-            $date->gte(now()->startOfMonth()) => 'Shu oy',
-            default => 'Avvalroq',
+            $date === null => __('Avvalroq'),
+            $date->isToday() => __('Bugun'),
+            $date->isYesterday() => __('Kecha'),
+            $date->gte(now()->startOfWeek()) => __('Shu hafta'),
+            $date->gte(now()->startOfMonth()) => __('Shu oy'),
+            default => __('Avvalroq'),
         };
     }
 
@@ -173,7 +173,7 @@ class DispatchController extends Controller
 
         if ($executor && $executor->availability_status === AvailabilityStatus::Vacation) {
             return back()->withErrors([
-                'assigned_executor_id' => 'Taʼtildagi ijrochiga vazifa biriktirib bo‘lmaydi.',
+                'assigned_executor_id' => __('Taʼtildagi ijrochiga vazifa biriktirib bo‘lmaydi.'),
             ]);
         }
 
@@ -210,7 +210,7 @@ class DispatchController extends Controller
             $data['note'] ?? null,
         );
 
-        return back()->with('status', 'Murojaat taqsimlandi.');
+        return back()->with('status', __('Murojaat taqsimlandi.'));
     }
 
     public function reject(Request $request, Ticket $ticket)
@@ -221,7 +221,7 @@ class DispatchController extends Controller
 
         $this->ticketService->reject($ticket, auth()->user(), $data['reason']);
 
-        return redirect()->route('admin.dispatch.index')->with('status', 'Murojaat rad etildi va yopildi.');
+        return redirect()->route('admin.dispatch.index')->with('status', __('Murojaat rad etildi va yopildi.'));
     }
 
     public function close(Request $request, Ticket $ticket)
@@ -232,7 +232,7 @@ class DispatchController extends Controller
 
         $this->ticketService->close($ticket, auth()->user(), $data['note'] ?? null);
 
-        return redirect()->route('admin.dispatch.archive')->with('status', 'Murojaat yopildi va arxivga joylandi.');
+        return redirect()->route('admin.dispatch.archive')->with('status', __('Murojaat yopildi va arxivga joylandi.'));
     }
 
     public function export(Request $request)
@@ -352,6 +352,6 @@ class DispatchController extends Controller
 
         $this->ticketService->addComment($ticket, auth()->user(), $data['body'], $request->boolean('is_public'));
 
-        return back()->with('status', 'Izoh qo‘shildi.');
+        return back()->with('status', __('Izoh qo‘shildi.'));
     }
 }

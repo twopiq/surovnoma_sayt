@@ -51,7 +51,7 @@ class AppDashboardController extends Controller
             'isAdmin' => $isAdmin,
             'managerPreview' => $managerPreview,
             'period' => $period,
-            'periods' => self::PERIODS,
+            'periods' => array_map(fn (string $label) => __($label), self::PERIODS),
             'start' => $start,
             'end' => $end,
             'filters' => $filters,
@@ -106,7 +106,9 @@ class AppDashboardController extends Controller
         $visible = DashboardWidget::toggle($widget);
         $label = DashboardWidget::CATALOG[$widget][0];
 
-        return back()->with('status', $visible ? "«{$label}» rahbarga ko'rinadi." : "«{$label}» rahbardan yashirildi.");
+        return back()->with('status', $visible
+            ? __("«:label» rahbarga ko'rinadi.", ['label' => __($label)])
+            : __('«:label» rahbardan yashirildi.', ['label' => __($label)]));
     }
 
     /** @return array{0: string, 1: Carbon, 2: Carbon} */

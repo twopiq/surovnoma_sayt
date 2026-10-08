@@ -2,12 +2,12 @@
     <x-slot name="header">
         <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div>
-                <h2 class="font-display text-2xl font-bold text-slate-950">Oylik hisobot</h2>
-                <p class="mt-1 text-sm text-slate-500">Tanlangan oy bo'yicha natijalar, reyting va shikoyatlar</p>
+                <h2 class="font-display text-2xl font-bold text-slate-950">{{ __('Oylik hisobot') }}</h2>
+                <p class="mt-1 text-sm text-slate-500">{{ __('Tanlangan oy bo\'yicha natijalar, reyting va shikoyatlar') }}</p>
             </div>
 
             <div class="inline-flex items-center rounded-md bg-white px-3 py-2 text-xs font-semibold text-slate-600 shadow-sm ring-1 ring-slate-200">
-                Tanlangan oy: {{ $monthValue }}
+                {{ __('Tanlangan oy') }}: {{ $monthValue }}
             </div>
         </div>
     </x-slot>
@@ -32,7 +32,7 @@
                     class="rounded-md border-slate-300 bg-white text-sm shadow-sm focus:border-violet-500 focus:ring-violet-500"
                 />
                 <button class="theme-primary rounded-md px-5 py-2 text-sm font-semibold shadow-sm transition">
-                    Ko'rish
+                    {{ __('Ko\'rish') }}
                 </button>
             </form>
 
@@ -75,7 +75,7 @@
             <section class="theme-panel rounded-lg border p-5 shadow-sm">
                 <div class="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
                     <div>
-                        <h3 class="font-display text-lg font-bold theme-ink">Bajarilgan murojaatlar diagrammasi</h3>
+                        <h3 class="font-display text-lg font-bold theme-ink">{{ __('Bajarilgan murojaatlar diagrammasi') }}</h3>
                         <p class="mt-1 text-sm theme-muted">
                             {{ $completionChartMeta['executor_label'] }} / {{ $completionChartMeta['period_label'] }} / {{ $completionChartMeta['range_label'] }}
                         </p>
@@ -95,14 +95,14 @@
                         />
 
                         <select name="chart_period" class="rounded-md border-slate-300 bg-white text-sm shadow-sm focus:border-violet-500 focus:ring-violet-500">
-                            <option value="day" @selected($completionChartOptions['period'] === 'day')>Kunlik</option>
-                            <option value="week" @selected($completionChartOptions['period'] === 'week')>Haftalik</option>
-                            <option value="month" @selected($completionChartOptions['period'] === 'month')>Oylik</option>
-                            <option value="year" @selected($completionChartOptions['period'] === 'year')>Yillik</option>
+                            <option value="day" @selected($completionChartOptions['period'] === 'day')>{{ __('Kunlik') }}</option>
+                            <option value="week" @selected($completionChartOptions['period'] === 'week')>{{ __('Haftalik') }}</option>
+                            <option value="month" @selected($completionChartOptions['period'] === 'month')>{{ __('Oylik') }}</option>
+                            <option value="year" @selected($completionChartOptions['period'] === 'year')>{{ __('Yillik') }}</option>
                         </select>
 
                         <select name="chart_executor_id" class="rounded-md border-slate-300 bg-white text-sm shadow-sm focus:border-violet-500 focus:ring-violet-500">
-                            <option value="">Barcha bajaruvchilar</option>
+                            <option value="">{{ __('Barcha bajaruvchilar') }}</option>
                             @foreach ($executors as $executor)
                                 <option value="{{ $executor->id }}" @selected($completionChartOptions['executor_id'] === $executor->id)>{{ $executor->name }}</option>
                             @endforeach
@@ -113,19 +113,19 @@
                                 <label class="cursor-pointer">
                                     <input type="radio" name="chart_scope" value="total" class="peer sr-only" @checked($completionChartOptions['scope'] === 'total')>
                                     <span class="block rounded-md px-3 py-2 text-sm font-semibold text-slate-600 transition peer-checked:bg-violet-700 peer-checked:text-white">
-                                        Butun bajaruvchilar kesimida
+                                        {{ __('Butun bajaruvchilar kesimida') }}
                                     </span>
                                 </label>
                                 <label class="cursor-pointer">
                                     <input type="radio" name="chart_scope" value="employees" class="peer sr-only" @checked($completionChartOptions['scope'] === 'employees')>
                                     <span class="block rounded-md px-3 py-2 text-sm font-semibold text-slate-600 transition peer-checked:bg-violet-700 peer-checked:text-white">
-                                        Xodimlar kesimida
+                                        {{ __('Xodimlar kesimida') }}
                                     </span>
                                 </label>
                             </div>
 
                             <button class="theme-primary rounded-md px-5 py-2 text-sm font-semibold shadow-sm transition">
-                                Yangilash
+                                {{ __('Yangilash') }}
                             </button>
                         </div>
                     </form>
@@ -148,8 +148,8 @@
             <div style="display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 1rem; width: 100%;">
                 <section class="theme-panel rounded-lg border p-5 shadow-sm" style="min-width: 0;">
                     <div>
-                        <h3 class="font-display text-lg font-bold theme-ink">Xodimlar natijasi</h3>
-                        <p class="mt-1 text-sm theme-muted">Topshiriqlarni yakunlash bo'yicha taqsimot</p>
+                        <h3 class="font-display text-lg font-bold theme-ink">{{ __('Xodimlar natijasi') }}</h3>
+                        <p class="mt-1 text-sm theme-muted">{{ __('Topshiriqlarni yakunlash bo\'yicha taqsimot') }}</p>
                     </div>
 
                     <div class="theme-soft-panel mt-6 h-72 rounded-lg border p-3">
@@ -157,7 +157,7 @@
                             :items="$employeeResults"
                             :max="$employeeMax"
                             accent="rgb(var(--c-role-operator))"
-                            empty-text="Bu oy yakunlangan ishlar hali yo'q."
+                            :empty-text="__('Bu oy yakunlangan ishlar hali yo\'q.')"
                             :min-width="560"
                             :slot-size="70"
                             :fit="true"
@@ -167,8 +167,8 @@
 
                 <section class="theme-panel rounded-lg border p-5 shadow-sm" style="min-width: 0;">
                     <div>
-                        <h3 class="font-display text-lg font-bold theme-ink">Oylik ko'rsatkichlar</h3>
-                        <p class="mt-1 text-sm theme-muted">Asosiy indikatorlar taqsimoti</p>
+                        <h3 class="font-display text-lg font-bold theme-ink">{{ __('Oylik ko\'rsatkichlar') }}</h3>
+                        <p class="mt-1 text-sm theme-muted">{{ __('Asosiy indikatorlar taqsimoti') }}</p>
                     </div>
 
                     <div class="theme-soft-panel mt-6 h-72 rounded-lg border p-3">
@@ -186,11 +186,11 @@
             <section class="theme-panel overflow-hidden rounded-lg border shadow-sm">
                 <div class="flex items-center justify-between border-b border-slate-200 px-5 py-4">
                     <div>
-                        <h3 class="font-display text-lg font-bold theme-ink">Top bajaruvchilar</h3>
-                        <p class="mt-1 text-sm theme-muted">Faol murojaatlar yuklamasi bo'yicha saralangan</p>
+                        <h3 class="font-display text-lg font-bold theme-ink">{{ __('Top bajaruvchilar') }}</h3>
+                        <p class="mt-1 text-sm theme-muted">{{ __('Faol murojaatlar yuklamasi bo\'yicha saralangan') }}</p>
                     </div>
                     <a href="{{ route('manager.dashboard', array_merge(request()->query(), ['chart_scope' => 'employees'])) }}" class="text-sm font-semibold text-violet-700 transition hover:text-violet-800">
-                        Barchasi &rarr;
+                        {{ __('Barchasi') }} &rarr;
                     </a>
                 </div>
 
@@ -200,10 +200,10 @@
                             <tr>
                                 <th class="px-5 py-3">SL.</th>
                                 <th class="px-5 py-3">Image</th>
-                                <th class="px-5 py-3">Ism</th>
-                                <th class="px-5 py-3">Email</th>
+                                <th class="px-5 py-3">{{ __('Ism') }}</th>
+                                <th class="px-5 py-3">{{ __('Email') }}</th>
                                 <th class="px-5 py-3">Phone</th>
-                                <th class="px-5 py-3 text-right">Yuklama</th>
+                                <th class="px-5 py-3 text-right">{{ __('Yuklama') }}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -220,12 +220,12 @@
                                     <td class="px-5 py-3 text-slate-600">{{ $executor['phone'] ?? '-' }}</td>
                                     <td class="px-5 py-3 text-right">
                                         <div class="font-display text-base font-bold text-slate-900">{{ $executor['workload_units'] }}</div>
-                                        <div class="text-xs text-slate-500">{{ $executor['active_count'] }} ta faol murojaat</div>
+                                        <div class="text-xs text-slate-500">{{ __(':n ta faol murojaat', ['n' => $executor['active_count']]) }}</div>
                                     </td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="6" class="px-5 py-8 text-center text-slate-500">Bajaruvchilar yuklamasi hali mavjud emas.</td>
+                                    <td colspan="6" class="px-5 py-8 text-center text-slate-500">{{ __('Bajaruvchilar yuklamasi hali mavjud emas.') }}</td>
                                 </tr>
                             @endforelse
                         </tbody>
@@ -235,8 +235,8 @@
 
             <section class="theme-panel rounded-lg border p-5 shadow-sm">
                 <div>
-                    <h3 class="font-display text-lg font-bold theme-ink">Faol ishlar kesimi</h3>
-                    <p class="mt-1 text-sm theme-muted">Har bir xodimdagi jarayondagi ishlar</p>
+                    <h3 class="font-display text-lg font-bold theme-ink">{{ __('Faol ishlar kesimi') }}</h3>
+                    <p class="mt-1 text-sm theme-muted">{{ __('Har bir xodimdagi jarayondagi ishlar') }}</p>
                 </div>
 
                 <div class="theme-soft-panel mt-6 h-96 rounded-lg border p-3">

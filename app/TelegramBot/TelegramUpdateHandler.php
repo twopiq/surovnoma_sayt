@@ -8,6 +8,7 @@ use App\Models\Category;
 use App\Models\Ticket;
 use App\Models\User;
 use App\Services\TicketService;
+use App\Support\Locales;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
@@ -47,6 +48,7 @@ class TelegramUpdateHandler
         }
 
         $chatId = (string) $chatId;
+        Locales::apply($this->telegramLocale($chatId));
 
         if ($this->isMainMenuText($text)) {
             Cache::forget($this->stateKey($chatId));
@@ -69,9 +71,10 @@ class TelegramUpdateHandler
             return;
         }
 
-        if ($this->isUzbekLanguageChoice($text) || $this->isRussianLanguageChoice($text)) {
+        if (($chosen = $this->languageChoice($text)) !== null) {
             Cache::forget($this->stateKey($chatId));
-            $this->setTelegramLocale($chatId, $this->isRussianLanguageChoice($text) ? 'ru' : 'uz');
+            $this->setTelegramLocale($chatId, $chosen);
+            Locales::apply($chosen);
             $this->sendSettingsMenu($chatId, $this->userByChat($chatId));
 
             return;
@@ -88,8 +91,8 @@ class TelegramUpdateHandler
         if (Str::startsWith($text, ['/cancel', '/bekor'])) {
             Cache::forget($this->stateKey($chatId));
             $this->bot->sendMessage($chatId, new TelegramMessage(
-                'Bekor qilindi',
-                'Joriy amal bekor qilindi.',
+                __('Bekor qilindi'),
+                __('Joriy amal bekor qilindi.'),
                 null,
                 $this->menuButtons($this->userByChat($chatId), $chatId),
             ));
@@ -156,6 +159,7 @@ class TelegramUpdateHandler
         }
 
         $chatId = (string) $chatId;
+        Locales::apply($this->telegramLocale($chatId));
         $user = $this->userByChat($chatId);
 
         if ($callbackId) {
@@ -239,8 +243,8 @@ class TelegramUpdateHandler
 
         if (! $user) {
             $this->bot->sendMessage($chatId, new TelegramMessage(
-                'Assalomu alaykum!',
-                "Ulash kodi noto'g'ri yoki yangilangan. Saytdagi Sozlamalar sahifasidan Telegram botni qayta oching.",
+                __('Assalomu alaykum!'),
+                __("Ulash kodi noto'g'ri yoki yangilangan. Saytdagi Sozlamalar sahifasidan Telegram botni qayta oching."),
                 null,
                 $this->menuButtons(null, $chatId),
             ));
@@ -254,11 +258,11 @@ class TelegramUpdateHandler
         $result = $user->linkTelegramChat($chatId, $from['username'] ?? $chat['username'] ?? null);
 
         $this->bot->sendMessage($chatId, new TelegramMessage(
-            'Assalomu alaykum!',
+            __('Assalomu alaykum!'),
             match ($result) {
-                'added' => "Qo'shimcha Telegram akkaunt ulandi. Tizim xabarlari endi bu chatga ham, avval ulangan chatlaringizga ham yuboriladi.",
-                'already' => "Bu chat allaqachon profilingizga ulangan. Tizim xabarlari shu chatga keladi.",
-                default => "Muvaffaqiyatli ulandingiz. Telegram akkauntingiz sayt profilingizga bog'landi. Endi yangi tizim xabarlari shu chatga avtomatik yuboriladi.",
+                'added' => __("Qo'shimcha Telegram akkaunt ulandi. Tizim xabarlari endi bu chatga ham, avval ulangan chatlaringizga ham yuboriladi."),
+                'already' => __("Bu chat allaqachon profilingizga ulangan. Tizim xabarlari shu chatga keladi."),
+                default => __("Muvaffaqiyatli ulandingiz. Telegram akkauntingiz sayt profilingizga bog'landi. Endi yangi tizim xabarlari shu chatga avtomatik yuboriladi."),
             },
             null,
             $this->menuButtons($user->fresh()),
@@ -269,8 +273,8 @@ class TelegramUpdateHandler
     {
         if (! $user) {
             $this->bot->sendMessage($chatId, new TelegramMessage(
-                'Assalomu alaykum!',
-                "RTT Markazi botiga xush kelibsiz. Akkaunt ulanmagan chatda faqat bir martalik mehmon murojaati yuborish yoki tracking kod orqali holatni tekshirish mumkin. Doimiy foydalanish uchun saytdan ro'yxatdan o'ting.",
+                __('Assalomu alaykum!'),
+                __("RTT Markazi botiga xush kelibsiz. Akkaunt ulanmagan chatda faqat bir martalik mehmon murojaati yuborish yoki tracking kod orqali holatni tekshirish mumkin. Doimiy foydalanish uchun saytdan ro'yxatdan o'ting."),
                 null,
                 $this->menuButtons(null, $chatId),
             ));
@@ -278,11 +282,11 @@ class TelegramUpdateHandler
             return;
         }
 
-        $status = $this->notificationsEnabled($user) ? 'yoqilgan' : "o'chirilgan";
+        $status = $this->notificationsEnabled($user) ? __('yoqilgan') : __("o'chirilgan");
 
         $this->bot->sendMessage($chatId, new TelegramMessage(
-            'Assalomu alaykum!',
-            "RTT Markazi botiga xush kelibsiz. Akkauntingiz ulangan. Telegram xabarnomalari: {$status}.",
+            __('Assalomu alaykum!'),
+            __('RTT Markazi botiga xush kelibsiz. Akkauntingiz ulangan. Telegram xabarnomalari: :status.', ['status' => $status]),
             null,
             $this->menuButtons($user),
         ));
@@ -293,7 +297,7 @@ class TelegramUpdateHandler
         if (! $user) {
             $this->bot->sendMessage($chatId, new TelegramMessage(
                 'RTT Markazi',
-                "Akkaunt ulanmagan. Mehmon murojaati yuborish bir marta ishlaydi; keyin saytdan ro'yxatdan o'ting.",
+                __("Akkaunt ulanmagan. Mehmon murojaati yuborish bir marta ishlaydi; keyin saytdan ro'yxatdan o'ting."),
                 null,
                 $this->menuButtons(null, $chatId),
             ));
@@ -301,11 +305,11 @@ class TelegramUpdateHandler
             return;
         }
 
-        $status = $this->notificationsEnabled($user) ? 'yoqilgan' : "o'chirilgan";
+        $status = $this->notificationsEnabled($user) ? __('yoqilgan') : __("o'chirilgan");
 
         $this->bot->sendMessage($chatId, new TelegramMessage(
             'RTT Markazi',
-            "Akkaunt ulangan. Telegram xabarnomalari: {$status}.",
+            __('Akkaunt ulangan. Telegram xabarnomalari: :status.', ['status' => $status]),
             null,
             $this->menuButtons($user),
         ));
@@ -322,19 +326,19 @@ class TelegramUpdateHandler
         }
 
         $lines = [
-            'F.I.O.: '.$user->name,
-            'Login: '.($user->login ?: '-'),
+            __('F.I.O.').': '.$user->name,
+            __('Login').': '.($user->login ?: '-'),
             'Email: '.$user->email,
-            'Telefon: '.($user->phone ?: '-'),
-            'Lavozim: '.($user->job_title ?: '-'),
-            "Bo'lim: ".($user->department?->name ?: '-'),
-            'Rol: '.$user->display_role,
-            'Bandlik: '.($user->availability_status?->label() ?? '-'),
-            'Telegram xabarnomalari: '.($this->notificationsEnabled($user) ? 'Yoqilgan' : "O'chirilgan"),
+            __('Telefon').': '.($user->phone ?: '-'),
+            __('Lavozim').': '.($user->job_title ?: '-'),
+            __("Bo'lim").': '.($user->department?->name ?: '-'),
+            __('Rol').': '.$user->display_role,
+            __('Bandlik').': '.($user->availability_status?->label() ?? '-'),
+            __('Telegram xabarnomalari').': '.($this->notificationsEnabled($user) ? __('Yoqilgan') : __("O'chirilgan")),
         ];
 
         $this->bot->sendMessage($chatId, new TelegramMessage(
-            'Profil ma\'lumotlari',
+            __('Profil ma\'lumotlari'),
             implode("\n", $lines),
             null,
             $this->menuButtons($user),
@@ -356,10 +360,10 @@ class TelegramUpdateHandler
         ])->save();
 
         $this->bot->sendMessage($chatId, new TelegramMessage(
-            $enabled ? 'Xabarnomalar yoqildi' : "Xabarnomalar o'chirildi",
+            $enabled ? __('Xabarnomalar yoqildi') : __("Xabarnomalar o'chirildi"),
             $enabled
-                ? 'Yangi tizim xabarlari shu chatga yuboriladi.'
-                : "Yangi tizim xabarlari Telegramga yuborilmaydi. Saytdagi Bildirishnomalar bo'limida ko'rinaveradi.",
+                ? __('Yangi tizim xabarlari shu chatga yuboriladi.')
+                : __("Yangi tizim xabarlari Telegramga yuborilmaydi. Saytdagi Bildirishnomalar bo'limida ko'rinaveradi."),
             null,
             $this->menuButtons($user->fresh()),
         ));
@@ -387,10 +391,8 @@ class TelegramUpdateHandler
     protected function installDefaultKeyboard(string $chatId): void
     {
         $this->bot->sendMessage($chatId, new TelegramMessage(
-            $this->telegramLocale($chatId) === 'ru' ? 'Меню' : 'Menyu',
-            $this->telegramLocale($chatId) === 'ru'
-                ? 'Нижнее меню обновлено.'
-                : 'Pastki menyu yangilandi.',
+            __('Menyu'),
+            __('Pastki menyu yangilandi.'),
             null,
             [],
             $this->defaultReplyKeyboard($chatId),
@@ -399,15 +401,12 @@ class TelegramUpdateHandler
 
     protected function sendSettingsMenu(string $chatId, ?User $user): void
     {
-        $isRussian = $this->telegramLocale($chatId) === 'ru';
-        $linked = $user ? ($isRussian ? 'подключен' : 'ulangan') : ($isRussian ? 'не подключен' : 'ulanmagan');
-        $language = $isRussian ? 'Русский' : "O'zbekcha";
+        $linked = $user ? __('ulangan') : __('ulanmagan');
+        $language = Locales::AVAILABLE[$this->telegramLocale($chatId)][0];
 
         $this->bot->sendMessage($chatId, new TelegramMessage(
-            $isRussian ? 'Настройки' : 'Sozlamalar',
-            $isRussian
-                ? "Аккаунт: {$linked}\nЯзык: {$language}"
-                : "Akkaunt: {$linked}\nTil: {$language}",
+            __('Sozlamalar'),
+            __('Akkaunt').': '.$linked."\n".__('Til').': '.$language,
             null,
             [],
             $this->settingsReplyKeyboard($chatId, $user),
@@ -416,11 +415,9 @@ class TelegramUpdateHandler
 
     protected function sendLanguageMenu(string $chatId): void
     {
-        $isRussian = $this->telegramLocale($chatId) === 'ru';
-
         $this->bot->sendMessage($chatId, new TelegramMessage(
-            $isRussian ? 'Язык' : 'Til',
-            $isRussian ? 'Выберите язык интерфейса бота.' : 'Bot interfeysi tilini tanlang.',
+            __('Til'),
+            __('Bot interfeysi tilini tanlang.'),
             null,
             [],
             $this->languageReplyKeyboard($chatId),
@@ -462,8 +459,8 @@ class TelegramUpdateHandler
 
         if ($categories->isEmpty()) {
             $this->bot->sendMessage($chatId, new TelegramMessage(
-                'Kategoriya topilmadi',
-                'Hozircha faol muammo kategoriyalari mavjud emas.',
+                __('Kategoriya topilmadi'),
+                __('Hozircha faol muammo kategoriyalari mavjud emas.'),
                 null,
                 $this->menuButtons($user),
             ));
@@ -480,10 +477,10 @@ class TelegramUpdateHandler
             ->all();
 
         $this->bot->sendMessage($chatId, new TelegramMessage(
-            'Kategoriya tanlang',
+            __('Kategoriya tanlang'),
             $mode === 'guest'
-                ? "Mehmon murojaati uchun muammo kategoriyasini tanlang."
-                : "Yangi murojaat uchun muammo kategoriyasini tanlang.",
+                ? __("Mehmon murojaati uchun muammo kategoriyasini tanlang.")
+                : __("Yangi murojaat uchun muammo kategoriyasini tanlang."),
             null,
             $buttons,
         ));
@@ -497,8 +494,8 @@ class TelegramUpdateHandler
 
         if (! $category) {
             $this->bot->sendMessage($chatId, new TelegramMessage(
-                'Kategoriya topilmadi',
-                'Tanlangan kategoriya faol emas yoki topilmadi.',
+                __('Kategoriya topilmadi'),
+                __('Tanlangan kategoriya faol emas yoki topilmadi.'),
                 null,
                 $this->menuButtons($user),
             ));
@@ -513,8 +510,8 @@ class TelegramUpdateHandler
             ], now()->addMinutes(20));
 
             $this->bot->sendMessage($chatId, new TelegramMessage(
-                'Telefon raqam',
-                "Kategoriya: {$category->name}\nMurojaatni qabul qilishdan oldin telefon raqamingizni yuboring.\nFormat: +998 99 999 99 99\nBekor qilish uchun /cancel yuboring.",
+                __('Telefon raqam'),
+                __('Kategoriya').': '.$category->name."\n".__('Murojaatni qabul qilishdan oldin telefon raqamingizni yuboring.')."\n".__('Format: :format', ['format' => '+998 99 999 99 99'])."\n".__('Bekor qilish uchun /cancel yuboring.'),
                 null,
                 [],
                 $this->phoneReplyKeyboard($chatId),
@@ -529,8 +526,8 @@ class TelegramUpdateHandler
         ], now()->addMinutes(20));
 
         $this->bot->sendMessage($chatId, new TelegramMessage(
-            'Tavsif yozing',
-            "Kategoriya: {$category->name}\nMuammoni kamida 30 belgida yozing. Bekor qilish uchun /cancel yuboring.",
+            __('Tavsif yozing'),
+            __('Kategoriya').': '.$category->name."\n".__('Muammoni kamida 30 belgida yozing.').' '.__('Bekor qilish uchun /cancel yuboring.'),
         ));
     }
 
@@ -540,8 +537,8 @@ class TelegramUpdateHandler
 
         if (! $phone) {
             $this->bot->sendMessage($chatId, new TelegramMessage(
-                "Telefon raqam noto'g'ri",
-                "Telefon raqamini +998 99 999 99 99 formatida yuboring yoki pastdagi tugma orqali raqamni ulashing.\nBekor qilish uchun /cancel yuboring.",
+                __("Telefon raqam noto'g'ri"),
+                __('Telefon raqamini +998 99 999 99 99 formatida yuboring yoki pastdagi tugma orqali raqamni ulashing.')."\n".__('Bekor qilish uchun /cancel yuboring.'),
                 null,
                 [],
                 $this->phoneReplyKeyboard($chatId),
@@ -557,8 +554,8 @@ class TelegramUpdateHandler
         ], now()->addMinutes(20));
 
         $this->bot->sendMessage($chatId, new TelegramMessage(
-            'Tavsif yozing',
-            "Telefon: {$phone}\nEndi muammoni kamida 30 belgida yozing. Bekor qilish uchun /cancel yuboring.",
+            __('Tavsif yozing'),
+            __('Telefon').': '.$phone."\n".__('Endi muammoni kamida 30 belgida yozing.').' '.__('Bekor qilish uchun /cancel yuboring.'),
             null,
             [],
             $this->defaultReplyKeyboard($chatId),
@@ -576,8 +573,8 @@ class TelegramUpdateHandler
 
         if (mb_strlen($text) < 30) {
             $this->bot->sendMessage($chatId, new TelegramMessage(
-                'Tavsif qisqa',
-                "Iltimos, muammoni kamida 30 belgida yozing. Bekor qilish uchun /cancel yuboring.",
+                __('Tavsif qisqa'),
+                __("Iltimos, muammoni kamida 30 belgida yozing. Bekor qilish uchun /cancel yuboring."),
             ));
 
             return;
@@ -602,7 +599,8 @@ class TelegramUpdateHandler
             $this->ticketService->addComment(
                 $ticket,
                 null,
-                'Telefon raqamim: '.$this->phoneForComment($state['requester_phone']),
+                __('Telefon raqamim: :phone', ['phone' => $this->phoneForComment($state['requester_phone'])], 'uz'),
+                // ($state['requester_phone']),
                 true,
             );
         }
@@ -611,12 +609,12 @@ class TelegramUpdateHandler
         Cache::forever($this->guestCreatedKey($chatId), $ticket->id);
 
         $this->bot->sendMessage($chatId, new TelegramMessage(
-            'Mehmon murojaati yuborildi',
-            "Murojaat raqami: {$ticket->reference}\nTracking kod: {$trackingCode}\nHolatni tekshirish uchun shu ikki qiymatni saqlab qo'ying.\n\nDoimiy kabinet va to'liq imkoniyatlar uchun saytdan ro'yxatdan o'ting.",
+            __('Mehmon murojaati yuborildi'),
+            __('Murojaat raqami').': '.$ticket->reference."\n".__('Tracking kod').': '.$trackingCode."\n".__("Holatni tekshirish uchun shu ikki qiymatni saqlab qo'ying.")."\n\n".__("Doimiy kabinet va to'liq imkoniyatlar uchun saytdan ro'yxatdan o'ting."),
             route('register'),
             [
                 [
-                    ['text' => "Holatni tekshirish", 'callback_data' => 'guest:track'],
+                    ['text' => __("Holatni tekshirish"), 'callback_data' => 'guest:track'],
                 ],
             ],
         ));
@@ -633,8 +631,8 @@ class TelegramUpdateHandler
 
         if (mb_strlen($text) < 30) {
             $this->bot->sendMessage($chatId, new TelegramMessage(
-                'Tavsif qisqa',
-                "Iltimos, muammoni kamida 30 belgida yozing. Bekor qilish uchun /cancel yuboring.",
+                __('Tavsif qisqa'),
+                __("Iltimos, muammoni kamida 30 belgida yozing. Bekor qilish uchun /cancel yuboring."),
             ));
 
             return;
@@ -655,8 +653,8 @@ class TelegramUpdateHandler
         Cache::forget($this->stateKey($chatId));
 
         $this->bot->sendMessage($chatId, new TelegramMessage(
-            'Murojaat yuborildi',
-            "Murojaat raqami: {$ticket->reference}\nHolat: {$ticket->status->label()}",
+            __('Murojaat yuborildi'),
+            __('Murojaat raqami').': '.$ticket->reference."\n".__('Holat').': '.$ticket->status->label(),
             route('tickets.show', $ticket),
             $this->menuButtons($user),
         ));
@@ -669,8 +667,8 @@ class TelegramUpdateHandler
         ], now()->addMinutes(10));
 
         $this->bot->sendMessage($chatId, new TelegramMessage(
-            'Murojaat holatini tekshirish',
-            "Murojaat raqami va tracking kodni bitta xabarda yuboring.\nMasalan: RTT-20260525-0001 ABCD1234\nBekor qilish uchun /cancel.",
+            __('Murojaat holatini tekshirish'),
+            __('Murojaat raqami va tracking kodni bitta xabarda yuboring.')."\n".__('Masalan').': RTT-20260525-0001 ABCD1234'."\n".__('Bekor qilish uchun /cancel.'),
         ));
     }
 
@@ -687,8 +685,8 @@ class TelegramUpdateHandler
 
         if (! $ticket || ! $code || ! $this->ticketService->verifyGuestCode($ticket, $code)) {
             $this->bot->sendMessage($chatId, new TelegramMessage(
-                'Topilmadi',
-                "Murojaat raqami yoki tracking kod noto'g'ri. Qayta urinib ko'ring yoki /cancel yuboring.",
+                __('Topilmadi'),
+                __("Murojaat raqami yoki tracking kod noto'g'ri. Qayta urinib ko'ring yoki /cancel yuboring."),
             ));
 
             return;
@@ -697,7 +695,7 @@ class TelegramUpdateHandler
         Cache::forget($this->stateKey($chatId));
 
         $this->bot->sendMessage($chatId, new TelegramMessage(
-            'Murojaat holati',
+            __('Murojaat holati'),
             $this->ticketSummary($ticket),
             null,
             $this->menuButtons(null, $chatId),
@@ -720,11 +718,11 @@ class TelegramUpdateHandler
             ->get();
 
         $body = $tickets->isEmpty()
-            ? "Sizda hali murojaatlar yo'q."
+            ? __("Sizda hali murojaatlar yo'q.")
             : $tickets->map(fn (Ticket $ticket): string => $this->ticketLine($ticket))->implode("\n\n");
 
         $this->bot->sendMessage($chatId, new TelegramMessage(
-            'Murojaatlarim',
+            __('Murojaatlarim'),
             $body,
             route('tickets.index'),
             $this->menuButtons($user),
@@ -754,8 +752,8 @@ class TelegramUpdateHandler
 
         if ($tickets->isEmpty()) {
             $this->bot->sendMessage($chatId, new TelegramMessage(
-                'Mening vazifalarim',
-                "Sizga biriktirilgan faol murojaat yo'q.",
+                __('Mening vazifalarim'),
+                __("Sizga biriktirilgan faol murojaat yo'q."),
                 route('executor.tickets.index'),
                 $this->menuButtons($user),
             ));
@@ -764,7 +762,7 @@ class TelegramUpdateHandler
         }
 
         $this->bot->sendMessage($chatId, new TelegramMessage(
-            'Mening vazifalarim',
+            __('Mening vazifalarim'),
             $tickets->map(fn (Ticket $ticket): string => $this->ticketLine($ticket))->implode("\n\n"),
             route('executor.tickets.index'),
             $this->executorTicketActionButtons($tickets, $user),
@@ -799,8 +797,8 @@ class TelegramUpdateHandler
 
         if ($tickets->isEmpty()) {
             $this->bot->sendMessage($chatId, new TelegramMessage(
-                $overdueOnly ? 'Kechikkan murojaatlar' : "Bo'sh murojaatlar",
-                $overdueOnly ? "Qabul qilish mumkin bo'lgan kechikkan murojaat yo'q." : "Qabul qilish mumkin bo'lgan bo'sh murojaat yo'q.",
+                $overdueOnly ? __('Kechikkan murojaatlar') : __("Bo'sh murojaatlar"),
+                $overdueOnly ? __("Qabul qilish mumkin bo'lgan kechikkan murojaat yo'q.") : __("Qabul qilish mumkin bo'lgan bo'sh murojaat yo'q."),
                 route('executor.tickets.index'),
                 $this->menuButtons($user),
             ));
@@ -809,11 +807,11 @@ class TelegramUpdateHandler
         }
 
         $buttons = $tickets->map(fn (Ticket $ticket): array => [
-            ['text' => "Olish: {$ticket->reference}", 'callback_data' => 'executor:claim:'.$ticket->id],
+            ['text' => __('Olish').': '.$ticket->reference, 'callback_data' => 'executor:claim:'.$ticket->id],
         ])->values()->all();
 
         $this->bot->sendMessage($chatId, new TelegramMessage(
-            $overdueOnly ? 'Kechikkan murojaatlar' : "Bo'sh murojaatlar",
+            $overdueOnly ? __('Kechikkan murojaatlar') : __("Bo'sh murojaatlar"),
             $tickets->map(fn (Ticket $ticket): string => $this->ticketLine($ticket))->implode("\n\n"),
             route('executor.tickets.index'),
             $buttons,
@@ -832,8 +830,8 @@ class TelegramUpdateHandler
 
         if (! $ticket || ! $ticket->canExecutorAccess($user)) {
             $this->bot->sendMessage($chatId, new TelegramMessage(
-                'Murojaat olinmadi',
-                'Bu murojaat topilmadi yoki siz uchun ochiq emas.',
+                __('Murojaat olinmadi'),
+                __('Bu murojaat topilmadi yoki siz uchun ochiq emas.'),
                 null,
                 $this->menuButtons($user),
             ));
@@ -842,10 +840,10 @@ class TelegramUpdateHandler
         }
 
         try {
-            $updated = $this->ticketService->claimForExecutor($ticket, $user, 'Telegram orqali qabul qilindi.');
+            $updated = $this->ticketService->claimForExecutor($ticket, $user, __('Telegram orqali qabul qilindi.', [], 'uz'));
         } catch (\Throwable $exception) {
             $this->bot->sendMessage($chatId, new TelegramMessage(
-                'Murojaat olinmadi',
+                __('Murojaat olinmadi'),
                 $exception->getMessage(),
                 null,
                 $this->menuButtons($user),
@@ -855,7 +853,7 @@ class TelegramUpdateHandler
         }
 
         $this->bot->sendMessage($chatId, new TelegramMessage(
-            'Murojaat qabul qilindi',
+            __('Murojaat qabul qilindi'),
             $this->ticketSummary($updated),
             route('executor.tickets.show', $updated),
             $this->executorTicketActionButtons(collect([$updated]), $user),
@@ -872,8 +870,8 @@ class TelegramUpdateHandler
 
         if (! $ticket->canExecutorCompleteBy($user)) {
             $this->bot->sendMessage($chatId, new TelegramMessage(
-                'Bajarib bo\'lmaydi',
-                "Bu murojaatni hozir bajarildi deb yuborib bo'lmaydi. Avval uni qabul qiling.",
+                __('Bajarib bo\'lmaydi'),
+                __("Bu murojaatni hozir bajarildi deb yuborib bo'lmaydi. Avval uni qabul qiling."),
                 null,
                 $this->executorTicketActionButtons(collect([$ticket]), $user),
             ));
@@ -887,8 +885,8 @@ class TelegramUpdateHandler
         ], now()->addMinutes(20));
 
         $this->bot->sendMessage($chatId, new TelegramMessage(
-            'Bajarish izohi',
-            "{$ticket->reference} bo'yicha bajarilgan ishni qisqa yozing. Bekor qilish uchun /cancel yuboring.",
+            __('Bajarish izohi'),
+            __(":ref bo'yicha bajarilgan ishni qisqa yozing.", ['ref' => $ticket->reference]).' '.__('Bekor qilish uchun /cancel yuboring.'),
         ));
     }
 
@@ -904,8 +902,8 @@ class TelegramUpdateHandler
 
         if (mb_strlen($text) < 3) {
             $this->bot->sendMessage($chatId, new TelegramMessage(
-                'Izoh qisqa',
-                "Bajarilgan ish bo'yicha kamida 3 belgi yozing. Bekor qilish uchun /cancel yuboring.",
+                __('Izoh qisqa'),
+                __("Bajarilgan ish bo'yicha kamida 3 belgi yozing. Bekor qilish uchun /cancel yuboring."),
             ));
 
             return;
@@ -928,7 +926,7 @@ class TelegramUpdateHandler
         Cache::forget($this->stateKey($chatId));
 
         $this->bot->sendMessage($chatId, new TelegramMessage(
-            'Murojaat bajarildi',
+            __('Murojaat bajarildi'),
             $this->ticketSummary($updated),
             route('executor.tickets.show', $updated),
             $this->menuButtons($user),
@@ -945,8 +943,8 @@ class TelegramUpdateHandler
 
         if ($ticket->assigned_executor_id !== $user?->id || ! in_array($ticket->status, [TicketStatus::Assigned, TicketStatus::InProgress], true)) {
             $this->bot->sendMessage($chatId, new TelegramMessage(
-                'Qaytarib bo\'lmaydi',
-                "Bu murojaatni hozir qaytarib bo'lmaydi.",
+                __('Qaytarib bo\'lmaydi'),
+                __("Bu murojaatni hozir qaytarib bo'lmaydi."),
                 null,
                 $this->executorTicketActionButtons(collect([$ticket]), $user),
             ));
@@ -960,8 +958,8 @@ class TelegramUpdateHandler
         ], now()->addMinutes(20));
 
         $this->bot->sendMessage($chatId, new TelegramMessage(
-            'Qaytarish sababi',
-            "{$ticket->reference} nega bajara olmasligingizni yozing — murojaat sizdan olinib, umumiy navbatga qaytadi. Bekor qilish uchun /cancel yuboring.",
+            __('Qaytarish sababi'),
+            __(':ref nega bajara olmasligingizni yozing — murojaat sizdan olinib, umumiy navbatga qaytadi.', ['ref' => $ticket->reference]).' '.__('Bekor qilish uchun /cancel yuboring.'),
         ));
     }
 
@@ -977,8 +975,8 @@ class TelegramUpdateHandler
 
         if (mb_strlen($text) < 5) {
             $this->bot->sendMessage($chatId, new TelegramMessage(
-                'Sabab qisqa',
-                "Qaytarish sababini kamida 5 belgida yozing. Bekor qilish uchun /cancel yuboring.",
+                __('Sabab qisqa'),
+                __("Qaytarish sababini kamida 5 belgida yozing. Bekor qilish uchun /cancel yuboring."),
             ));
 
             return;
@@ -989,7 +987,7 @@ class TelegramUpdateHandler
         } catch (\Throwable $exception) {
             Cache::forget($this->stateKey($chatId));
             $this->bot->sendMessage($chatId, new TelegramMessage(
-                "Qaytarib bo'lmadi",
+                __("Qaytarib bo'lmadi"),
                 $exception->getMessage(),
                 null,
                 $this->menuButtons($user),
@@ -1001,7 +999,7 @@ class TelegramUpdateHandler
         Cache::forget($this->stateKey($chatId));
 
         $this->bot->sendMessage($chatId, new TelegramMessage(
-            'Murojaat navbatga qaytarildi',
+            __('Murojaat navbatga qaytarildi'),
             $this->ticketSummary($updated),
             route('executor.tickets.show', $updated),
             $this->menuButtons($user),
@@ -1022,8 +1020,8 @@ class TelegramUpdateHandler
         ], now()->addMinutes(20));
 
         $this->bot->sendMessage($chatId, new TelegramMessage(
-            'Izoh yozing',
-            "{$ticket->reference} uchun izoh matnini yuboring. Izoh murojaatchiga ko'rinadi. Bekor qilish uchun /cancel yuboring.",
+            __('Izoh yozing'),
+            __(":ref uchun izoh matnini yuboring. Izoh murojaatchiga ko'rinadi.", ['ref' => $ticket->reference]).' '.__('Bekor qilish uchun /cancel yuboring.'),
         ));
     }
 
@@ -1039,8 +1037,8 @@ class TelegramUpdateHandler
 
         if (mb_strlen($text) < 3) {
             $this->bot->sendMessage($chatId, new TelegramMessage(
-                'Izoh qisqa',
-                "Izohni kamida 3 belgida yozing. Bekor qilish uchun /cancel yuboring.",
+                __('Izoh qisqa'),
+                __("Izohni kamida 3 belgida yozing. Bekor qilish uchun /cancel yuboring."),
             ));
 
             return;
@@ -1050,7 +1048,7 @@ class TelegramUpdateHandler
         Cache::forget($this->stateKey($chatId));
 
         $this->bot->sendMessage($chatId, new TelegramMessage(
-            "Izoh qo'shildi",
+            __("Izoh qo'shildi"),
             $this->ticketSummary($ticket->fresh()),
             route('executor.tickets.show', $ticket),
             $this->executorTicketActionButtons(collect([$ticket->fresh()]), $user),
@@ -1073,16 +1071,16 @@ class TelegramUpdateHandler
             ->get();
 
         $body = $tickets->isEmpty()
-            ? "Siz operator sifatida yaratgan murojaatlar hali yo'q."
+            ? __("Siz operator sifatida yaratgan murojaatlar hali yo'q.")
             : $tickets->map(fn (Ticket $ticket): string => $this->ticketLine($ticket))->implode("\n\n");
 
         $this->bot->sendMessage($chatId, new TelegramMessage(
-            'Operator murojaatlari',
+            __('Operator murojaatlari'),
             $body,
             route('operator.tickets.index'),
             [
                 [
-                    ['text' => 'Saytda yaratish', 'url' => route('operator.tickets.create')],
+                    ['text' => __('Saytda yaratish'), 'url' => route('operator.tickets.create')],
                 ],
                 ...$this->menuButtons($user),
             ],
@@ -1101,8 +1099,8 @@ class TelegramUpdateHandler
 
         if (! $ticket || ! $ticket->canExecutorAccess($user)) {
             $this->bot->sendMessage($chatId, new TelegramMessage(
-                'Murojaat topilmadi',
-                'Bu murojaat topilmadi yoki siz uchun ochiq emas.',
+                __('Murojaat topilmadi'),
+                __('Bu murojaat topilmadi yoki siz uchun ochiq emas.'),
                 null,
                 $this->menuButtons($user),
             ));
@@ -1125,22 +1123,22 @@ class TelegramUpdateHandler
             $row = [];
 
             if ($ticket->canExecutorClaimBy($user)) {
-                $row[] = ['text' => "{$ticket->executorClaimLabel()}: {$ticket->reference}", 'callback_data' => 'executor:claim:'.$ticket->id];
+                $row[] = ['text' => $ticket->executorClaimLabel().': '.$ticket->reference, 'callback_data' => 'executor:claim:'.$ticket->id];
             }
 
             if ($ticket->canExecutorCompleteBy($user)) {
-                $row[] = ['text' => "Bajarish: {$ticket->reference}", 'callback_data' => 'executor:complete:'.$ticket->id];
+                $row[] = ['text' => __('Bajarish').': '.$ticket->reference, 'callback_data' => 'executor:complete:'.$ticket->id];
             }
 
             if (
                 $ticket->assigned_executor_id === $user->id
                 && in_array($ticket->status, [TicketStatus::Assigned, TicketStatus::InProgress], true)
             ) {
-                $row[] = ['text' => "Qaytarish: {$ticket->reference}", 'callback_data' => 'executor:return:'.$ticket->id];
+                $row[] = ['text' => __('Qaytarish').': '.$ticket->reference, 'callback_data' => 'executor:return:'.$ticket->id];
             }
 
             if ($ticket->assigned_executor_id === $user->id) {
-                $row[] = ['text' => "Izoh: {$ticket->reference}", 'callback_data' => 'executor:comment:'.$ticket->id];
+                $row[] = ['text' => __('Izoh').': '.$ticket->reference, 'callback_data' => 'executor:comment:'.$ticket->id];
             }
 
             foreach (array_chunk($row, 2) as $chunk) {
@@ -1160,15 +1158,15 @@ class TelegramUpdateHandler
         }
 
         $lines = [
-            'Yangi: '.Ticket::query()->where('status', TicketStatus::New->value)->count(),
-            'Jarayonda: '.Ticket::query()->where('status', TicketStatus::InProgress->value)->count(),
-            'Kechikkan: '.Ticket::query()->where('status', TicketStatus::Overdue->value)->count(),
-            'Bajarilgan: '.Ticket::query()->where('status', TicketStatus::Completed->value)->count(),
-            'Tasdiq kutayotgan foydalanuvchilar: '.User::query()->whereNull('approved_at')->where('is_active', true)->count(),
+            __('Yangi').': '.Ticket::query()->where('status', TicketStatus::New->value)->count(),
+            __('Jarayonda').': '.Ticket::query()->where('status', TicketStatus::InProgress->value)->count(),
+            __('Kechikkan').': '.Ticket::query()->where('status', TicketStatus::Overdue->value)->count(),
+            __('Bajarilgan').': '.Ticket::query()->where('status', TicketStatus::Completed->value)->count(),
+            __('Tasdiq kutayotgan foydalanuvchilar').': '.User::query()->whereNull('approved_at')->where('is_active', true)->count(),
         ];
 
         $this->bot->sendMessage($chatId, new TelegramMessage(
-            'Admin xulosasi',
+            __('Admin xulosasi'),
             implode("\n", $lines),
             route('admin.dispatch.tickets'),
             $this->menuButtons($user),
@@ -1191,11 +1189,11 @@ class TelegramUpdateHandler
             ->get();
 
         $body = $tickets->isEmpty()
-            ? "Kechikkan murojaat yo'q."
+            ? __("Kechikkan murojaat yo'q.")
             : $tickets->map(fn (Ticket $ticket): string => $this->ticketLine($ticket))->implode("\n\n");
 
         $this->bot->sendMessage($chatId, new TelegramMessage(
-            'Kechikkan murojaatlar',
+            __('Kechikkan murojaatlar'),
             $body,
             route('admin.dispatch.tickets', ['overdue' => 1]),
             $this->menuButtons($user),
@@ -1218,11 +1216,11 @@ class TelegramUpdateHandler
             ->get(['name', 'email', 'created_at']);
 
         $body = $pending->isEmpty()
-            ? "Tasdiq kutayotgan foydalanuvchi yo'q."
+            ? __("Tasdiq kutayotgan foydalanuvchi yo'q.")
             : $pending->map(fn (User $pendingUser): string => "{$pendingUser->name}\n{$pendingUser->email}\n{$pendingUser->created_at?->format('d.m.Y H:i')}")->implode("\n\n");
 
         $this->bot->sendMessage($chatId, new TelegramMessage(
-            'Foydalanuvchilar',
+            __('Foydalanuvchilar'),
             $body,
             route('admin.users.index'),
             $this->menuButtons($user),
@@ -1249,10 +1247,10 @@ class TelegramUpdateHandler
             ->count();
 
         $lines = [
-            'Oy: '.$monthStart->translatedFormat('F Y'),
-            'Yakunlangan: '.$completed,
-            'Kechikib yakunlangan: '.$overdueCompleted,
-            'Faol murojaatlar: '.Ticket::query()->whereIn('status', [
+            __('Oy').': '.$monthStart->translatedFormat('F Y'),
+            __('Yakunlangan').': '.$completed,
+            __('Kechikib yakunlangan').': '.$overdueCompleted,
+            __('Faol murojaatlar').': '.Ticket::query()->whereIn('status', [
                 TicketStatus::New->value,
                 TicketStatus::Assigned->value,
                 TicketStatus::InProgress->value,
@@ -1262,7 +1260,7 @@ class TelegramUpdateHandler
         ];
 
         $this->bot->sendMessage($chatId, new TelegramMessage(
-            'Rahbar xulosasi',
+            __('Rahbar xulosasi'),
             implode("\n", $lines),
             route('manager.dashboard'),
             $this->menuButtons($user),
@@ -1272,12 +1270,12 @@ class TelegramUpdateHandler
     protected function sendRegisterOffer(string $chatId): void
     {
         $this->bot->sendMessage($chatId, new TelegramMessage(
-            "Ro'yxatdan o'ting",
+            __("Ro'yxatdan o'ting"),
             "Bu chatda mehmon murojaati yuborish imkoniyati bir marta ishlaydi. Keyingi murojaatlarni kabinet orqali yuborish va kuzatish uchun saytdan ro'yxatdan o'ting.",
             route('register'),
             [
                 [
-                    ['text' => 'Murojaat holatini tekshirish', 'callback_data' => 'guest:track'],
+                    ['text' => __('Murojaat holatini tekshirish'), 'callback_data' => 'guest:track'],
                 ],
             ],
         ));
@@ -1287,22 +1285,22 @@ class TelegramUpdateHandler
     {
         return implode("\n", array_filter([
             "{$ticket->reference} - {$ticket->status->label()}",
-            'Kategoriya: '.($ticket->category?->name ?: '-'),
-            'Muhimlik: '.$ticket->priority->label(),
-            'Muddat: '.$ticket->deadlineLabel(),
+            __('Kategoriya').': '.($ticket->category?->name ?: '-'),
+            __('Muhimlik').': '.$ticket->priority->label(),
+            __('Muddat').': '.$ticket->deadlineLabel(),
         ]));
     }
 
     protected function ticketSummary(Ticket $ticket): string
     {
         return implode("\n", [
-            'Raqam: '.$ticket->reference,
-            'Holat: '.$ticket->status->label(),
-            'Kategoriya: '.($ticket->category?->name ?: '-'),
-            'Muhimlik: '.$ticket->priority->label(),
-            'Qabul qilingan: '.$ticket->receivedAtLabel(),
-            'Berilgan muddat: '.$ticket->slaDurationLabel(),
-            'Tugash muddati: '.$ticket->deadlineLabel(),
+            __('Raqam').': '.$ticket->reference,
+            __('Holat').': '.$ticket->status->label(),
+            __('Kategoriya').': '.($ticket->category?->name ?: '-'),
+            __('Muhimlik').': '.$ticket->priority->label(),
+            __('Qabul qilingan').': '.$ticket->receivedAtLabel(),
+            __('Berilgan muddat').': '.$ticket->slaDurationLabel(),
+            __('Tugash muddati').': '.$ticket->deadlineLabel(),
         ]);
     }
 
@@ -1339,10 +1337,7 @@ class TelegramUpdateHandler
     protected function languageReplyKeyboard(string $chatId): array
     {
         return [
-            [
-                "O'zbekcha",
-                'Русский',
-            ],
+            collect(Locales::AVAILABLE)->map(fn (array $meta) => $meta[0])->values()->all(),
             [
                 $this->keyboardLabel($chatId, 'settings'),
                 $this->keyboardLabel($chatId, 'main'),
@@ -1355,7 +1350,7 @@ class TelegramUpdateHandler
         return [
             [
                 [
-                    'text' => 'Telefon raqamni ulash',
+                    'text' => __('Telefon raqamni ulash'),
                     'request_contact' => true,
                 ],
             ],
@@ -1414,45 +1409,55 @@ class TelegramUpdateHandler
 
     protected function keyboardLabel(string $chatId, string $key): string
     {
-        $isRussian = $this->telegramLocale($chatId) === 'ru';
+        $locale = $this->telegramLocale($chatId);
 
         return match ($key) {
-            'main' => $isRussian ? 'Главное меню' : 'Asosiy menyu',
-            'settings' => $isRussian ? 'Настройки' : 'Sozlamalar',
-            'language' => $isRussian ? 'Сменить язык' : 'Tilni almashtirish',
-            'logout' => $isRussian ? 'Выйти из аккаунта' : 'Hisobdan chiqish',
+            'main' => __('Asosiy menyu', [], $locale),
+            'settings' => __('Sozlamalar', [], $locale),
+            'language' => __('Tilni almashtirish', [], $locale),
+            'logout' => __('Hisobdan chiqish', [], $locale),
             default => $key,
         };
     }
 
     protected function isMainMenuText(string $text): bool
     {
-        return $this->matchesKeyboardText($text, ['Asosiy menyu', 'Главное меню']);
+        return $this->matchesKeyboardText($text, $this->inAllLocales('Asosiy menyu'));
     }
 
     protected function isSettingsText(string $text): bool
     {
-        return $this->matchesKeyboardText($text, ['Sozlamalar', 'Настройки']);
+        return $this->matchesKeyboardText($text, $this->inAllLocales('Sozlamalar'));
     }
 
     protected function isLanguageText(string $text): bool
     {
-        return $this->matchesKeyboardText($text, ['Tilni almashtirish', 'Сменить язык']);
+        return $this->matchesKeyboardText($text, $this->inAllLocales('Tilni almashtirish'));
     }
 
     protected function isLogoutText(string $text): bool
     {
-        return $this->matchesKeyboardText($text, ['Hisobdan chiqish', 'Выйти из аккаунта']);
+        return $this->matchesKeyboardText($text, $this->inAllLocales('Hisobdan chiqish'));
     }
 
-    protected function isUzbekLanguageChoice(string $text): bool
+    /** Til tugmasi bosilgan bo'lsa — tanlangan til kodi (uz/ru/en), aks holda null. */
+    protected function languageChoice(string $text): ?string
     {
-        return $this->matchesKeyboardText($text, ["O'zbekcha", 'Uzbek', 'Uzbekcha']);
+        $aliases = ['uz' => ['Uzbek', 'Uzbekcha'], 'ru' => ['Russian', 'Ruscha'], 'en' => ['Inglizcha', 'Английский']];
+
+        foreach (Locales::AVAILABLE as $code => [$name]) {
+            if ($this->matchesKeyboardText($text, [$name, ...($aliases[$code] ?? [])])) {
+                return $code;
+            }
+        }
+
+        return null;
     }
 
-    protected function isRussianLanguageChoice(string $text): bool
+    /** Pastki tugma matni har qanday tilda kelishi mumkin (chat tili keyin o'zgargan bo'lsa ham). */
+    protected function inAllLocales(string $key): array
     {
-        return $this->matchesKeyboardText($text, ['Русский', 'Russian', 'Ruscha']);
+        return collect(array_keys(Locales::AVAILABLE))->map(fn (string $locale) => __($key, [], $locale))->unique()->values()->all();
     }
 
     protected function matchesKeyboardText(string $text, array $labels): bool
@@ -1480,14 +1485,19 @@ class TelegramUpdateHandler
 
     protected function telegramLocale(string $chatId): string
     {
-        $locale = Cache::get($this->localeKey($chatId), 'uz');
+        $locale = Cache::get($this->localeKey($chatId));
 
-        return in_array($locale, ['uz', 'ru'], true) ? $locale : 'uz';
+        if (! Locales::isSupported($locale)) {
+            // Chat tili tanlanmagan bo'lsa — ulangan foydalanuvchining sayt tili
+            $locale = $this->userByChat($chatId)?->locale;
+        }
+
+        return Locales::isSupported($locale) ? $locale : 'uz';
     }
 
     protected function setTelegramLocale(string $chatId, string $locale): void
     {
-        Cache::forever($this->localeKey($chatId), in_array($locale, ['uz', 'ru'], true) ? $locale : 'uz');
+        Cache::forever($this->localeKey($chatId), Locales::isSupported($locale) ? $locale : 'uz');
     }
 
     protected function guestCreatedKey(string $chatId): string
@@ -1512,14 +1522,14 @@ class TelegramUpdateHandler
     protected function sendLinkHelp(string $chatId): void
     {
         $this->bot->sendMessage($chatId, new TelegramMessage(
-            'Saytdagi akkauntni ulash',
+            __('Saytdagi akkauntni ulash'),
             implode("\n", [
-                '1. Saytga login va parolingiz bilan kiring.',
-                "2. Sozlamalar sahifasidagi «Telegram ulanishi» bo'limini oching.",
-                "3. «Telegramda ulash» tugmasini bosing — shu bot ochiladi.",
-                "4. Botda «Start» ni bosing: akkaunt avtomatik ulanadi.",
+                __('1. Saytga login va parolingiz bilan kiring.'),
+                __("2. Sozlamalar sahifasidagi «Telegram ulanishi» bo'limini oching."),
+                __("3. «Telegramda ulash» tugmasini bosing — shu bot ochiladi."),
+                __("4. Botda «Start» ni bosing: akkaunt avtomatik ulanadi."),
                 '',
-                "Telegram boshqa qurilmada bo'lsa, Sozlamalardagi havolani nusxalab, o'sha qurilmada oching.",
+                __("Telegram boshqa qurilmada bo'lsa, Sozlamalardagi havolani nusxalab, o'sha qurilmada oching."),
             ]),
             route('app.settings'),
             $this->menuButtons(null, $chatId),
@@ -1535,12 +1545,12 @@ class TelegramUpdateHandler
         }
 
         $this->bot->sendMessage($chatId, new TelegramMessage(
-            'Akkauntdan chiqish',
-            "Bu Telegram chat «{$user->name}» akkauntidan uziladi va tizim xabarlari bu yerga kelmaydi. Davom etasizmi?",
+            __('Akkauntdan chiqish'),
+            __('Bu Telegram chat «:name» akkauntidan uziladi va tizim xabarlari bu yerga kelmaydi. Davom etasizmi?', ['name' => $user->name]),
             null,
             [[
-                ['text' => 'Ha, chiqish', 'callback_data' => 'unlink:confirm'],
-                ['text' => 'Bekor qilish', 'callback_data' => 'unlink:cancel'],
+                ['text' => __('Ha, chiqish'), 'callback_data' => 'unlink:confirm'],
+                ['text' => __('Bekor qilish'), 'callback_data' => 'unlink:cancel'],
             ]],
         ));
     }
@@ -1551,8 +1561,8 @@ class TelegramUpdateHandler
 
         if (! $user) {
             $this->bot->sendMessage($chatId, new TelegramMessage(
-                'Akkaunt topilmadi',
-                "Bu Telegram chat hali hech bir akkauntga ulanmagan.",
+                __('Akkaunt topilmadi'),
+                __("Bu Telegram chat hali hech bir akkauntga ulanmagan."),
                 null,
                 $this->menuButtons(null, $chatId),
             ));
@@ -1563,8 +1573,8 @@ class TelegramUpdateHandler
         $user->unlinkTelegramChat($chatId);
 
         $this->bot->sendMessage($chatId, new TelegramMessage(
-            'Telegram uzildi',
-            "Bu chatga tizim xabarlari yuborilmaydi. Qayta ulash uchun saytdagi Sozlamalar bo'limidan Telegram botni oching.",
+            __('Telegram uzildi'),
+            __("Bu chatga tizim xabarlari yuborilmaydi. Qayta ulash uchun saytdagi Sozlamalar bo'limidan Telegram botni oching."),
             null,
             $this->menuButtons(null, $chatId),
         ));
@@ -1578,18 +1588,18 @@ class TelegramUpdateHandler
 
             if (! $this->guestTicketAlreadyCreated($chatId)) {
                 $buttons[] = [
-                    ['text' => 'Mehmon murojaati yuborish', 'callback_data' => 'guest:create'],
+                    ['text' => __('Mehmon murojaati yuborish'), 'callback_data' => 'guest:create'],
                 ];
             }
 
             $buttons[] = [
-                ['text' => 'Murojaat holatini tekshirish', 'callback_data' => 'guest:track'],
+                ['text' => __('Murojaat holatini tekshirish'), 'callback_data' => 'guest:track'],
             ];
             $buttons[] = [
-                ['text' => 'Saytdagi akkauntni ulash', 'callback_data' => 'link'],
+                ['text' => __('Saytdagi akkauntni ulash'), 'callback_data' => 'link'],
             ];
             $buttons[] = [
-                ['text' => "Ro'yxatdan o'tish", 'url' => route('register')],
+                ['text' => __("Ro'yxatdan o'tish"), 'url' => route('register')],
             ];
 
             return $buttons;
@@ -1599,56 +1609,56 @@ class TelegramUpdateHandler
 
         if ($user->hasSystemRole(UserRole::Requester)) {
             $buttons[] = [
-                ['text' => 'Murojaatlarim', 'callback_data' => 'requester:tickets'],
-                ['text' => 'Yangi murojaat', 'callback_data' => 'requester:create'],
+                ['text' => __('Murojaatlarim'), 'callback_data' => 'requester:tickets'],
+                ['text' => __('Yangi murojaat'), 'callback_data' => 'requester:create'],
             ];
         }
 
         if ($user->hasSystemRole(UserRole::Executor)) {
             $buttons[] = [
-                ['text' => 'Mening vazifalarim', 'callback_data' => 'executor:tasks'],
+                ['text' => __('Mening vazifalarim'), 'callback_data' => 'executor:tasks'],
             ];
             $buttons[] = [
-                ['text' => "Bo'shlar", 'callback_data' => 'executor:available'],
-                ['text' => 'Kechikkanlar', 'callback_data' => 'executor:overdue'],
+                ['text' => __("Bo'shlar"), 'callback_data' => 'executor:available'],
+                ['text' => __('Kechikkanlar'), 'callback_data' => 'executor:overdue'],
             ];
         }
 
         if ($user->hasSystemRole(UserRole::Operator)) {
             $buttons[] = [
-                ['text' => 'Operator murojaatlari', 'callback_data' => 'operator:tickets'],
-                ['text' => 'Saytda yaratish', 'url' => route('operator.tickets.create')],
+                ['text' => __('Operator murojaatlari'), 'callback_data' => 'operator:tickets'],
+                ['text' => __('Saytda yaratish'), 'url' => route('operator.tickets.create')],
             ];
         }
 
         if ($user->hasSystemRole(UserRole::Admin)) {
             $buttons[] = [
-                ['text' => 'Admin xulosa', 'callback_data' => 'admin:summary'],
-                ['text' => 'Kechikkanlar', 'callback_data' => 'admin:overdue'],
+                ['text' => __('Admin xulosa'), 'callback_data' => 'admin:summary'],
+                ['text' => __('Kechikkanlar'), 'callback_data' => 'admin:overdue'],
             ];
             $buttons[] = [
-                ['text' => 'Foydalanuvchilar', 'callback_data' => 'admin:users'],
-                ['text' => 'Saytda ochish', 'url' => route('admin.dispatch.tickets')],
+                ['text' => __('Foydalanuvchilar'), 'callback_data' => 'admin:users'],
+                ['text' => __('Saytda ochish'), 'url' => route('admin.dispatch.tickets')],
             ];
         }
 
         if ($user->hasSystemRole(UserRole::Manager)) {
             $buttons[] = [
-                ['text' => 'Rahbar xulosa', 'callback_data' => 'manager:summary'],
-                ['text' => 'Hisobot', 'url' => route('manager.dashboard')],
+                ['text' => __('Rahbar xulosa'), 'callback_data' => 'manager:summary'],
+                ['text' => __('Hisobot'), 'url' => route('manager.dashboard')],
             ];
         }
 
         $notificationButton = $this->notificationsEnabled($user)
-            ? ['text' => "Xabarnomani o'chirish", 'callback_data' => 'notifications:toggle']
-            : ['text' => 'Xabarnomani yoqish', 'callback_data' => 'notifications:toggle'];
+            ? ['text' => __("Xabarnomani o'chirish"), 'callback_data' => 'notifications:toggle']
+            : ['text' => __('Xabarnomani yoqish'), 'callback_data' => 'notifications:toggle'];
 
         $buttons[] = [
-            ['text' => "Profilni ko'rish", 'callback_data' => 'profile'],
+            ['text' => __("Profilni ko'rish"), 'callback_data' => 'profile'],
             $notificationButton,
         ];
         $buttons[] = [
-            ['text' => 'Saytdagi akkauntdan chiqish', 'callback_data' => 'unlink:ask'],
+            ['text' => __('Saytdagi akkauntdan chiqish'), 'callback_data' => 'unlink:ask'],
         ];
 
         return $buttons;

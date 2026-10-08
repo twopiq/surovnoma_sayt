@@ -37,14 +37,14 @@ enum TicketPriority: string
         ];
     }
 
-    public function label(): string
+    public function label(?string $locale = null): string
     {
         return match ($this) {
-            self::Low => __('Past'),
-            self::Medium => __("O'rta"),
-            self::High => __('Yuqori'),
-            self::Urgent => __('Shoshilinch'),
-            self::Unassigned => __('Belgilanmagan'),
+            self::Low => __('Past', [], $locale),
+            self::Medium => __("O'rta", [], $locale),
+            self::High => __('Yuqori', [], $locale),
+            self::Urgent => __('Shoshilinch', [], $locale),
+            self::Unassigned => __('Belgilanmagan', [], $locale),
         };
     }
 

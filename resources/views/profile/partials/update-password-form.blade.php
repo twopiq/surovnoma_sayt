@@ -1,11 +1,11 @@
 <section>
     <header>
         <h2 class="text-lg font-bold text-slate-950">
-            Parolni o'zgartirish
+            {{ __('Parolni o\'zgartirish') }}
         </h2>
 
         <p class="mt-1 text-sm text-slate-600">
-            Akkauntingiz xavfsizligi uchun murakkab parol ishlating.
+            {{ __('Akkauntingiz xavfsizligi uchun murakkab parol ishlating.') }}
         </p>
     </header>
 
@@ -32,7 +32,7 @@
         </div>
 
         <div class="flex items-center gap-4">
-            <x-primary-button>Saqlash</x-primary-button>
+            <x-primary-button>{{ __('Saqlash') }}</x-primary-button>
 
             @if (session('status') === 'password-updated')
                 <p
@@ -41,7 +41,7 @@
                     x-transition
                     x-init="setTimeout(() => show = false, 2000)"
                     class="text-sm font-medium text-emerald-600"
-                >Parol yangilandi.</p>
+                >{{ __('Parol yangilandi.') }}</p>
             @endif
         </div>
     </form>

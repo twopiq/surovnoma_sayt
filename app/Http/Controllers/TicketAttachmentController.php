@@ -21,7 +21,7 @@ class TicketAttachmentController extends Controller
         $disk = Storage::disk($attachment->disk ?: 'local');
         abort_unless($disk->exists($attachment->path), 404);
 
-        $audit->log($user->id, 'attachment.downloaded', "Fayl yuklab olindi: {$attachment->original_name}", $attachment, [
+        $audit->log($user->id, 'attachment.downloaded', __('Fayl yuklab olindi: :name', ['name' => $attachment->original_name], 'uz'), $attachment, [
             'ticket_id' => $attachment->ticket_id,
             'ip' => $request->ip(),
         ]);

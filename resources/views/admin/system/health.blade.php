@@ -1,9 +1,9 @@
 @php
     $statusMeta = [
-        'ok' => ['Yaxshi', 'completed'],
-        'warn' => ['Ogohlantirish', 'assigned'],
-        'fail' => ['Xato', 'new'],
-        'info' => ['Ma\'lumot', 'closed'],
+        'ok' => [__('Yaxshi'), 'completed'],
+        'warn' => [__('Ogohlantirish'), 'assigned'],
+        'fail' => [__('Xato'), 'new'],
+        'info' => [__('Ma\'lumot'), 'closed'],
     ];
 @endphp
 
@@ -11,13 +11,13 @@
     <x-slot name="header">
         <div class="flex flex-wrap items-start justify-between gap-3">
             <div>
-                <div class="pg-crumb">Tizim</div>
-                <h2>Tizim holati</h2>
-                <p class="pg-sub">Server, baza, fon jarayonlari va integratsiyalar tekshiruvi · {{ $checkedAt->format('d.m.Y H:i:s') }}</p>
+                <div class="pg-crumb">{{ __('Tizim') }}</div>
+                <h2>{{ __('Tizim holati') }}</h2>
+                <p class="pg-sub">{{ __('Server, baza, fon jarayonlari va integratsiyalar tekshiruvi') }} · {{ $checkedAt->format('d.m.Y H:i:s') }}</p>
             </div>
             <div class="flex gap-2">
-                <a href="{{ route('admin.system.logs', ['tab' => 'server', 'level' => 'error']) }}" class="btn btn-secondary">Xatolarni ko'rish</a>
-                <a href="{{ route('admin.system.health') }}" class="btn btn-primary">Qayta tekshirish</a>
+                <a href="{{ route('admin.system.logs', ['tab' => 'server', 'level' => 'error']) }}" class="btn btn-secondary">{{ __('Xatolarni ko\'rish') }}</a>
+                <a href="{{ route('admin.system.health') }}" class="btn btn-primary">{{ __('Qayta tekshirish') }}</a>
             </div>
         </div>
     </x-slot>
@@ -28,7 +28,7 @@
                 <div class="ui-card">
                     <span class="dash-k__label">{{ $statusMeta[$key][0] }}</span>
                     <span class="dash-k__value">{{ $summary[$key] ?? 0 }}</span>
-                    <span class="status-badge status--{{ $statusMeta[$key][1] }}">{{ $key === 'fail' ? 'darhol tuzating' : ($key === 'warn' ? "e'tibor bering" : ($key === 'ok' ? 'joyida' : 'tekshiruvsiz')) }}</span>
+                    <span class="status-badge status--{{ $statusMeta[$key][1] }}">{{ $key === 'fail' ? __('darhol tuzating') : ($key === 'warn' ? __("e'tibor bering") : ($key === 'ok' ? __('joyida') : __('tekshiruvsiz'))) }}</span>
                 </div>
             @endforeach
         </div>

@@ -4,6 +4,7 @@ namespace App\Notifications;
 
 use App\TelegramBot\TelegramMessage;
 use App\TelegramBot\TelegramNotificationChannel;
+use App\Support\StoredText;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
@@ -58,10 +59,13 @@ class TicketStatusNotification extends Notification
 
     public function toTelegram(object $notifiable): TelegramMessage
     {
+        $locale = $notifiable->locale ?? null;
+
         return new TelegramMessage(
-            $this->title,
-            $this->body,
+            StoredText::translate($this->title, $locale),
+            StoredText::translateLines($this->body, $locale),
             $this->url,
+            locale: $locale,
         );
     }
 }

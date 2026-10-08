@@ -178,9 +178,9 @@ class Ticket extends Model
         $minutes = (int) abs($this->created_at->diffInMinutes($finished));
 
         return match (true) {
-            $minutes < 60 => $minutes.' daq',
-            $minutes < 24 * 60 => intdiv($minutes, 60).' s '.($minutes % 60).' daq',
-            default => intdiv($minutes, 24 * 60).' kun '.intdiv($minutes % (24 * 60), 60).' s',
+            $minutes < 60 => __(':m daq', ['m' => $minutes]),
+            $minutes < 24 * 60 => __(':h s :m daq', ['h' => intdiv($minutes, 60), 'm' => $minutes % 60]),
+            default => __(':d kun :h s', ['d' => intdiv($minutes, 24 * 60), 'h' => intdiv($minutes % (24 * 60), 60)]),
         };
     }
 
@@ -188,11 +188,11 @@ class Ticket extends Model
     public function resultLabel(): array
     {
         return match (true) {
-            $this->status === TicketStatus::Rejected => ['Rad etilgan', 'closed'],
-            $this->status === TicketStatus::Cancelled => ['Bekor qilingan', 'closed'],
-            ! $this->deadline_at || ! $this->completed_at => ['Muddatsiz', 'closed'],
-            $this->completed_at->lte($this->deadline_at) => ['Muddatida', 'completed'],
-            default => ['Kechikib', 'new'],
+            $this->status === TicketStatus::Rejected => [__('Rad etilgan'), 'closed'],
+            $this->status === TicketStatus::Cancelled => [__('Bekor qilingan'), 'closed'],
+            ! $this->deadline_at || ! $this->completed_at => [__('Muddatsiz'), 'closed'],
+            $this->completed_at->lte($this->deadline_at) => [__('Muddatida'), 'completed'],
+            default => [__('Kechikib'), 'new'],
         };
     }
 
@@ -274,16 +274,16 @@ class Ticket extends Model
     public function executorClaimLabel(): string
     {
         return match ($this->status) {
-            TicketStatus::New => 'Bajarishga olish',
-            TicketStatus::Assigned => $this->assigned_executor_id === null ? 'Bajarishga olish' : 'Qabul qilish',
-            TicketStatus::Returned => 'Qayta qabul qilish',
-            TicketStatus::Overdue => 'Kechikkan murojaatni olish',
-            TicketStatus::InProgress => 'Qabul qilindi',
-            TicketStatus::Completed => 'Bajarilgan',
-            TicketStatus::Closed => 'Yopilgan',
-            TicketStatus::Rejected => 'Rad etilgan',
-            TicketStatus::Cancelled => 'Bekor qilingan',
-            default => 'Mavjud emas',
+            TicketStatus::New => __('Bajarishga olish'),
+            TicketStatus::Assigned => $this->assigned_executor_id === null ? __('Bajarishga olish') : __('Qabul qilish'),
+            TicketStatus::Returned => __('Qayta qabul qilish'),
+            TicketStatus::Overdue => __('Kechikkan murojaatni olish'),
+            TicketStatus::InProgress => __('Qabul qilindi'),
+            TicketStatus::Completed => __('Bajarilgan'),
+            TicketStatus::Closed => __('Yopilgan'),
+            TicketStatus::Rejected => __('Rad etilgan'),
+            TicketStatus::Cancelled => __('Bekor qilingan'),
+            default => __('Mavjud emas'),
         };
     }
 }

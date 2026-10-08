@@ -8,32 +8,32 @@
 
 <section>
     <header>
-        <h2 class="text-lg font-bold text-slate-950">Telegram ulanishi</h2>
+        <h2 class="text-lg font-bold text-slate-950">{{ __('Telegram ulanishi') }}</h2>
         <p class="mt-1 text-sm text-slate-600">
-            Botni oching va akkauntni bitta bosishda ulang. Bot ichida profilni ko'rish va xabarnomalarni yoqish yoki o'chirish mumkin.
+            {{ __('Botni oching va akkauntni bitta bosishda ulang. Bot ichida profilni ko\'rish va xabarnomalarni yoqish yoki o\'chirish mumkin.') }}
             @if ($canLinkMultipleTelegram)
-                Administrator sifatida bir nechta Telegram akkaunt ulashingiz mumkin — xabarlar hammasiga yuboriladi.
+                {{ __('Administrator sifatida bir nechta Telegram akkaunt ulashingiz mumkin — xabarlar hammasiga yuboriladi.') }}
             @endif
         </p>
     </header>
 
     @if (! $telegramSchemaReady)
         <div class="mt-5 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-            Telegram ulanishi uchun baza ustunlari hali yaratilmagan. Terminalda <span class="font-mono">php artisan migrate</span> buyrug'ini ishga tushiring.
+            {{ __('Telegram ulanishi uchun baza ustunlari hali yaratilmagan. Terminalda') }} <span class="font-mono">php artisan migrate</span> {{ __('buyrug\'ini ishga tushiring.') }}
         </div>
     @endif
 
     @if (! $telegramBotConfigured)
         <div class="mt-5 rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-            Telegram bot tokeni sozlanmagan. `.env` fayliga `TELEGRAM_BOT_TOKEN` qo'shing va konfiguratsiya keshini yangilang.
+            {{ __("Telegram bot tokeni sozlanmagan. :file fayliga :key qo'shing va konfiguratsiya keshini yangilang.", ['file' => '.env', 'key' => 'TELEGRAM_BOT_TOKEN']) }}
         </div>
     @endif
 
     @if ($telegramSchemaReady && $isLinked)
         <div class="mt-5">
             <div class="mb-2 flex items-center justify-between gap-2">
-                <span class="text-sm font-semibold text-slate-900">Ulangan akkauntlar ({{ $telegramAccounts->count() }})</span>
-                <span class="text-xs text-slate-500">Xabarnomalar: {{ $user->telegram_notifications_enabled !== false ? 'yoqilgan' : "o'chirilgan" }}</span>
+                <span class="text-sm font-semibold text-slate-900">{{ __('Ulangan akkauntlar') }} ({{ $telegramAccounts->count() }})</span>
+                <span class="text-xs text-slate-500">{{ __('Xabarnomalar') }}: {{ $user->telegram_notifications_enabled !== false ? __('yoqilgan') : __("o'chirilgan") }}</span>
             </div>
             <ul class="divide-y divide-slate-200 rounded-md border border-slate-200">
                 @foreach ($telegramAccounts as $account)
@@ -44,33 +44,33 @@
                             </span>
                             <div class="min-w-0 text-sm">
                                 <div class="font-semibold text-slate-900">
-                                    {{ $account->username ? '@'.$account->username : 'Username yo\'q' }}
+                                    {{ $account->username ? '@'.$account->username : __('Username yo\'q') }}
                                     @if ($account->primary)
-                                        <span class="ml-1 rounded bg-slate-100 px-1.5 py-0.5 text-[11px] font-semibold text-slate-600">Asosiy</span>
+                                        <span class="ml-1 rounded bg-slate-100 px-1.5 py-0.5 text-[11px] font-semibold text-slate-600">{{ __('Asosiy') }}</span>
                                     @endif
                                 </div>
                                 <div class="text-xs text-slate-500">
-                                    Chat ID: <span class="font-mono">{{ $account->chat_id }}</span>
-                                    · Ulangan: {{ $account->linked_at?->format('d.m.Y H:i') ?? '—' }}
+                                    {{ __('Chat ID:') }} <span class="font-mono">{{ $account->chat_id }}</span>
+                                    · {{ __('Ulangan') }}: {{ $account->linked_at?->format('d.m.Y H:i') ?? '—' }}
                                 </div>
                             </div>
                         </div>
-                        <form method="POST" action="{{ route('settings.telegram.disconnect-chat', $account->chat_id) }}" onsubmit="return confirm('Bu Telegram akkaunt uzilsinmi?')">
+                        <form method="POST" action="{{ route('settings.telegram.disconnect-chat', $account->chat_id) }}" onsubmit="return confirm(@js(__('Bu Telegram akkaunt uzilsinmi?')))">
                             @csrf
                             @method('DELETE')
-                            <button type="submit" class="btn btn-danger !px-3 !py-1.5">Uzish</button>
+                            <button type="submit" class="btn btn-danger !px-3 !py-1.5">{{ __('Uzish') }}</button>
                         </form>
                     </li>
                 @endforeach
             </ul>
 
-            <p class="mt-3 text-sm text-slate-600">Xabarnomalarni yoqish yoki o'chirish uchun Telegram botdagi tugmalardan foydalaning.</p>
+            <p class="mt-3 text-sm text-slate-600">{{ __('Xabarnomalarni yoqish yoki o\'chirish uchun Telegram botdagi tugmalardan foydalaning.') }}</p>
 
             @if ($telegramAccounts->count() > 1)
-                <form method="POST" action="{{ route('settings.telegram.disconnect') }}" class="mt-3" onsubmit="return confirm('Barcha Telegram akkauntlar uzilsinmi?')">
+                <form method="POST" action="{{ route('settings.telegram.disconnect') }}" class="mt-3" onsubmit="return confirm(@js(__('Barcha Telegram akkauntlar uzilsinmi?')))">
                     @csrf
                     @method('DELETE')
-                    <button type="submit" class="text-sm font-semibold text-red-700 hover:underline">Hammasini uzish</button>
+                    <button type="submit" class="text-sm font-semibold text-red-700 hover:underline">{{ __('Hammasini uzish') }}</button>
                 </form>
             @endif
         </div>
@@ -89,12 +89,12 @@
                             <svg class="h-6 w-6" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">{!! $telegramIcon !!}</svg>
                         </div>
                         <div class="min-w-0">
-                            <div class="text-base font-bold text-slate-900">{{ $isLinked ? 'Yana Telegram akkaunt ulash' : 'Bot orqali ulash' }}</div>
+                            <div class="text-base font-bold text-slate-900">{{ $isLinked ? __('Yana Telegram akkaunt ulash') : __('Bot orqali ulash') }}</div>
                             <p class="mt-1 text-sm text-slate-600">
                                 @if ($isLinked)
-                                    Boshqa Telegram akkauntda (masalan, ikkinchi telefonda) shu havolani oching va «Start» ni bosing. Avval ulanganlar uzilmaydi.
+                                    {{ __('Boshqa Telegram akkauntda (masalan, ikkinchi telefonda) shu havolani oching va «Start» ni bosing. Avval ulanganlar uzilmaydi.') }}
                                 @else
-                                    Tugmani bosing, Telegram ochiladi. Botda <span class="font-semibold">«Start»</span> tugmasini bossangiz, akkauntingiz avtomatik ulanadi.
+                                    {{ __('Tugmani bosing, Telegram ochiladi. Botda') }} <span class="font-semibold">{{ __('«Start»') }}</span> {{ __('tugmasini bossangiz, akkauntingiz avtomatik ulanadi.') }}
                                 @endif
                             </p>
                         </div>
@@ -103,37 +103,37 @@
                     <a href="{{ $telegramStartUrl }}" target="_blank" rel="noreferrer"
                        class="mt-5 flex w-full items-center justify-center gap-2 rounded-lg bg-[#229ED9] px-5 py-3 text-sm font-bold text-[#fff] transition hover:bg-[#1c8cc2] focus:outline-none focus:ring-2 focus:ring-sky-400 focus:ring-offset-2 sm:w-auto">
                         <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">{!! $telegramIcon !!}</svg>
-                        Telegramda ulash
+                        {{ __('Telegramda ulash') }}
                     </a>
 
                     <div class="mt-4" x-data="{ copied: false, copy() { navigator.clipboard.writeText(@js($telegramStartUrl)).then(() => { this.copied = true; setTimeout(() => this.copied = false, 2000) }) } }">
-                        <p class="text-xs text-slate-500">Telegram boshqa qurilmada bo'lsa, havolani nusxalab o'sha yerda oching:</p>
+                        <p class="text-xs text-slate-500">{{ __('Telegram boshqa qurilmada bo\'lsa, havolani nusxalab o\'sha yerda oching:') }}</p>
                         <button type="button" x-on:click="copy()" class="btn btn-secondary mt-2 !px-3 !py-1.5 text-xs">
-                            <span x-text="copied ? 'Nusxalandi' : 'Havolani nusxalash'">Havolani nusxalash</span>
+                            <span x-text="copied ? @js(__('Nusxalandi')) : @js(__('Havolani nusxalash'))">{{ __('Havolani nusxalash') }}</span>
                         </button>
                     </div>
                 </div>
             @else
                 <div class="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-                    Bot havolasi chiqishi uchun `.env` fayliga `TELEGRAM_BOT_USERNAME` qiymatini qo'shing.
+                    {{ __("Bot havolasi chiqishi uchun :file fayliga :key qiymatini qo'shing.", ['file' => '.env', 'key' => 'TELEGRAM_BOT_USERNAME']) }}
                 </div>
             @endif
 
             <form method="POST" action="{{ route('settings.telegram.regenerate') }}">
                 @csrf
-                <button type="submit" class="btn btn-secondary">Ulanish kodini yangilash</button>
+                <button type="submit" class="btn btn-secondary">{{ __('Ulanish kodini yangilash') }}</button>
                 @if (session('status') === 'telegram-token-regenerated')
-                    <span class="ml-3 text-sm font-medium text-emerald-600">Kod yangilandi.</span>
+                    <span class="ml-3 text-sm font-medium text-emerald-600">{{ __('Kod yangilandi.') }}</span>
                 @endif
             </form>
         </div>
     @endif
 
     @if (session('status') === 'telegram-disconnected')
-        <p class="mt-4 text-sm font-medium text-emerald-600">Telegram ulanishi uzildi.</p>
+        <p class="mt-4 text-sm font-medium text-emerald-600">{{ __('Telegram ulanishi uzildi.') }}</p>
     @endif
 
     @if (session('status') === 'telegram-migration-required')
-        <p class="mt-4 text-sm font-medium text-red-600">Avval Telegram migratsiyasini bajaring.</p>
+        <p class="mt-4 text-sm font-medium text-red-600">{{ __('Avval Telegram migratsiyasini bajaring.') }}</p>
     @endif
 </section>

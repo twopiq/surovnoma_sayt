@@ -1,18 +1,18 @@
 @php
     $statusCode = $statusCode ?? 500;
     $headline = $headline ?? 'Kutilmagan xatolik yuz berdi';
-    $eyebrow = $eyebrow ?? 'System notice';
+    $eyebrow = $eyebrow ?? 'Tizim xabari';
     $lead = $lead ?? "So'rovni bajarishda muammo yuz berdi. Iltimos, birozdan keyin qayta urinib ko'ring.";
     $details = $details ?? [];
     $homeLabel = $homeLabel ?? 'Asosiy sahifaga qaytish';
 @endphp
 
 <!DOCTYPE html>
-<html lang="uz">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>{{ $statusCode }} - {{ $headline }}</title>
+        <title>{{ $statusCode }} - {{ __($headline) }}</title>
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans+Condensed:wght@600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
@@ -31,13 +31,13 @@
                     </a>
 
                     <nav class="flex flex-wrap justify-center gap-2 font-semibold tracking-wide">
-                        <a href="{{ route('guest.create') }}" class="transition hover:text-[#fff]">[ Mehmon formasi ]</a>
-                        <a href="{{ route('guest.track') }}" class="transition hover:text-[#fff]">[ Holatni kuzatish ]</a>
-                        <a href="{{ route('register') }}" class="transition hover:text-[#fff]">[ Ro'yxatdan o'tish ]</a>
-                        <a href="{{ route('login') }}" class="transition hover:text-[#fff]">[ Kirish ]</a>
+                        <a href="{{ route('guest.create') }}" class="transition hover:text-[#fff]">{{ __('[ Mehmon formasi ]') }}</a>
+                        <a href="{{ route('guest.track') }}" class="transition hover:text-[#fff]">{{ __('[ Holatni kuzatish ]') }}</a>
+                        <a href="{{ route('register') }}" class="transition hover:text-[#fff]">{{ __('[ Ro\'yxatdan o\'tish ]') }}</a>
+                        <a href="{{ route('login') }}" class="transition hover:text-[#fff]">{{ __('[ Kirish ]') }}</a>
                     </nav>
 
-                    <a href="{{ route('home') }}" class="hidden justify-self-end transition hover:text-[#fff] md:inline-flex">Asosiy sahifa</a>
+                    <a href="{{ route('home') }}" class="hidden justify-self-end transition hover:text-[#fff] md:inline-flex">{{ __('Asosiy sahifa') }}</a>
                 </header>
 
                 <section class="grid flex-1 items-end gap-10 pb-12 pt-20 lg:grid-cols-[1.05fr_0.95fr] lg:pb-20">
@@ -46,30 +46,30 @@
                             {{ $statusCode }}
                         </div>
                         <div class="mt-6 max-w-4xl font-display text-6xl font-bold leading-[0.85] tracking-[-0.08em] text-[#fff] sm:text-7xl lg:text-8xl">
-                            {{ $headline }}
+                            {{ __($headline) }}
                         </div>
                     </div>
 
                     <div class="max-w-2xl border-t border-[#fff]/15 pt-8 lg:mb-20">
-                        <div class="text-sm font-semibold text-[#fff]/55">{{ $eyebrow }}</div>
+                        <div class="text-sm font-semibold text-[#fff]/55">{{ __($eyebrow) }}</div>
                         <p class="mt-3 font-display text-3xl leading-tight tracking-[-0.04em] text-[#fff]/90 sm:text-4xl">
-                            {{ $lead }}
+                            {{ __($lead) }}
                         </p>
 
                         @if (count($details))
                             <dl class="mt-8 grid gap-4 border-y border-[#fff]/10 py-6 font-mono text-sm">
                                 @foreach ($details as $label => $value)
                                     <div>
-                                        <dt class="text-[#fff]/35">&lt;{{ $label }}&gt;</dt>
-                                        <dd class="mt-1 text-[#fff]">{{ $value }}</dd>
+                                        <dt class="text-[#fff]/35">&lt;{{ __($label) }}&gt;</dt>
+                                        <dd class="mt-1 text-[#fff]">{{ is_string($value) ? __($value) : $value }}</dd>
                                     </div>
                                 @endforeach
                             </dl>
                         @endif
 
                         <div class="mt-8 flex flex-wrap gap-4 text-lg font-semibold text-[#fff]/80">
-                            <button type="button" onclick="history.back()" class="transition hover:text-[#fff]">[ Ortga qaytish ]</button>
-                            <a href="{{ route('home') }}" class="transition hover:text-[#fff]">[ {{ $homeLabel }} ]</a>
+                            <button type="button" onclick="history.back()" class="transition hover:text-[#fff]">{{ __('[ Ortga qaytish ]') }}</button>
+                            <a href="{{ route('home') }}" class="transition hover:text-[#fff]">[ {{ __($homeLabel) }} ]</a>
                         </div>
                     </div>
                 </section>

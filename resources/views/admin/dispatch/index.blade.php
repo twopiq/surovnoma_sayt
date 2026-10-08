@@ -2,8 +2,8 @@
     <x-slot name="header">
         <div class="flex items-center justify-between">
             <div>
-                <h2 class="font-display text-2xl font-bold">Dispetcher doskasi</h2>
-                <p class="mt-1 text-sm text-slate-500">Faol murojaatlarning holatlar bo'yicha ko'rinishi</p>
+                <h2 class="font-display text-2xl font-bold">{{ __('Dispetcher doskasi') }}</h2>
+                <p class="mt-1 text-sm text-slate-500">{{ __('Faol murojaatlarning holatlar bo\'yicha ko\'rinishi') }}</p>
             </div>
         </div>
     </x-slot>
