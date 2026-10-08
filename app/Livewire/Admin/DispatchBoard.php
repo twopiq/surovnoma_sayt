@@ -23,7 +23,7 @@ class DispatchBoard extends Component
         $grouped = collect($statuses)
             ->mapWithKeys(fn (TicketStatus $status) => [
                 $status->value => Ticket::query()
-                    ->with('slaProfile')
+                    ->with(['slaProfile', 'category', 'assignedExecutor', 'attachments:id,ticket_id,original_name'])
                     ->where('status', $status->value)
                     ->latest()
                     ->take(5)

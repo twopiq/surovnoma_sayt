@@ -1,7 +1,7 @@
 @props([
     'items',
     'max' => null,
-    'accent' => '#3b82f6',
+    'accent' => 'rgb(var(--c-accent))',
     'emptyText' => "Ma'lumot yo'q.",
     'minWidth' => 760,
     'height' => 320,
@@ -41,8 +41,8 @@
         >
             <defs>
                 <linearGradient id="{{ $gradientId }}" x1="0" x2="0" y1="0" y2="1">
-                    <stop offset="0%" stop-color="{{ $accent }}" stop-opacity="0.95" />
-                    <stop offset="100%" stop-color="{{ $accent }}" stop-opacity="0.72" />
+                    <stop offset="0%" style="stop-color: {{ $accent }}; stop-opacity: 0.95" />
+                    <stop offset="100%" style="stop-color: {{ $accent }}; stop-opacity: 0.72" />
                 </linearGradient>
             </defs>
 
@@ -75,7 +75,7 @@
                         width="{{ $barWidth }}"
                         height="{{ $barHeight }}"
                         rx="8"
-                        fill="{{ $fill ?? 'url(#'.$gradientId.')' }}"
+                        style="fill: {{ $fill ?? 'url(#'.$gradientId.')' }}"
                         class="transition duration-150 hover:opacity-80"
                     >
                         <title>{{ $label }}: {{ $value }}</title>

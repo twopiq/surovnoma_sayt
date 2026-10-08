@@ -60,59 +60,71 @@ enum TicketStatus: string
         };
     }
 
+    /**
+     * Dizayn tizimidagi holat guruhi: CSS klasslari (.status--*, .status-col--*, .status-text--*) shu nom bilan.
+     */
+    public function tone(): string
+    {
+        return match ($this) {
+            self::New, self::Returned, self::Overdue => 'new',
+            self::Assigned => 'assigned',
+            self::InProgress => 'in-progress',
+            self::Completed => 'completed',
+            self::Closed, self::Rejected => 'closed',
+        };
+    }
+
+    public function badgeCssClass(): string
+    {
+        return 'status-badge status--'.$this->tone();
+    }
+
+    public function columnCssClass(): string
+    {
+        return 'status-col--'.$this->tone();
+    }
+
+    public function textCssClass(): string
+    {
+        return 'status-text--'.$this->tone();
+    }
+
+    /** Badge foni (yorug' mavzu) — CSS o'zgaruvchisi ishlamaydigan joylar uchun (KPI API). */
     public function paletteColor(): string
     {
-        return match ($this) {
-            self::Closed, self::Rejected => '#8F8F8F',
-            self::Assigned => '#FFE900',
-            self::InProgress => '#FDA13F',
-            self::New, self::Returned, self::Overdue => '#E53D00',
-            self::Completed => '#40F99B',
-        };
-    }
-
-    public function paletteSoftColor(): string
-    {
-        return match ($this) {
-            self::Closed, self::Rejected => '#8F8F8F26',
-            self::Assigned => '#FFE90033',
-            self::InProgress => '#FDA13F2E',
-            self::New, self::Returned, self::Overdue => '#E53D0026',
-            self::Completed => '#40F99B26',
-        };
-    }
-
-    public function paletteRingColor(): string
-    {
-        return match ($this) {
-            self::Closed, self::Rejected => '#8F8F8F80',
-            self::Assigned => '#FFE90099',
-            self::InProgress => '#FDA13F99',
-            self::New, self::Returned, self::Overdue => '#E53D0080',
-            self::Completed => '#40F99B80',
+        return match ($this->tone()) {
+            'new' => '#FDE4E1',
+            'assigned' => '#FDF0C9',
+            'in-progress' => '#FDE6D3',
+            'completed' => '#D7F0DF',
+            'closed' => '#E6E5E0',
         };
     }
 
     public function paletteForegroundColor(): string
     {
-        return match ($this) {
-            self::New, self::Returned, self::Overdue => '#FFFFFF',
-            default => '#07120F',
+        return match ($this->tone()) {
+            'new' => '#8F1D12',
+            'assigned' => '#6B4700',
+            'in-progress' => '#8A3A07',
+            'completed' => '#11582C',
+            'closed' => '#3F4247',
+        };
+    }
+
+    public function paletteDotColor(): string
+    {
+        return match ($this->tone()) {
+            'new' => '#D92D20',
+            'assigned' => '#9A6700',
+            'in-progress' => '#C2410C',
+            'completed' => '#15803D',
+            'closed' => '#6B6E75',
         };
     }
 
     public function badgeStyle(): string
     {
-        return "background-color: {$this->paletteColor()}; color: {$this->paletteForegroundColor()}; --tw-ring-color: {$this->paletteRingColor()};";
-    }
-
-    public function textStyle(): string
-    {
-        return "color: {$this->paletteColor()};";
-    }
-
-    public function boardStyle(): string
-    {
-        return "background-color: {$this->paletteSoftColor()} !important; border-color: {$this->paletteRingColor()} !important;";
+        return "background-color: {$this->paletteColor()}; color: {$this->paletteForegroundColor()}; --tw-ring-color: {$this->paletteDotColor()};";
     }
 }

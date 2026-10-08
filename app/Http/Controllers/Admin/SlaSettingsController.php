@@ -36,7 +36,7 @@ class SlaSettingsController extends Controller
     {
         return view('admin.sla.work-schedule', [
             'schedules' => WorkSchedule::query()->orderBy('weekday')->get(),
-            'holidays' => HolidayException::query()->orderBy('date')->get(),
+            'holidays' => HolidayException::query()->whereDate('date', '>=', now()->subMonths(1))->orderBy('date')->get(),
             'weekdayLabels' => $this->weekdayLabels(),
         ]);
     }
@@ -99,6 +99,29 @@ class SlaSettingsController extends Controller
                 ],
             );
         }
+    }
+
+    public function storeHoliday(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'date' => ['required', 'date'],
+            'name' => ['required', 'string', 'max:255'],
+            'is_working_override' => ['nullable', 'boolean'],
+        ]);
+
+        HolidayException::query()->updateOrCreate(
+            ['date' => $data['date']],
+            ['name' => $data['name'], 'is_working_override' => (bool) ($data['is_working_override'] ?? false)],
+        );
+
+        return back()->with('status', 'Istisno kun saqlandi.');
+    }
+
+    public function destroyHoliday(HolidayException $holiday): RedirectResponse
+    {
+        $holiday->delete();
+
+        return back()->with('status', "Istisno kun o'chirildi.");
     }
 
     public function bootstrapDefaults(): RedirectResponse

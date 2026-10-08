@@ -1,241 +1,383 @@
+@php
+    $summary = $report['summary'];
+    $w = fn (string $key) => in_array($key, $widgets, true);
+    $query = request()->query();
+    $modeUrl = fn (?string $view) => route('app.dashboard', $view ? array_merge($query, ['view' => $view]) : \Illuminate\Support\Arr::except($query, ['view']));
+    $exportUrl = fn (string $format) => route('app.dashboard.export', array_merge(\Illuminate\Support\Arr::except($query, ['view']), ['format' => $format]));
+@endphp
+
 <x-app-layout>
     <x-slot name="header">
-        <div>
-            <h2 class="font-['Space_Grotesk'] text-2xl font-bold">IT Yordam markazi boshqaruvi</h2>
-            <p class="mt-1 text-sm text-slate-500">Murojaatlar va tizim ko'rsatkichlari.</p>
+        <div class="flex flex-wrap items-start justify-between gap-3">
+            <div class="min-w-0">
+                <h2>Murojaatlar hisoboti</h2>
+                <p class="dash-cap mt-1">
+                    Davr: {{ $start->format('d.m.Y') }} – {{ $end->format('d.m.Y') }}
+                    · {{ $summary['total'] }} ta murojaat, {{ $summary['completed'] }} tasi bajarildi, SLA {{ $summary['sla_percent'] }}%
+                    @if ($summary['overdue'] > 0)
+                        · {{ $summary['overdue'] }} tasi kechikkan
+                    @endif
+                </p>
+            </div>
+            @if ($isAdmin)
+                <nav class="dash-mode" aria-label="Ko'rinish rejimi">
+                    <a href="{{ $modeUrl(null) }}" @if (! $managerPreview) aria-current="page" @endif>Admin ko'rinishi</a>
+                    <a href="{{ $modeUrl('manager') }}" @if ($managerPreview) aria-current="page" @endif>Rahbar ko'rinishi</a>
+                </nav>
+            @endif
         </div>
     </x-slot>
 
-    @php
-        $stats = $dashboardStats;
-        $trendMode = $filterOptions['trend'];
-        $trendTabs = ['y' => 'Y', 'q' => 'Q', 'm' => 'M', 'w' => 'W', 'd' => 'D'];
-        $formatCompact = function (?int $value): string {
-            $value = (int) $value;
-            if ($value >= 1000000) return round($value / 1000000, 1).'M';
-            if ($value >= 1000) return round($value / 1000, 1).'K';
-            return (string) $value;
-        };
-        $slaAngle = max(0, min(100, (float) $stats['within_sla_percent'])) * 3.6;
-        $slaColor = $stats['within_sla_percent'] >= 80 ? 'text-emerald-600' : ($stats['within_sla_percent'] >= 60 ? 'text-amber-600' : 'text-rose-600');
-    @endphp
+    <div class="mx-auto max-w-none px-4 pt-6 sm:px-6 lg:px-8">
+        <form method="GET" action="{{ route('app.dashboard') }}" class="mb-4 flex flex-wrap items-center justify-between gap-3" data-auto-filter>
+            @if ($managerPreview)
+                <input type="hidden" name="view" value="manager">
+            @endif
+            <div class="flex flex-wrap items-center gap-2">
+                <div class="dash-seg" role="radiogroup" aria-label="Davr">
+                    @foreach ($periods as $value => $label)
+                        <label>
+                            <input type="radio" name="period" value="{{ $value }}" class="sr-only" @checked($period === $value)>
+                            {{ $label }}
+                        </label>
+                    @endforeach
+                </div>
 
-    <div class="mx-auto max-w-none px-4 pt-8 pb-12 sm:px-6 lg:px-8">
-        @include('app.partials.top-menu')
-
-        {{-- Filtrlar --}}
-        <form method="GET" action="{{ route('app.dashboard') }}" data-auto-filter
-              class="mt-6 flex flex-wrap items-center gap-3 rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm">
-            <div class="flex flex-wrap items-center gap-3">
-                @if ($filterOptions['agents']->count() > 1)
-                    <select name="agent" class="rounded-md border-slate-300 text-sm shadow-sm">
-                        <option value="all">Barcha ijrochilar</option>
-                        @foreach ($filterOptions['agents'] as $agent)
-                            <option value="{{ data_get($agent, 'id') }}" @selected($filterOptions['agent'] === (int) data_get($agent, 'id'))>
-                                {{ data_get($agent, 'name') }}
-                            </option>
-                        @endforeach
-                    </select>
+                @if ($period === 'range')
+                    <input type="date" name="from" value="{{ $start->format('Y-m-d') }}" aria-label="Boshlanish sanasi" class="py-1.5 text-[13px]">
+                    <input type="date" name="to" value="{{ $end->format('Y-m-d') }}" aria-label="Tugash sanasi" class="py-1.5 text-[13px]">
                 @endif
-                <select name="year" class="rounded-md border-slate-300 text-sm shadow-sm">
-                    <option value="all">Barcha yillar</option>
-                    @foreach ($filterOptions['years'] as $year)
-                        <option value="{{ $year }}" @selected($filterOptions['year'] === $year)>{{ $year }}</option>
+
+                <select name="department_id" aria-label="Bo'lim" class="py-1.5 pr-8 text-[13px]">
+                    <option value="">Bo'lim: Barchasi</option>
+                    @foreach ($filterOptions['departments'] as $department)
+                        <option value="{{ $department->id }}" @selected(($filters['department_id'] ?? null) === $department->id)>{{ $department->name }}</option>
                     @endforeach
                 </select>
-                <input type="hidden" name="trend" value="{{ $trendMode }}">
+                <select name="category_id" aria-label="Kategoriya" class="py-1.5 pr-8 text-[13px]">
+                    <option value="">Kategoriya: Barchasi</option>
+                    @foreach ($filterOptions['categories'] as $category)
+                        <option value="{{ $category->id }}" @selected(($filters['category_id'] ?? null) === $category->id)>{{ $category->name }}</option>
+                    @endforeach
+                </select>
+                <select name="executor_id" aria-label="Ijrochi" class="py-1.5 pr-8 text-[13px]">
+                    <option value="">Ijrochi: Barchasi</option>
+                    @foreach ($filterOptions['executors'] as $executor)
+                        <option value="{{ $executor->id }}" @selected(($filters['executor_id'] ?? null) === $executor->id)>{{ $executor->name }}</option>
+                    @endforeach
+                </select>
+
+                <input type="hidden" name="compare" value="0">
+                <label class="inline-flex items-center gap-2 text-[13px] font-medium text-muted">
+                    <input type="checkbox" name="compare" value="1" class="rounded" @checked($compare)>
+                    Avvalgi davr bilan
+                </label>
             </div>
-            @if (request()->hasAny(['agent', 'year']))
-                <a href="{{ route('app.dashboard', ['trend' => $trendMode]) }}"
-                   class="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-50">
-                    Tozalash
-                </a>
-            @endif
+
+            <div class="flex gap-2">
+                <a href="{{ $exportUrl('csv') }}" class="btn btn-secondary">CSV</a>
+                <a href="{{ $exportUrl('excel') }}" class="btn btn-primary">Excel</a>
+            </div>
         </form>
 
-        {{-- Asosiy ko'rsatkichlar --}}
-        <div class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-            @php
-                $kpiCards = [
-                    [
-                        'label' => 'Jami murojaatlar',
-                        'value' => $formatCompact($stats['total_tickets']),
-                        'sub' => 'Umumiy',
-                        'color' => 'text-slate-900',
-                        'dot' => 'bg-slate-400',
-                    ],
-                    [
-                        'label' => 'Ochiq',
-                        'value' => $formatCompact($stats['open_tickets']),
-                        'sub' => 'Faol holatda',
-                        'color' => 'text-orange-600',
-                        'dot' => 'bg-orange-400',
-                    ],
-                    [
-                        'label' => 'Hal etilgan',
-                        'value' => $formatCompact($stats['resolved_total']),
-                        'sub' => 'Yopilgan',
-                        'color' => 'text-emerald-600',
-                        'dot' => 'bg-emerald-500',
-                    ],
-                    [
-                        'label' => "O'rtacha hal etish",
-                        'value' => $stats['avg_resolution_hours'] !== null
-                            ? number_format($stats['avg_resolution_hours'], 1).' h'
-                            : '—',
-                        'sub' => $stats['avg_resolution_hours'] !== null ? 'soat (o\'rtacha)' : 'Ma\'lumot yetarli emas',
-                        'color' => 'text-slate-900',
-                        'dot' => 'bg-blue-400',
-                    ],
-                    [
-                        'label' => 'SLA doirasida',
-                        'value' => number_format($stats['within_sla_percent'], 1).'%',
-                        'sub' => $stats['within_sla_count'].' / '.$stats['resolved_total'].' yopilgan',
-                        'color' => $slaColor,
-                        'dot' => $stats['within_sla_percent'] >= 80 ? 'bg-emerald-500' : ($stats['within_sla_percent'] >= 60 ? 'bg-amber-400' : 'bg-rose-500'),
-                    ],
-                ];
-            @endphp
-            @foreach ($kpiCards as $card)
-                <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                    <div class="flex items-center gap-2">
-                        <span class="inline-block h-2 w-2 rounded-full {{ $card['dot'] }}"></span>
-                        <span class="text-xs font-semibold uppercase tracking-wide text-slate-500">{{ $card['label'] }}</span>
-                    </div>
-                    <div class="mt-3 text-4xl font-semibold leading-none {{ $card['color'] }}">{{ $card['value'] }}</div>
-                    <div class="mt-2 text-xs text-slate-400">{{ $card['sub'] }}</div>
-                </div>
-            @endforeach
-        </div>
+        @if ($managerPreview)
+            <p class="mb-4 rounded-md border border-line bg-accent-soft px-3 py-2 text-[13px] text-accent-strong">
+                Rahbar shu ko'rinishni ko'radi: faqat «Rahbarda ko'rinadi» belgilangan vidjetlar.
+            </p>
+        @endif
 
-        {{-- Trend + SLA --}}
-        <div class="mt-6 grid gap-6 xl:grid-cols-[1fr_300px]">
+        @if (count($widgets) === 0)
+            <div class="dash-card text-center text-muted">Hozircha sizga ochilgan infografika yo'q. Administratorga murojaat qiling.</div>
+        @endif
 
-            {{-- Trend grafigi --}}
-            <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-                <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <div>
-                        <h3 class="font-semibold text-slate-900">Murojaatlar trendi</h3>
-                        <p class="mt-1 text-sm text-slate-500">{{ $trendSeries['label'] }}</p>
-                    </div>
-                    <div class="inline-flex shrink-0 rounded-lg bg-slate-100 p-1">
-                        @foreach ($trendTabs as $value => $label)
-                            <a
-                                href="{{ route('app.dashboard', array_merge(request()->query(), ['trend' => $value])) }}"
-                                class="min-w-[36px] rounded-md px-3 py-1.5 text-center text-sm font-bold transition {{ $trendMode === $value ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-500 hover:bg-white hover:text-slate-800' }}"
-                            >
-                                {{ $label }}
-                            </a>
-                        @endforeach
-                    </div>
-                </div>
-                <div class="mt-5 h-64">
-                    <x-dashboard-area-chart :items="$trendSeries['items']" :height="256" />
-                </div>
-            </section>
-
-            {{-- SLA va tezkor ko'rsatkichlar --}}
-            <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-                <div class="flex items-center justify-between">
-                    <h3 class="font-semibold text-slate-900">SLA holati</h3>
-                    <span class="rounded-full bg-[#dcf7f3] px-2.5 py-1 text-xs font-bold tracking-wide text-[#228a84]">
-                        {{ number_format($stats['within_sla_percent'], 1) }}%
-                    </span>
-                </div>
-                <p class="mt-1 text-xs text-slate-400">Yopilgan murojaatlar asosida</p>
-
-                <div class="mt-5 flex justify-center">
-                    <div class="h-36 w-36 rounded-full" style="background: conic-gradient(#38c1bb 0deg {{ $slaAngle }}deg, #e2f8f6 {{ $slaAngle }}deg 360deg);">
-                        <div class="flex h-full items-center justify-center rounded-full border-[16px] border-white bg-white text-center">
-                            <div>
-                                <div class="text-2xl font-bold {{ $slaColor }}">{{ number_format($stats['within_sla_percent'], 1) }}%</div>
-                                <div class="mt-0.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400">SLA</div>
-                            </div>
+        {{-- KPI kartalari --}}
+        @if ($w('kpi'))
+            <div class="mb-2 flex items-center justify-between gap-2">
+                <span class="dash-section__num">Asosiy ko'rsatkichlar</span>
+                @if ($canManageWidgets)
+                    <form method="POST" action="{{ route('app.dashboard.widgets.toggle', 'kpi') }}">
+                        @csrf
+                        <button type="submit" @class(['dash-vis', 'dash-vis--on' => $visibility['kpi']]) aria-pressed="{{ $visibility['kpi'] ? 'true' : 'false' }}">
+                            <i aria-hidden="true"></i>{{ $visibility['kpi'] ? "Rahbarda ko'rinadi" : 'Rahbarda yashirin' }}
+                        </button>
+                    </form>
+                @endif
+            </div>
+            <div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
+                @foreach ($report['kpi'] as $card)
+                    <div @class(['dash-card', 'dash-card--off' => $canManageWidgets && ! $visibility['kpi']])>
+                        <div class="dash-card__body">
+                            <span class="dash-k__label">{{ $card['label'] }}</span>
+                            <span class="dash-k__value">{{ number_format($card['value'], 0, '.', ' ') }}</span>
+                            @if ($card['delta'] !== null)
+                                <span class="dash-delta dash-delta--{{ $card['tone'] }}">
+                                    {{ $card['delta'] > 0 ? '▲' : ($card['delta'] < 0 ? '▼' : '■') }} {{ number_format(abs($card['delta']), 1) }}%
+                                </span>
+                                <span class="dash-cap">avvalgi davrdan</span>
+                            @endif
                         </div>
                     </div>
-                </div>
+                @endforeach
+            </div>
+        @endif
 
-                <div class="mt-5 grid grid-cols-2 gap-3 border-t border-slate-100 pt-5">
-                    <div class="rounded-xl bg-emerald-50 px-3 py-3 text-center">
-                        <div class="text-xl font-bold text-emerald-700">{{ $formatCompact($stats['within_sla_count']) }}</div>
-                        <div class="mt-1 text-[11px] text-emerald-600">Vaqtida</div>
-                    </div>
-                    <div class="rounded-xl bg-rose-50 px-3 py-3 text-center">
-                        <div class="text-xl font-bold text-rose-600">{{ $formatCompact($stats['outside_sla_count']) }}</div>
-                        <div class="mt-1 text-[11px] text-rose-500">Kechikkan</div>
-                    </div>
-                    <div class="rounded-xl bg-amber-50 px-3 py-3 text-center">
-                        <div class="text-xl font-bold text-amber-700">{{ $formatCompact($stats['urgent_resolved']) }}</div>
-                        <div class="mt-1 text-[11px] text-amber-600">Shoshilinch</div>
-                    </div>
-                    <div class="rounded-xl bg-cyan-50 px-3 py-3 text-center">
-                        <div class="text-xl font-bold text-cyan-700">{{ $formatCompact($stats['same_day_resolved']) }}</div>
-                        <div class="mt-1 text-[11px] text-cyan-600">Bir kunda</div>
-                    </div>
-                </div>
-            </section>
-        </div>
+        {{-- 01 Oqim --}}
+        @if ($w('trend') || $w('funnel') || $w('statuses') || $w('channels'))
+            <div class="dash-section">
+                <div class="dash-section__num">01</div>
+                <h2>Oqim</h2>
+                <div class="dash-cap">Murojaatlar qancha keladi va qanday yo'l bosadi</div>
+            </div>
+            <div class="grid gap-3 xl:grid-cols-[2fr_1fr]">
+                <div class="grid content-start gap-3">
+                    @if ($w('trend'))
+                        @php($trend = $report['trend'])
+                        <x-dash-widget key="trend" title="Kunlik trend" :subtitle="'Bajarilgan murojaatlar: '.$trend['total'].($compare ? ', punktir — avvalgi davr' : '')" :visibility="$visibility" :can-manage="$canManageWidgets">
+                            <svg width="100%" viewBox="0 0 620 180" preserveAspectRatio="xMinYMin meet" role="img" aria-label="Kunlik bajarilgan murojaatlar grafigi">
+                                @foreach ($trend['gridY'] as $line)
+                                    <line x1="36" x2="612" y1="{{ $line['y'] }}" y2="{{ $line['y'] }}" style="stroke: rgb(var(--c-line))" />
+                                    <text class="dash-svg-text" x="30" y="{{ $line['y'] + 4 }}" text-anchor="end">{{ $line['label'] }}</text>
+                                @endforeach
+                                @foreach ($trend['labels'] as $label)
+                                    <text class="dash-svg-text" x="{{ $label['x'] }}" y="174" text-anchor="middle">{{ $label['label'] }}</text>
+                                @endforeach
+                                @if ($trend['area'])
+                                    <polygon points="{{ $trend['area'] }}" style="fill: rgb(var(--c-accent-soft))" />
+                                @endif
+                                @if ($trend['previous'])
+                                    <polyline points="{{ $trend['previous'] }}" fill="none" stroke-width="2" stroke-dasharray="4 4" style="stroke: rgb(var(--c-line-strong))" />
+                                @endif
+                                <polyline points="{{ $trend['points'] }}" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="stroke: rgb(var(--c-accent))" />
+                                @if ($trend['last'])
+                                    <circle cx="{{ $trend['last']['x'] }}" cy="{{ $trend['last']['y'] }}" r="4" style="fill: rgb(var(--c-accent))" />
+                                @endif
+                            </svg>
+                        </x-dash-widget>
+                    @endif
 
-        {{-- Kategoriya + Muhimlik --}}
-        <div class="mt-6 grid gap-6 xl:grid-cols-2">
-
-            {{-- Kategoriya bo'yicha --}}
-            <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-                <h3 class="font-semibold text-slate-900">Kategoriya bo'yicha murojaatlar</h3>
-                @if (count($categoryBreakdown['items']) > 0)
-                    <div class="mt-5 space-y-4">
-                        @foreach ($categoryBreakdown['items'] as $item)
-                            @php($pct = $item['total'] > 0 ? round($item['resolved'] / $item['total'] * 100) : 0)
-                            <div>
-                                <div class="flex items-center justify-between gap-3">
-                                    <span class="min-w-0 truncate text-sm font-medium text-slate-700">{{ $item['label'] }}</span>
-                                    <span class="shrink-0 text-xs text-slate-500">{{ $item['resolved'] }}/{{ $item['total'] }} &nbsp;·&nbsp; {{ $pct }}%</span>
+                    @if ($w('funnel'))
+                        <x-dash-widget key="funnel" title="Murojaat yo'li" subtitle="Davrda kelgan murojaatlar qaysi bosqichgacha yetgani" :visibility="$visibility" :can-manage="$canManageWidgets">
+                            @foreach ($report['funnel'] as $stage)
+                                <div class="dash-bar dash-bar--tall" style="grid-template-columns: 96px 1fr 84px">
+                                    <span>{{ $stage['label'] }}</span>
+                                    <div class="dash-bar__track"><i style="width: {{ $stage['percent'] }}%; background: rgb(var(--c-accent)); opacity: {{ $stage['opacity'] }}"></i></div>
+                                    <span class="dash-mono text-right">{{ $stage['value'] }} · {{ $stage['percent'] }}%</span>
                                 </div>
-                                <div class="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-slate-100">
-                                    <div class="h-full rounded-full bg-[#38c1bb] transition-all" style="width: {{ $pct }}%;"></div>
+                            @endforeach
+                        </x-dash-widget>
+                    @endif
+                </div>
+
+                <div class="grid content-start gap-3">
+                    @if ($w('statuses'))
+                        <x-dash-widget key="statuses" title="Holatlar" :visibility="$visibility" :can-manage="$canManageWidgets">
+                            <div class="flex flex-wrap items-center gap-4">
+                                <svg width="130" height="130" viewBox="0 0 130 130" role="img" aria-label="Holatlar taqsimoti">
+                                    @if ($report['statuses']['total'] === 0)
+                                        <circle cx="65" cy="65" r="54" fill="none" stroke-width="18" style="stroke: rgb(var(--c-surface-sunken))" />
+                                    @endif
+                                    @foreach ($report['statuses']['items'] as $segment)
+                                        <circle cx="65" cy="65" r="54" fill="none" stroke-width="18" stroke-dasharray="{{ $segment['dash'] }}" stroke-dashoffset="{{ $segment['offset'] }}" transform="rotate(-90 65 65)" style="stroke: rgb(var(--c-status-{{ $segment['tone'] }}-dot))" />
+                                    @endforeach
+                                    <text x="65" y="67" text-anchor="middle" style="fill: rgb(var(--c-ink)); font: 600 26px var(--font-display)">{{ $report['statuses']['total'] }}</text>
+                                    <text x="65" y="83" text-anchor="middle" class="dash-svg-text">jami</text>
+                                </svg>
+                                <div class="dash-legend m-0 flex-col">
+                                    @forelse ($report['statuses']['items'] as $segment)
+                                        <span><i style="background: rgb(var(--c-status-{{ $segment['tone'] }}-dot))"></i>{{ $segment['label'] }} <b class="dash-mono text-ink">{{ $segment['value'] }}</b></span>
+                                    @empty
+                                        <span>Davrda murojaat yo'q</span>
+                                    @endforelse
                                 </div>
                             </div>
-                        @endforeach
-                    </div>
-                @else
-                    <div class="mt-6 rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center text-sm text-slate-500">
-                        Hozircha kategoriyalar bo'yicha ma'lumot yetarli emas.
-                    </div>
-                @endif
-            </section>
+                        </x-dash-widget>
+                    @endif
 
-            {{-- Muhimlik jadvali --}}
-            <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-                <h3 class="font-semibold text-slate-900">Muhimlik bo'yicha murojaatlar</h3>
-                <div class="app-table-wrap mt-5">
-                    <table class="app-data-table app-data-table--auto">
-                        <thead>
-                            <tr>
-                                <th>Priority</th>
-                                <th class="text-right">Total</th>
-                                <th class="text-right">New</th>
-                                <th class="text-right">In Progress</th>
-                                <th class="text-right">Resolved</th>
-                                <th class="text-right">Returned</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach ($priorityMatrix['rows'] as $row)
-                                @php($intensity = $priorityMatrix['max'] > 0 ? min(1, $row['total'] / $priorityMatrix['max']) : 0)
-                                @php($bg = 'background-color: rgba(56, 193, 187, '.(0.08 + ($intensity * 0.42)).');')
-                                <tr>
-                                    <td class="font-medium text-slate-900">{{ $row['label'] }}</td>
-                                    <td class="text-right font-semibold text-slate-900" style="{{ $bg }}">{{ $row['total'] }}</td>
-                                    <td class="text-right text-slate-700" style="{{ $row['new'] > 0 ? $bg : '' }}">{{ $row['new'] }}</td>
-                                    <td class="text-right text-slate-700" style="{{ $row['in_progress'] > 0 ? $bg : '' }}">{{ $row['in_progress'] }}</td>
-                                    <td class="text-right text-slate-700" style="{{ $row['completed'] > 0 ? $bg : '' }}">{{ $row['completed'] }}</td>
-                                    <td class="text-right text-slate-700" style="{{ $row['returned'] > 0 ? $bg : '' }}">{{ $row['returned'] }}</td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
+                    @if ($w('channels'))
+                        <x-dash-widget key="channels" title="Kanallar" :visibility="$visibility" :can-manage="$canManageWidgets">
+                            @forelse ($report['channels'] as $channel)
+                                <div class="dash-bar" style="grid-template-columns: 120px 1fr 40px">
+                                    <span>{{ $channel['label'] }}</span>
+                                    <div class="dash-bar__track"><i style="width: {{ $channel['width'] }}%; background: rgb(var(--c-{{ $channel['color'] }}))"></i></div>
+                                    <span class="dash-mono text-right">{{ $channel['value'] }}</span>
+                                </div>
+                            @empty
+                                <p class="dash-cap">Davrda murojaat yo'q</p>
+                            @endforelse
+                        </x-dash-widget>
+                    @endif
                 </div>
-            </section>
-        </div>
+            </div>
+        @endif
+
+        {{-- 02 Sifat va vaqt --}}
+        @if ($w('heatmap') || $w('resolution') || $w('at_risk'))
+            <div class="dash-section">
+                <div class="dash-section__num">02</div>
+                <h2>Sifat va vaqt</h2>
+                <div class="dash-cap">SLA, kechikishlar va yechim tezligi</div>
+            </div>
+            <div class="grid gap-3 lg:grid-cols-2 2xl:grid-cols-[1fr_1fr_1.3fr]">
+                @if ($w('heatmap'))
+                    <x-dash-widget key="heatmap" title="Qaysi vaqtda murojaat keladi" subtitle="Hafta kuni × soat" :visibility="$visibility" :can-manage="$canManageWidgets">
+                        <svg width="100%" viewBox="0 0 316 162" role="img" aria-label="Murojaatlar issiqlik xaritasi">
+                            @foreach ($report['heatmap']['rows'] as $r => $row)
+                                <text class="dash-svg-text" x="0" y="{{ 22 + $r * 20 }}">{{ $row['label'] }}</text>
+                                @foreach ($row['cells'] as $c => $cell)
+                                    <rect x="{{ 26 + $c * 26 }}" y="{{ 10 + $r * 20 }}" width="23" height="17" rx="3" style="fill: rgb(var(--c-accent)); opacity: {{ $cell['opacity'] }}">
+                                        <title>{{ $row['label'] }}, {{ $cell['hour'] }}:00 — {{ $cell['value'] }} ta</title>
+                                    </rect>
+                                @endforeach
+                            @endforeach
+                            @foreach (\App\Services\DashboardReportService::HEATMAP_HOURS as $c => $hour)
+                                @if ($c % 2 === 0)
+                                    <text class="dash-svg-text" x="{{ 37 + $c * 26 }}" y="156" text-anchor="middle">{{ $hour }}</text>
+                                @endif
+                            @endforeach
+                        </svg>
+                        <div class="dash-cap">8:00 dan oldingi va 18:00 dan keyingi murojaatlar chetki ustunlarga qo'shilgan</div>
+                    </x-dash-widget>
+                @endif
+
+                @if ($w('resolution'))
+                    @php($resolution = $report['resolution'])
+                    <x-dash-widget key="resolution" title="Yechim vaqti taqsimoti" subtitle="Soat bo'yicha, bajarilgan murojaatlar soni" :visibility="$visibility" :can-manage="$canManageWidgets">
+                        <svg width="100%" viewBox="0 0 300 150" role="img" aria-label="Yechim vaqti gistogrammasi">
+                            @foreach ($resolution['bars'] as $i => $bar)
+                                <rect x="{{ 13 + $i * 40 }}" y="{{ 130 - $bar['height'] }}" width="34" height="{{ max($bar['height'], 1) }}" rx="3" style="fill: rgb(var(--c-accent))">
+                                    <title>{{ $bar['label'] }} soat — {{ $bar['value'] }} ta</title>
+                                </rect>
+                                <text class="dash-svg-text" x="{{ 30 + $i * 40 }}" y="144" text-anchor="middle">{{ $bar['label'] }}</text>
+                            @endforeach
+                        </svg>
+                        <div class="dash-cap">
+                            @if ($resolution['count'] > 0)
+                                Mediana {{ $resolution['median'] }} soat · 90-persentil {{ $resolution['p90'] }} soat · {{ $resolution['count'] }} ta murojaat
+                            @else
+                                Davrda bajarilgan murojaat yo'q
+                            @endif
+                        </div>
+                    </x-dash-widget>
+                @endif
+
+                @if ($w('at_risk'))
+                    <x-dash-widget key="at_risk" title="Kechikkan va xavfdagilar" subtitle="Muddati o'tgan yoki 24 soatdan kam qolgan" :visibility="$visibility" :can-manage="$canManageWidgets" class="lg:col-span-2 2xl:col-span-1">
+                        @if (count($report['atRisk']) > 0)
+                            <table class="w-full text-[13px]">
+                                <thead>
+                                    <tr class="bg-sunken text-left text-[11px] font-semibold uppercase tracking-[.06em] text-muted">
+                                        <th class="px-2 py-1.5">Raqam</th>
+                                        <th class="px-2 py-1.5">Mavzu</th>
+                                        <th class="px-2 py-1.5">SLA</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach ($report['atRisk'] as $row)
+                                        <tr class="border-t border-line">
+                                            <td class="dash-mono whitespace-nowrap px-2 py-2">
+                                                @if ($isAdmin)
+                                                    <a href="{{ route('admin.dispatch.show', $row['ticket']) }}" class="text-accent hover:underline">{{ $row['ticket']->reference }}</a>
+                                                @else
+                                                    {{ $row['ticket']->reference }}
+                                                @endif
+                                            </td>
+                                            <td class="max-w-[220px] truncate px-2 py-2" title="{{ $row['subject'] }}">{{ $row['subject'] }}</td>
+                                            <td class="whitespace-nowrap px-2 py-2"><span class="status-badge status--{{ $row['tone'] }}">{{ $row['pill'] }}</span></td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        @else
+                            <p class="dash-cap">Kechikkan yoki muddati yaqin murojaat yo'q.</p>
+                        @endif
+                    </x-dash-widget>
+                @endif
+            </div>
+        @endif
+
+        {{-- 03 Jamoa --}}
+        @if ($w('executors') || $w('score_parts') || $w('departments'))
+            <div class="dash-section">
+                <div class="dash-section__num">03</div>
+                <h2>Jamoa</h2>
+                <div class="dash-cap">Ijrochilar, bo'limlar va yuklama</div>
+            </div>
+            <div class="grid gap-3 lg:grid-cols-2 2xl:grid-cols-[2fr_1fr_1fr]">
+                @if ($w('executors'))
+                    <x-dash-widget key="executors" title="Ijrochilar KPI reytingi" :visibility="$visibility" :can-manage="$canManageWidgets" class="lg:col-span-2 2xl:col-span-1">
+                        @if ($report['executors']->isNotEmpty())
+                            <table class="w-full text-[13px]">
+                                <thead>
+                                    <tr class="bg-sunken text-left text-[11px] font-semibold uppercase tracking-[.06em] text-muted">
+                                        <th class="px-2 py-1.5">Ijrochi</th>
+                                        <th class="px-2 py-1.5">Jami</th>
+                                        <th class="px-2 py-1.5">Bajar.</th>
+                                        <th class="px-2 py-1.5">SLA</th>
+                                        <th class="px-2 py-1.5">Soat</th>
+                                        <th class="px-2 py-1.5">KPI</th>
+                                        <th class="px-2 py-1.5">Baho</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach ($report['executors'] as $row)
+                                        <tr class="border-t border-line">
+                                            <td class="whitespace-nowrap px-2 py-2">{{ $row['name'] }}</td>
+                                            <td class="dash-mono px-2 py-2">{{ $row['total'] }}</td>
+                                            <td class="dash-mono px-2 py-2">{{ $row['completed'] }}</td>
+                                            <td class="dash-mono px-2 py-2">{{ $row['sla_percent'] }}%</td>
+                                            <td class="dash-mono px-2 py-2">{{ $row['avg_resolution_hours'] ?? '—' }}</td>
+                                            <td class="min-w-[110px] px-2 py-2">
+                                                <div class="flex items-center gap-2">
+                                                    <div class="dash-bar__track flex-1"><i style="width: {{ min(100, $row['kpi_score']) }}%; background: rgb(var(--c-accent))"></i></div>
+                                                    <span class="dash-mono">{{ $row['kpi_score'] }}</span>
+                                                </div>
+                                            </td>
+                                            <td class="px-2 py-2"><span class="dash-grade" title="{{ $row['grade'] }}">{{ \App\Services\DashboardReportService::letterGrade((float) $row['kpi_score']) }}</span></td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        @else
+                            <p class="dash-cap">Ijrochilar topilmadi.</p>
+                        @endif
+                    </x-dash-widget>
+                @endif
+
+                @if ($w('score_parts'))
+                    <x-dash-widget key="score_parts" title="KPI ball tarkibi" subtitle="Og'irliklar 40 / 30 / 15 / 10 / 5" :visibility="$visibility" :can-manage="$canManageWidgets">
+                        @foreach ($report['scoreParts']['rows'] as $part)
+                            <div class="dash-bar" style="grid-template-columns: 130px 1fr 52px">
+                                <span>{{ $part['label'] }}</span>
+                                <div class="dash-bar__track"><i style="width: {{ $part['width'] }}%; background: rgb(var(--c-{{ $part['color'] }}))"></i></div>
+                                <span class="dash-mono text-right">{{ $part['value'] }}/{{ $part['weight'] }}</span>
+                            </div>
+                        @endforeach
+                        <div class="dash-cap mt-1.5">Umumiy KPI: <b class="dash-mono text-ink">{{ $report['scoreParts']['total'] }}</b> / 100</div>
+                    </x-dash-widget>
+                @endif
+
+                @if ($w('departments'))
+                    <x-dash-widget key="departments" title="Bo'limlar" subtitle="Jami va bajarilgan" :visibility="$visibility" :can-manage="$canManageWidgets">
+                        @php($deptMax = max(1, (int) $report['departments']->max('total')))
+                        @forelse ($report['departments'] as $department)
+                            <div class="dash-bar">
+                                <span class="truncate" title="{{ $department['label'] }}">{{ $department['label'] }}</span>
+                                <div class="dash-bar__track">
+                                    <i style="width: {{ round($department['total'] / $deptMax * 100) }}%; background: rgb(var(--c-line-strong)); opacity: .45"></i>
+                                    <i style="width: {{ round($department['completed'] / $deptMax * 100) }}%; background: rgb(var(--c-accent))"></i>
+                                </div>
+                                <span class="dash-mono text-right">{{ $department['completed'] }}/{{ $department['total'] }}</span>
+                            </div>
+                        @empty
+                            <p class="dash-cap">Davrda bo'limlarga biriktirilgan murojaat yo'q.</p>
+                        @endforelse
+                        <div class="dash-legend">
+                            <span><i style="background: rgb(var(--c-accent))"></i>Bajarilgan</span>
+                            <span><i style="background: rgb(var(--c-line-strong)); opacity: .45"></i>Jami</span>
+                        </div>
+                    </x-dash-widget>
+                @endif
+            </div>
+        @endif
     </div>
 </x-app-layout>

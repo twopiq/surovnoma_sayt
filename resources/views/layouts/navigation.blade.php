@@ -15,172 +15,127 @@
         ? route('tickets.index')
         : ($isManagerWithDashboard ? route('app.dashboard') : route('app.home'));
 
-    $sidebarItems = [
-        ...(! $isRequesterOnly && ! $isManagerWithDashboard ? [[
-            'label' => 'Home',
-            'href' => route('app.home'),
-            'active' => request()->routeIs('app.home'),
-            'icon' => 'home',
-        ]] : []),
-        ...($isRequesterOnly ? [[
-            'label' => 'Murojaatlarim',
-            'href' => route('tickets.index'),
-            'active' => request()->routeIs('tickets.*'),
-            'icon' => 'tickets',
-        ]] : []),
-        ...($isAdmin ? [[
-            'label' => 'Ticket management',
-            'href' => route('admin.dispatch.tickets'),
-            'active' => request()->routeIs('admin.dispatch.*'),
-            'icon' => 'tickets',
-        ]] : []),
-        ...($isAdmin ? [[
-            'label' => 'User management',
-            'href' => route('admin.users.list'),
-            'active' => request()->routeIs('admin.users.*'),
-            'icon' => 'users',
-        ]] : []),
-        ...($isAdmin ? [[
-            'label' => 'Guest bloklar',
-            'href' => route('admin.guest-blocks.index'),
-            'active' => request()->routeIs('admin.guest-blocks.*'),
-            'icon' => 'shield',
-            'badge' => \Illuminate\Support\Facades\Schema::hasTable('guest_blocks') ? \App\Models\GuestBlock::query()->active()->count() : 0,
-        ]] : []),
-        ...($user?->canAccessAppDashboard() ? [[
-            'label' => $isManagerWithDashboard ? 'Home' : 'Dashboard',
-            'href' => route('app.dashboard'),
-            'active' => request()->routeIs('app.dashboard'),
-            'icon' => $isManagerWithDashboard ? 'home' : 'dashboard',
-        ]] : []),
-        [
-            'label' => 'Bildirishnomalar',
-            'href' => route('notifications.index'),
-            'active' => request()->routeIs('notifications.*'),
-            'icon' => 'notifications',
-            'badge' => $unreadNotificationsCount,
-        ],
+    $notificationsItem = [
+        'label' => 'Bildirishnomalar',
+        'href' => route('notifications.index'),
+        'active' => request()->routeIs('notifications.*'),
+        'icon' => 'notifications',
+        'badge' => $unreadNotificationsCount,
+    ];
+
+    if ($isAdmin) {
+        // Dizayn tizimi: "Admin menyusi" — A varianti (guruhlangan yon menyu, ichki tablarsiz)
+        $pendingUsersCount = \App\Models\User::query()->whereNull('approved_at')->where('is_active', true)->count();
+
+        $sidebarItems = [
+            ['label' => 'Bosh sahifa', 'href' => route('app.home'), 'active' => request()->routeIs('app.home'), 'icon' => 'home'],
+            ['label' => 'Dashboard', 'href' => route('app.dashboard'), 'active' => request()->routeIs('app.dashboard'), 'icon' => 'dashboard'],
+            ['group' => 'Ish'],
+            ['label' => 'Murojaatlar', 'href' => route('admin.dispatch.tickets'), 'active' => request()->routeIs('admin.dispatch.tickets', 'admin.dispatch.index', 'admin.dispatch.status', 'admin.dispatch.show') && request()->query('source') !== 'archive', 'icon' => 'tickets'],
+            ['label' => 'Arxiv', 'href' => route('admin.dispatch.archive'), 'active' => request()->routeIs('admin.dispatch.archive') || (request()->routeIs('admin.dispatch.show') && request()->query('source') === 'archive'), 'icon' => 'archive'],
+            ['group' => 'Odamlar'],
+            ['label' => 'Foydalanuvchilar', 'href' => route('admin.users.list'), 'active' => request()->routeIs('admin.users.*'), 'icon' => 'users', 'badge' => $pendingUsersCount, 'badgeTone' => 'alert'],
+            ['group' => 'Sozlamalar'],
+            ['label' => 'Deadline', 'href' => route('admin.dispatch.deadlines'), 'active' => request()->routeIs('admin.dispatch.deadlines', 'admin.sla.*'), 'icon' => 'clock'],
+            ['label' => 'Ish kunlari', 'href' => route('admin.dispatch.work-schedule'), 'active' => request()->routeIs('admin.dispatch.work-schedule'), 'icon' => 'calendar'],
+            ['label' => 'Guest himoya', 'href' => route('admin.guest-blocks.index'), 'active' => request()->routeIs('admin.guest-blocks.*'), 'icon' => 'shield'],
+            ['group' => ''],
+            $notificationsItem,
+        ];
+    } else {
+        $sidebarItems = [
+            ...(! $isRequesterOnly && ! $isManagerWithDashboard ? [[
+                'label' => 'Bosh sahifa',
+                'href' => route('app.home'),
+                'active' => request()->routeIs('app.home'),
+                'icon' => 'home',
+            ]] : []),
+            ...($isRequesterOnly ? [[
+                'label' => 'Murojaatlarim',
+                'href' => route('tickets.index'),
+                'active' => request()->routeIs('tickets.*'),
+                'icon' => 'tickets',
+            ]] : []),
+            ...($user?->canAccessAppDashboard() ? [[
+                'label' => $isManagerWithDashboard ? 'Bosh sahifa' : 'Dashboard',
+                'href' => route('app.dashboard'),
+                'active' => request()->routeIs('app.dashboard'),
+                'icon' => $isManagerWithDashboard ? 'home' : 'dashboard',
+            ]] : []),
+            $notificationsItem,
+        ];
+    }
+@endphp
+
+@php
+    $sidebarIcons = [
+        'home' => '<path d="M3.5 9 10 3.5 16.5 9v7a1 1 0 0 1-1 1h-3.5v-4.5h-4V17H4.5a1 1 0 0 1-1-1z"/>',
+        'dashboard' => '<path d="M3.5 16.5v-6M8 16.5v-10M12.5 16.5v-7M17 16.5v-12"/>',
+        'tickets' => '<path d="M3 5.5h14v3a1.5 1.5 0 0 0 0 3v3H3v-3a1.5 1.5 0 0 0 0-3z"/>',
+        'users' => '<circle cx="8" cy="7" r="2.6"/><path d="M3 16c.4-2.6 2.6-4 5-4s4.6 1.4 5 4M13.5 4.6a2.6 2.6 0 0 1 0 4.8M15 12.4c1.2.6 1.9 1.7 2 3.6"/>',
+        'shield' => '<path d="M10 3 4.5 5v4.5c0 3.5 2.3 6 5.5 7.5 3.2-1.5 5.5-4 5.5-7.5V5z"/>',
+        'archive' => '<rect x="3" y="4" width="14" height="4" rx="1"/><path d="M4.5 8v7.5h11V8M8 11.5h4"/>',
+        'clock' => '<circle cx="10" cy="10" r="7"/><path d="M10 6v4l2.5 1.5"/>',
+        'calendar' => '<rect x="3.5" y="4.5" width="13" height="12" rx="1.5"/><path d="M3.5 8h13M7 3v3M13 3v3"/>',
+        'notifications' => '<path d="M5 14V9.5a5 5 0 0 1 10 0V14l1.3 1.8H3.7zM8.3 17.5a2 2 0 0 0 3.4 0"/>',
     ];
 @endphp
 
 <aside x-data="{ open: false }" class="relative z-[90]">
-    <div class="sticky top-0 flex h-16 items-center justify-between border-b border-slate-200 bg-white px-4 lg:hidden">
-        <div class="flex items-center gap-3">
-            <a href="{{ $homeHref }}" class="flex items-center gap-3">
-                <x-application-logo class="h-9 w-9 fill-current text-cyan-700" />
-                <div>
-                    <div class="font-['Space_Grotesk'] text-sm font-bold uppercase tracking-[0.16em] text-slate-800">RTT</div>
-                    <div class="text-xs text-slate-500">{{ $user->display_role }}</div>
-                </div>
-            </a>
+    <div class="sticky top-0 flex h-14 items-center justify-between border-b border-line bg-sunken px-4 lg:hidden">
+        <a href="{{ $homeHref }}" class="flex items-center gap-2.5">
+            <x-application-logo class="h-8 w-8" />
+            <span class="font-display text-[17px] font-semibold leading-6 text-ink">RTT Markazi</span>
+            <span class="role-chip">{{ $user->display_role }}</span>
+        </a>
+        <div class="flex items-center gap-2">
             <x-theme-toggle />
+            <button type="button" @click="open = ! open" class="inline-flex h-9 w-9 items-center justify-center rounded-md border border-line-strong bg-surface text-ink" :aria-expanded="open.toString()">
+                <span class="sr-only">Menyu</span>
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 20 20" stroke-width="1.6" stroke-linecap="round" aria-hidden="true">
+                    <path d="M3.5 5.5h13M3.5 10h13M3.5 14.5h13" />
+                </svg>
+            </button>
         </div>
-        <button @click="open = ! open" class="rounded-md border border-slate-200 p-2 text-slate-600">
-            <span class="sr-only">Menyu</span>
-            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-        </button>
     </div>
 
     <div
         x-show="open"
         x-transition.opacity
         @click="open = false"
-        class="fixed inset-0 z-[80] bg-slate-950/40 lg:hidden"
+        class="fixed inset-0 z-[80] bg-ink/40 lg:hidden"
         style="display: none;"
     ></div>
 
     <div
         :class="open ? 'translate-x-0' : '-translate-x-full'"
-        class="fixed inset-y-0 left-0 z-[90] flex w-64 flex-col border-r border-emerald-950 bg-[#123b2f] text-white shadow-2xl transition-transform duration-200 lg:translate-x-0"
+        class="fixed inset-y-0 left-0 z-[90] flex w-[232px] flex-col border-r border-line bg-sunken transition-transform duration-200 lg:translate-x-0"
     >
-        <div class="flex min-h-[96px] items-center border-b border-white/10 px-4 py-4">
-            <div class="flex w-full items-start justify-between gap-3">
-                <a href="{{ $homeHref }}" class="flex items-center gap-3">
-                    <x-application-logo class="h-10 w-10 fill-current text-cyan-200" />
-                    <div>
-                        <div class="font-['Space_Grotesk'] text-sm font-bold uppercase tracking-[0.2em]">RTT</div>
-                        <div class="text-xs text-cyan-100/75">{{ $user->display_role }}</div>
-                    </div>
-                </a>
-                <x-theme-toggle tone="sidebar" />
-            </div>
+        <div class="flex items-center justify-between gap-2 px-5 pb-4 pt-5">
+            <a href="{{ $homeHref }}" class="flex min-w-0 items-center gap-2.5">
+                <x-application-logo class="h-8 w-8 shrink-0" />
+                <span class="truncate font-display text-[17px] font-semibold leading-6 text-ink">RTT Markazi</span>
+            </a>
+            <span class="role-chip">{{ $user->display_role }}</span>
         </div>
 
-        <nav class="flex-1 space-y-1 px-3 py-4" aria-label="Sidebar">
+        <nav class="flex flex-1 flex-col gap-0.5 overflow-y-auto px-3 pb-3" aria-label="Asosiy menyu">
             @foreach ($sidebarItems as $item)
-                @if ($item['active'])
-                    <span class="flex items-center gap-3 rounded-md bg-cyan-300/20 px-3 py-2 text-sm font-semibold text-white" aria-current="page">
-                        @if ($item['icon'] === 'home')
-                            <svg class="h-5 w-5 text-cyan-100" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                                <path d="M9.3 2.45a1 1 0 0 1 1.4 0l6.25 6.1a1 1 0 0 1-1.4 1.43l-.55-.54V16a2 2 0 0 1-2 2h-2.25a.75.75 0 0 1-.75-.75v-4.5h-2v4.5a.75.75 0 0 1-.75.75H5a2 2 0 0 1-2-2V9.44l-.55.54a1 1 0 0 1-1.4-1.43l6.25-6.1Z" />
-                            </svg>
-                        @elseif ($item['icon'] === 'dashboard')
-                            <svg class="h-5 w-5 text-cyan-100" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                                <path d="M3 4.5A1.5 1.5 0 0 1 4.5 3h3A1.5 1.5 0 0 1 9 4.5v3A1.5 1.5 0 0 1 7.5 9h-3A1.5 1.5 0 0 1 3 7.5v-3ZM11 4.5A1.5 1.5 0 0 1 12.5 3h3A1.5 1.5 0 0 1 17 4.5v3A1.5 1.5 0 0 1 15.5 9h-3A1.5 1.5 0 0 1 11 7.5v-3ZM3 12.5A1.5 1.5 0 0 1 4.5 11h3A1.5 1.5 0 0 1 9 12.5v3A1.5 1.5 0 0 1 7.5 17h-3A1.5 1.5 0 0 1 3 15.5v-3ZM11 12.5a1.5 1.5 0 0 1 1.5-1.5h3a1.5 1.5 0 0 1 1.5 1.5v3a1.5 1.5 0 0 1-1.5 1.5h-3a1.5 1.5 0 0 1-1.5-1.5v-3Z" />
-                            </svg>
-                        @elseif ($item['icon'] === 'notifications')
-                            <svg class="h-5 w-5 text-cyan-100" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                                <path d="M4 8a6 6 0 1 1 12 0v3.586l.707.707A1 1 0 0 1 16 14H4a1 1 0 0 1-.707-1.707L4 11.586V8Z" />
-                                <path d="M8 15a2 2 0 1 0 4 0H8Z" />
-                            </svg>
-                        @elseif ($item['icon'] === 'users')
-                            <svg class="h-5 w-5 text-cyan-100" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                                <path d="M7.5 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM2 16.5A5.5 5.5 0 0 1 12.1 13.46a.75.75 0 0 0 1.24-.84 7 7 0 0 0-12.84 3.88.75.75 0 0 0 1.5 0ZM13 8.5a2.5 2.5 0 1 0 0-5 .75.75 0 0 0 0 1.5 1 1 0 1 1 0 2 .75.75 0 0 0 0 1.5ZM13.5 10.5a.75.75 0 0 0 0 1.5 3 3 0 0 1 3 3 .75.75 0 0 0 1.5 0 4.5 4.5 0 0 0-4.5-4.5Z" />
-                            </svg>
-                        @elseif ($item['icon'] === 'shield')
-                            <svg class="h-5 w-5 {{ $item['active'] ? 'text-cyan-100' : 'text-cyan-100/75' }}" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                                <path fill-rule="evenodd" d="M9.66 1.58a.75.75 0 0 1 .68 0 13.2 13.2 0 0 0 6.1 1.67.75.75 0 0 1 .74.67c.06.53.09 1.06.09 1.58 0 5.16-3.3 9.55-7.9 11.18a.75.75 0 0 1-.5 0C4.27 15.05.97 10.66.97 5.5c0-.52.03-1.05.09-1.58a.75.75 0 0 1 .74-.67 13.2 13.2 0 0 0 6.1-1.67ZM7.03 7.97a.75.75 0 0 0-1.06 1.06L8.94 12a.75.75 0 0 0 1.06 0l4.03-4.03a.75.75 0 0 0-1.06-1.06l-3.5 3.5-2.44-2.44Z" clip-rule="evenodd" />
-                            </svg>
-                        @elseif ($item['icon'] === 'tickets')
-                            <svg class="h-5 w-5 text-cyan-100" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                                <path fill-rule="evenodd" d="M4.5 3A2.5 2.5 0 0 0 2 5.5v1.75a.75.75 0 0 0 .75.75 2 2 0 1 1 0 4 .75.75 0 0 0-.75.75v1.75A2.5 2.5 0 0 0 4.5 17h11a2.5 2.5 0 0 0 2.5-2.5v-1.75a.75.75 0 0 0-.75-.75 2 2 0 1 1 0-4 .75.75 0 0 0 .75-.75V5.5A2.5 2.5 0 0 0 15.5 3h-11Zm6.25 3.25a.75.75 0 0 0-1.5 0v1a.75.75 0 0 0 1.5 0v-1Zm0 3.5a.75.75 0 0 0-1.5 0v.5a.75.75 0 0 0 1.5 0v-.5Zm0 3a.75.75 0 0 0-1.5 0v1a.75.75 0 0 0 1.5 0v-1Z" clip-rule="evenodd" />
-                            </svg>
-                        @endif
-                        <span class="min-w-0 flex-1 truncate">{{ $item['label'] }}</span>
-                        @if (($item['badge'] ?? 0) > 0)
-                            <span class="rounded-full bg-cyan-100 px-2 py-0.5 text-xs font-bold text-emerald-950">{{ $item['badge'] }}</span>
-                        @endif
-                    </span>
-                @else
-                    <a href="{{ $item['href'] }}" class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-semibold text-cyan-50/85 transition hover:bg-white/10 hover:text-white">
-                        @if ($item['icon'] === 'home')
-                            <svg class="h-5 w-5 text-cyan-100/75" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                                <path d="M9.3 2.45a1 1 0 0 1 1.4 0l6.25 6.1a1 1 0 0 1-1.4 1.43l-.55-.54V16a2 2 0 0 1-2 2h-2.25a.75.75 0 0 1-.75-.75v-4.5h-2v4.5a.75.75 0 0 1-.75.75H5a2 2 0 0 1-2-2V9.44l-.55.54a1 1 0 0 1-1.4-1.43l6.25-6.1Z" />
-                            </svg>
-                        @elseif ($item['icon'] === 'dashboard')
-                            <svg class="h-5 w-5 text-cyan-100/75" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                                <path d="M3 4.5A1.5 1.5 0 0 1 4.5 3h3A1.5 1.5 0 0 1 9 4.5v3A1.5 1.5 0 0 1 7.5 9h-3A1.5 1.5 0 0 1 3 7.5v-3ZM11 4.5A1.5 1.5 0 0 1 12.5 3h3A1.5 1.5 0 0 1 17 4.5v3A1.5 1.5 0 0 1 15.5 9h-3A1.5 1.5 0 0 1 11 7.5v-3ZM3 12.5A1.5 1.5 0 0 1 4.5 11h3A1.5 1.5 0 0 1 9 12.5v3A1.5 1.5 0 0 1 7.5 17h-3A1.5 1.5 0 0 1 3 15.5v-3ZM11 12.5a1.5 1.5 0 0 1 1.5-1.5h3a1.5 1.5 0 0 1 1.5 1.5v3a1.5 1.5 0 0 1-1.5 1.5h-3a1.5 1.5 0 0 1-1.5-1.5v-3Z" />
-                            </svg>
-                        @elseif ($item['icon'] === 'notifications')
-                            <svg class="h-5 w-5 text-cyan-100/75" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                                <path d="M4 8a6 6 0 1 1 12 0v3.586l.707.707A1 1 0 0 1 16 14H4a1 1 0 0 1-.707-1.707L4 11.586V8Z" />
-                                <path d="M8 15a2 2 0 1 0 4 0H8Z" />
-                            </svg>
-                        @elseif ($item['icon'] === 'users')
-                            <svg class="h-5 w-5 text-cyan-100/75" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                                <path d="M7.5 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM2 16.5A5.5 5.5 0 0 1 12.1 13.46a.75.75 0 0 0 1.24-.84 7 7 0 0 0-12.84 3.88.75.75 0 0 0 1.5 0ZM13 8.5a2.5 2.5 0 1 0 0-5 .75.75 0 0 0 0 1.5 1 1 0 1 1 0 2 .75.75 0 0 0 0 1.5ZM13.5 10.5a.75.75 0 0 0 0 1.5 3 3 0 0 1 3 3 .75.75 0 0 0 1.5 0 4.5 4.5 0 0 0-4.5-4.5Z" />
-                            </svg>
-                        @elseif ($item['icon'] === 'shield')
-                            <svg class="h-5 w-5 {{ $item['active'] ? 'text-cyan-100' : 'text-cyan-100/75' }}" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                                <path fill-rule="evenodd" d="M9.66 1.58a.75.75 0 0 1 .68 0 13.2 13.2 0 0 0 6.1 1.67.75.75 0 0 1 .74.67c.06.53.09 1.06.09 1.58 0 5.16-3.3 9.55-7.9 11.18a.75.75 0 0 1-.5 0C4.27 15.05.97 10.66.97 5.5c0-.52.03-1.05.09-1.58a.75.75 0 0 1 .74-.67 13.2 13.2 0 0 0 6.1-1.67ZM7.03 7.97a.75.75 0 0 0-1.06 1.06L8.94 12a.75.75 0 0 0 1.06 0l4.03-4.03a.75.75 0 0 0-1.06-1.06l-3.5 3.5-2.44-2.44Z" clip-rule="evenodd" />
-                            </svg>
-                        @elseif ($item['icon'] === 'tickets')
-                            <svg class="h-5 w-5 text-cyan-100/75" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                                <path fill-rule="evenodd" d="M4.5 3A2.5 2.5 0 0 0 2 5.5v1.75a.75.75 0 0 0 .75.75 2 2 0 1 1 0 4 .75.75 0 0 0-.75.75v1.75A2.5 2.5 0 0 0 4.5 17h11a2.5 2.5 0 0 0 2.5-2.5v-1.75a.75.75 0 0 0-.75-.75 2 2 0 1 1 0-4 .75.75 0 0 0 .75-.75V5.5A2.5 2.5 0 0 0 15.5 3h-11Zm6.25 3.25a.75.75 0 0 0-1.5 0v1a.75.75 0 0 0 1.5 0v-1Zm0 3.5a.75.75 0 0 0-1.5 0v.5a.75.75 0 0 0 1.5 0v-.5Zm0 3a.75.75 0 0 0-1.5 0v1a.75.75 0 0 0 1.5 0v-1Z" clip-rule="evenodd" />
-                            </svg>
-                        @endif
-                        <span class="min-w-0 flex-1 truncate">{{ $item['label'] }}</span>
-                        @if (($item['badge'] ?? 0) > 0)
-                            <span class="rounded-full bg-cyan-100/90 px-2 py-0.5 text-xs font-bold text-emerald-950">{{ $item['badge'] }}</span>
-                        @endif
-                    </a>
+                @if (array_key_exists('group', $item))
+                    <div class="side-nav__group" @if ($item['group'] === '') aria-hidden="true" @endif>{{ $item['group'] }}</div>
+                    @continue
                 @endif
+                <a href="{{ $item['href'] }}" class="side-nav__item" @if ($item['active']) aria-current="page" @endif>
+                    <svg class="h-[18px] w-[18px] shrink-0" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">{!! $sidebarIcons[$item['icon']] ?? '' !!}</svg>
+                    <span class="min-w-0 flex-1 truncate">{{ $item['label'] }}</span>
+                    @if (($item['badge'] ?? 0) > 0)
+                        <span @class(['side-nav__count', 'side-nav__count--alert' => ($item['badgeTone'] ?? null) === 'alert'])>{{ $item['badge'] }}</span>
+                    @endif
+                </a>
             @endforeach
         </nav>
 
-        <div class="relative border-t border-white/10 p-3" x-data="{ userMenuOpen: false }" @click.outside="userMenuOpen = false">
+        <div class="relative border-t border-line p-3" x-data="{ userMenuOpen: false }" @click.outside="userMenuOpen = false">
             <div
                 x-show="userMenuOpen"
                 x-transition:enter="transition ease-out duration-150"
@@ -189,50 +144,44 @@
                 x-transition:leave="transition ease-in duration-100"
                 x-transition:leave-start="opacity-100 scale-100"
                 x-transition:leave-end="opacity-0 scale-95"
-                class="absolute left-3 right-3 z-[120] origin-bottom rounded-md border border-white/10 bg-white p-1 shadow-2xl ring-1 ring-black/5"
+                class="absolute left-3 right-3 z-[120] origin-bottom rounded-3xl border border-line bg-surface p-1 shadow-xl"
                 style="bottom: calc(100% + 0.5rem); display: none;"
                 @click="userMenuOpen = false"
             >
-                <a href="{{ route('profile.edit') }}" class="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100 hover:text-slate-950">
-                    <svg class="h-4 w-4 text-slate-500" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                        <path fill-rule="evenodd" d="M10 9a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm-7 9a7 7 0 1 1 14 0H3Z" clip-rule="evenodd" />
-                    </svg>
+                <a href="{{ route('profile.edit') }}" class="side-nav__item">
+                    <svg class="h-4 w-4" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10" cy="7" r="3"/><path d="M4 17c.6-3 3-4.5 6-4.5s5.4 1.5 6 4.5"/></svg>
                     <span>Profil</span>
                 </a>
-                <a href="{{ route('app.settings') }}" class="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100 hover:text-slate-950">
-                    <svg class="h-4 w-4 text-slate-500" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                        <path fill-rule="evenodd" d="M7.84 1.804A1 1 0 0 1 8.82 1h2.36a1 1 0 0 1 .98.804l.27 1.35c.37.15.72.35 1.04.6l1.29-.46a1 1 0 0 1 1.17.39l1.18 2.05a1 1 0 0 1-.19 1.22l-1.02.91a6.98 6.98 0 0 1 0 1.2l1.02.91a1 1 0 0 1 .19 1.22l-1.18 2.05a1 1 0 0 1-1.17.39l-1.29-.46c-.32.25-.67.45-1.04.6l-.27 1.35a1 1 0 0 1-.98.804H8.82a1 1 0 0 1-.98-.804l-.27-1.35a5.54 5.54 0 0 1-1.04-.6l-1.29.46a1 1 0 0 1-1.17-.39l-1.18-2.05a1 1 0 0 1 .19-1.22l1.02-.91a6.98 6.98 0 0 1 0-1.2l-1.02-.91a1 1 0 0 1-.19-1.22l1.18-2.05a1 1 0 0 1 1.17-.39l1.29.46c.32-.25.67-.45 1.04-.6l.27-1.35ZM10 12.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z" clip-rule="evenodd" />
-                    </svg>
+                <a href="{{ route('app.settings') }}" class="side-nav__item">
+                    <svg class="h-4 w-4" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10" cy="10" r="2.5"/><path d="M10 2.5v2M10 15.5v2M2.5 10h2M15.5 10h2M4.7 4.7l1.4 1.4M13.9 13.9l1.4 1.4M4.7 15.3l1.4-1.4M13.9 6.1l1.4-1.4"/></svg>
                     <span>Sozlamalar</span>
                 </a>
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
-                    <button type="submit" class="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm font-medium text-red-600 transition hover:bg-red-50">
-                        <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                            <path fill-rule="evenodd" d="M3 4.25A2.25 2.25 0 0 1 5.25 2h5.5A2.25 2.25 0 0 1 13 4.25v2a.75.75 0 0 1-1.5 0v-2a.75.75 0 0 0-.75-.75h-5.5a.75.75 0 0 0-.75.75v11.5c0 .414.336.75.75.75h5.5a.75.75 0 0 0 .75-.75v-2a.75.75 0 0 1 1.5 0v2A2.25 2.25 0 0 1 10.75 18h-5.5A2.25 2.25 0 0 1 3 15.75V4.25Zm10.72 4.22a.75.75 0 0 1 1.06 0l1.75 1.75a.75.75 0 0 1 0 1.06l-1.75 1.75a.75.75 0 1 1-1.06-1.06l.47-.47H8.75a.75.75 0 0 1 0-1.5h5.44l-.47-.47a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd" />
-                        </svg>
+                    <button type="submit" class="side-nav__item w-full text-left !text-red-700 hover:!bg-red-50">
+                        <svg class="h-4 w-4" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4.5V4a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-.5M9 10h8M14.5 7.5 17 10l-2.5 2.5"/></svg>
                         <span>Chiqish</span>
                     </button>
                 </form>
             </div>
 
-            <button
-                type="button"
-                @click="userMenuOpen = ! userMenuOpen"
-                :aria-expanded="userMenuOpen.toString()"
-                class="flex w-full items-center gap-3 rounded-md px-3 py-2 text-left transition hover:bg-white/10"
-            >
-                <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-cyan-100 text-sm font-bold uppercase text-emerald-950">
-                    {{ mb_substr($user->name, 0, 1) }}
-                </span>
-                <span class="min-w-0 flex-1">
-                    <span class="block truncate text-sm font-semibold text-white">{{ $user->name }}</span>
-                    <span class="block truncate text-xs text-cyan-100/70">{{ $user->email }}</span>
-                </span>
-                <svg class="h-4 w-4 shrink-0 text-cyan-100/75 transition" :class="{ 'rotate-180': userMenuOpen }" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                    <path fill-rule="evenodd" d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd" />
-                </svg>
-            </button>
+            <div class="flex items-center gap-2">
+                <button
+                    type="button"
+                    @click="userMenuOpen = ! userMenuOpen"
+                    :aria-expanded="userMenuOpen.toString()"
+                    class="flex min-w-0 flex-1 items-center gap-2.5 rounded-md px-2 py-1.5 text-left transition hover:bg-surface"
+                >
+                    <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent text-[13px] font-semibold uppercase text-accent-on">
+                        {{ mb_substr($user->name, 0, 1) }}
+                    </span>
+                    <span class="min-w-0 flex-1">
+                        <span class="block truncate text-[13px] font-semibold leading-[18px] text-ink">{{ $user->name }}</span>
+                        <span class="block truncate text-xs text-muted">{{ $user->email }}</span>
+                    </span>
+                </button>
+                <x-theme-toggle class="hidden lg:inline-flex" />
+            </div>
         </div>
     </div>
 </aside>

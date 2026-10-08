@@ -8,8 +8,9 @@
         <title>{{ config('app.name', 'RTT Markazi Elektron Murojaatlar Tizimi') }}</title>
 
         <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-        <link rel="preconnect" href="https://fonts.bunny.net">
-        <link href="https://fonts.bunny.net/css?family=figtree:400,500,600;space-grotesk:500,700&display=swap" rel="stylesheet" />
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans+Condensed:wght@600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 
         <script>
             document.documentElement.dataset.theme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
@@ -17,13 +18,13 @@
         @vite(['resources/css/app.css', 'resources/js/app.js'])
         @livewireStyles
     </head>
-    <body class="bg-slate-50 font-sans antialiased text-slate-900">
+    <body class="bg-canvas font-sans text-ink antialiased" data-role="{{ auth()->user()?->themeRole() ?? 'murojaatchi' }}">
         <div>
             @include('layouts.navigation')
 
-            <div class="min-w-0 lg:pl-64">
-                <header class="border-b border-slate-200/80 bg-white/90 backdrop-blur">
-                    <div class="px-4 py-5 sm:px-6 lg:px-8">
+            <div class="min-w-0 lg:pl-[232px]">
+                <header class="page-header border-b border-line bg-canvas">
+                    <div class="px-4 pb-5 pt-6 sm:px-6 lg:px-8">
                         <div class="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                             @isset($header)
                                 <div class="min-w-0 flex-1">

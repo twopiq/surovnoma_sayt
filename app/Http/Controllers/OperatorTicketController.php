@@ -20,7 +20,7 @@ class OperatorTicketController extends Controller
     public function index(): View
     {
         $tickets = Ticket::query()
-            ->with(['category', 'assignedExecutor', 'slaProfile'])
+            ->with(['category', 'assignedExecutor', 'slaProfile', 'attachments:id,ticket_id,original_name'])
             ->where('operator_id', auth()->id())
             ->latest()
             ->paginate(12);

@@ -1,6 +1,6 @@
 <x-guest-layout>
     <div class="rounded-2xl {{ $isRejected ? 'bg-rose-50' : 'bg-cyan-50' }} p-5">
-        <h1 class="font-['Space_Grotesk'] text-2xl font-bold text-slate-900">
+        <h1 class="font-display text-2xl font-bold text-slate-900">
             {{ $isRejected ? "So'rov rad etildi" : 'Hisob tekshirilmoqda' }}
         </h1>
         <p class="mt-3 text-sm text-slate-600">

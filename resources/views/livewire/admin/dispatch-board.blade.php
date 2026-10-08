@@ -1,4 +1,4 @@
-<div class="grid gap-4 lg:grid-cols-3 xl:grid-cols-4">
+<div class="grid items-start gap-4" style="grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr))">
     @php
         $source = request()->routeIs('app.home') ? 'home' : 'board';
     @endphp
@@ -9,10 +9,10 @@
             $total = $totals[$status->value] ?? 0;
         @endphp
 
-        <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm" style="{{ $status->boardStyle() }}">
+        <div class="rounded-xl border p-3.5 {{ $status->columnCssClass() }}">
             <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
                 <div class="flex min-w-0 items-center gap-2">
-                    <h3 class="inline-flex rounded-md px-2 py-1 text-sm font-semibold ring-1" style="{{ $status->badgeStyle() }}">{{ $status->label() }}</h3>
+                    <h3 class="m-0"><x-ticket-status-badge :status="$status" size="md" /></h3>
                     <span class="rounded-full bg-white/80 px-2 py-1 text-xs font-semibold text-slate-600 ring-1 ring-slate-200">{{ $total }}</span>
                 </div>
                 <a href="{{ $statusUrl }}" class="rounded-full bg-white/90 px-3 py-1 text-xs font-bold text-slate-700 shadow-sm ring-1 ring-slate-200 transition hover:bg-cyan-50 hover:text-cyan-800">
@@ -21,14 +21,8 @@
             </div>
             <div class="space-y-3">
                 @forelse ($grouped[$status->value] as $ticket)
-                    <a href="{{ route('admin.dispatch.show', ['ticket' => $ticket, 'source' => $source]) }}" class="block rounded-xl bg-slate-50 p-3 text-sm text-slate-700 transition hover:bg-cyan-50">
-                        <div class="font-semibold">{{ $ticket->reference }}</div>
-                        <div class="mt-1 text-slate-500">{{ \Illuminate\Support\Str::limit($ticket->requester_name, 24) }}</div>
-                        <div class="mt-3 grid gap-1 text-xs text-slate-500">
-                            <div>Qabul: <span class="font-semibold text-slate-700">{{ $ticket->receivedAtLabel() }}</span></div>
-                            <div>Muddat: <span class="font-semibold text-slate-700">{{ $ticket->slaDurationLabel() }}</span></div>
-                            <div>Tugash: <span class="font-semibold {{ $ticket->isOverdue() ? 'text-rose-700' : 'text-slate-700' }}">{{ $ticket->deadlineLabel() }}</span></div>
-                        </div>
+                    <a href="{{ route('admin.dispatch.show', ['ticket' => $ticket, 'source' => $source]) }}" class="block rounded-[14px] focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-600">
+                        <x-ticket-card :ticket="$ticket" :show-status="false" />
                     </a>
                 @empty
                     <div class="rounded-xl border border-dashed border-slate-200 p-4 text-sm text-slate-400">Bo'sh</div>

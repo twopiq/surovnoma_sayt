@@ -151,9 +151,9 @@ class NotificationAndAttachmentTest extends TestCase
 
         $response
             ->assertOk()
-            ->assertSeeText('Murojaat qabul qilindi')
+            ->assertSeeText('Murojaatingiz yuborildi')
             ->assertSeeText('Maxfiy tracking code')
-            ->assertSeeText("Ma'lumotlarni yuklab olish", false)
+            ->assertSeeText('Faylga yuklab olish')
             ->assertSee('download="murojaat-', false)
             ->assertSee(route('guest.tickets.show', $ticket), false)
             ->assertSessionHas("guest_ticket_access.{$ticket->id}", true);

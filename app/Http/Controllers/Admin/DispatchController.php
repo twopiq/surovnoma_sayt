@@ -30,25 +30,81 @@ class DispatchController extends Controller
     public function tickets(Request $request): View
     {
         $query = $this->filteredTicketQuery($request, $this->activeStatuses())->latest();
+        $tickets = $query->paginate(20)->withQueryString();
+
+        $selected = $request->filled('ticket')
+            ? Ticket::query()->with(['requester', 'category', 'assignedExecutor', 'assignedDepartment', 'slaProfile'])->find($request->integer('ticket'))
+            : $tickets->first();
+
+        // Holat chiplari uchun sonlar: holat filtrisiz, qolgan filtrlar bilan
+        $statusCounts = $this->filteredTicketQuery($request->duplicate(\Illuminate\Support\Arr::except($request->query(), ['status', 'overdue'])), $this->activeStatuses())
+            ->reorder()
+            ->toBase()
+            ->selectRaw('status, count(*) as total')
+            ->groupBy('status')
+            ->pluck('total', 'status');
 
         return view('admin.dispatch.tickets', [
-            'tickets' => $query->paginate(15)->withQueryString(),
+            'tickets' => $tickets,
+            'selected' => $selected,
+            'statusCounts' => $statusCounts,
+            'overdueCount' => $this->filteredTicketQuery($request->duplicate([...\Illuminate\Support\Arr::except($request->query(), ['status']), 'overdue' => 1]), $this->activeStatuses())->count(),
+            'chipStatuses' => [TicketStatus::New, TicketStatus::Assigned, TicketStatus::InProgress, TicketStatus::Returned],
             'statuses' => $this->activeStatuses(),
             'priorities' => TicketPriority::assignableCases(),
+            'categories' => Category::query()->where('is_active', true)->orderBy('name')->get(['id', 'name']),
+            'executors' => User::query()->role('executor')->where('is_active', true)->orderBy('name')->get(['id', 'name']),
         ]);
     }
 
+    public const ARCHIVE_PERIODS = ['7' => '7 kun', '30' => '30 kun', '90' => '90 kun', 'all' => 'Hammasi'];
+
     public function archive(Request $request): View
     {
+        $period = array_key_exists((string) $request->query('period'), self::ARCHIVE_PERIODS) ? (string) $request->query('period') : '30';
+        $finishedAt = 'coalesce(completed_at, rejected_at, updated_at)';
+
         $query = $this->filteredTicketQuery($request, $this->archiveStatuses(), allowOverdueFilter: false)
-            ->latest('completed_at')
-            ->latest();
+            ->when($period !== 'all', fn ($q) => $q->whereRaw("{$finishedAt} >= ?", [now()->subDays((int) $period)->startOfDay()]))
+            ->orderByRaw("{$finishedAt} desc");
+
+        $tickets = $query->paginate(30)->withQueryString();
+
+        $selected = $request->filled('ticket')
+            ? Ticket::query()->with(['assignedExecutor:id,name', 'category:id,name', 'histories.user:id,name'])->find($request->integer('ticket'))
+            : $tickets->first()?->load('histories.user:id,name');
+
+        $statusCounts = $this->filteredTicketQuery($request->duplicate(\Illuminate\Support\Arr::except($request->query(), ['status'])), $this->archiveStatuses(), allowOverdueFilter: false)
+            ->when($period !== 'all', fn ($q) => $q->whereRaw("{$finishedAt} >= ?", [now()->subDays((int) $period)->startOfDay()]))
+            ->toBase()
+            ->selectRaw('status, count(*) as total')
+            ->groupBy('status')
+            ->pluck('total', 'status');
 
         return view('admin.dispatch.archive', [
-            'tickets' => $query->paginate(15)->withQueryString(),
+            'tickets' => $tickets,
+            'groups' => $tickets->getCollection()->groupBy(fn (Ticket $ticket) => $this->archiveGroup($ticket->finishedAt())),
+            'selected' => $selected,
+            'statusCounts' => $statusCounts,
             'statuses' => $this->archiveStatuses(),
+            'period' => $period,
+            'periods' => self::ARCHIVE_PERIODS,
             'priorities' => TicketPriority::assignableCases(),
+            'categories' => Category::query()->where('is_active', true)->orderBy('name')->get(['id', 'name']),
+            'executors' => User::query()->role('executor')->orderBy('name')->get(['id', 'name']),
         ]);
+    }
+
+    private function archiveGroup(?\Illuminate\Support\Carbon $date): string
+    {
+        return match (true) {
+            $date === null => 'Avvalroq',
+            $date->isToday() => 'Bugun',
+            $date->isYesterday() => 'Kecha',
+            $date->gte(now()->startOfWeek()) => 'Shu hafta',
+            $date->gte(now()->startOfMonth()) => 'Shu oy',
+            default => 'Avvalroq',
+        };
     }
 
     public function status(Request $request, string $status): View
@@ -58,7 +114,7 @@ class DispatchController extends Controller
         abort_unless($ticketStatus instanceof TicketStatus, 404);
 
         $query = Ticket::query()
-            ->with(['assignedDepartment', 'assignedExecutor', 'requester', 'category', 'slaProfile'])
+            ->with(['assignedDepartment', 'assignedExecutor', 'requester', 'category', 'slaProfile', 'attachments:id,ticket_id,original_name'])
             ->where('status', $ticketStatus->value)
             ->when($request->filled('priority'), fn ($query) => $query->where('priority', $request->string('priority')))
             ->latest();
@@ -225,7 +281,7 @@ class DispatchController extends Controller
         $allowedStatusValues = array_map(fn (TicketStatus $status): string => $status->value, $allowedStatuses);
 
         $query = Ticket::query()
-            ->with(['assignedDepartment', 'assignedExecutor', 'requester', 'category', 'slaProfile'])
+            ->with(['assignedDepartment', 'assignedExecutor', 'requester', 'category', 'slaProfile', 'attachments:id,ticket_id,original_name'])
             ->whereIn('status', $allowedStatusValues);
 
         if ($request->filled('status')) {
@@ -234,6 +290,23 @@ class DispatchController extends Controller
 
         if ($request->filled('priority')) {
             $query->where('priority', $request->string('priority'));
+        }
+
+        if ($request->filled('category_id')) {
+            $query->where('category_id', $request->integer('category_id'));
+        }
+
+        if ($request->filled('executor_id')) {
+            $query->where('assigned_executor_id', $request->integer('executor_id'));
+        }
+
+        if ($search = trim((string) $request->query('q'))) {
+            $query->where(function ($inner) use ($search): void {
+                $inner->where('reference', 'like', "%{$search}%")
+                    ->orWhere('title', 'like', "%{$search}%")
+                    ->orWhere('description', 'like', "%{$search}%")
+                    ->orWhere('requester_name', 'like', "%{$search}%");
+            });
         }
 
         if ($allowOverdueFilter && $request->boolean('overdue')) {
@@ -256,7 +329,6 @@ class DispatchController extends Controller
             TicketStatus::InProgress,
             TicketStatus::Returned,
             TicketStatus::Overdue,
-            TicketStatus::Rejected,
         ];
     }
 
@@ -265,6 +337,7 @@ class DispatchController extends Controller
         return [
             TicketStatus::Completed,
             TicketStatus::Closed,
+            TicketStatus::Rejected,
         ];
     }
 

@@ -29,7 +29,7 @@
     <x-slot name="header">
         <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div>
-                <h2 class="font-['Space_Grotesk'] text-2xl font-bold text-slate-900">Murojaatlarim</h2>
+                <h2 class="font-display text-2xl font-bold text-slate-900">Murojaatlarim</h2>
                 <p class="mt-1 text-sm text-slate-500">Yuborilgan murojaatlar holati va yangi murojaat yaratish.</p>
             </div>
             <a href="{{ route('tickets.create') }}" class="inline-flex items-center justify-center rounded-md bg-cyan-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-cyan-800">Yangi murojaat</a>
@@ -41,7 +41,7 @@
             @foreach ($summaryCards as $card)
                 <div class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
                     <div class="text-sm font-medium text-slate-500">{{ $card['label'] }}</div>
-                    <div class="mt-3 font-['Space_Grotesk'] text-3xl font-bold {{ $card['tone'] }}">{{ $card['value'] }}</div>
+                    <div class="mt-3 font-display text-3xl font-bold {{ $card['tone'] }}">{{ $card['value'] }}</div>
                 </div>
             @endforeach
         </section>

@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
         <div class="flex items-center justify-between">
-            <h2 class="font-['Space_Grotesk'] text-2xl font-bold">Operator paneli</h2>
+            <h2 class="font-display text-2xl font-bold">Operator paneli</h2>
             <a href="{{ route('operator.tickets.create') }}" class="rounded-full bg-cyan-700 px-4 py-2 text-sm font-semibold text-white">Boshqa xodim nomidan</a>
         </div>
     </x-slot>

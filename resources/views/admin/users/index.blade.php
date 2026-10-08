@@ -1,70 +1,86 @@
+@php
+    $initials = fn (string $name) => collect(preg_split('/\s+/u', trim($name)))->take(2)->map(fn ($part) => mb_substr($part, 0, 1))->implode('');
+    $ago = function ($date) {
+        if (! $date) {
+            return '—';
+        }
+
+        return match (true) {
+            $date->isToday() => 'bugun '.$date->format('H:i'),
+            $date->isYesterday() => 'kecha '.$date->format('H:i'),
+            $date->gt(now()->subDays(7)) => (int) $date->copy()->startOfDay()->diffInDays(now()->startOfDay()).' kun oldin',
+            default => $date->format('d.m.Y'),
+        };
+    };
+@endphp
+
 <x-app-layout>
     <x-slot name="header">
         <div>
-            <h2 class="font-['Space_Grotesk'] text-2xl font-bold">Tasdiq kutayotganlar</h2>
-            <p class="mt-1 text-sm text-slate-500">Yangi ro'yxatdan o'tgan va tasdiqlash kutayotgan foydalanuvchilar.</p>
+            <div class="pg-crumb">Odamlar</div>
+            <h2>{{ $tab === 'pending' ? 'Tasdiq kutayotganlar' : 'Rad etilganlar' }}</h2>
+            <p class="pg-sub">Yangi ro'yxatdan o'tganlarni tasdiqlang yoki rad eting.</p>
         </div>
     </x-slot>
 
-    <div class="mx-auto max-w-none space-y-5 px-4 pt-8 sm:px-6 lg:px-8">
-        @include('admin.users.partials.top-menu')
+    <div class="mx-auto max-w-none px-4 pt-6 sm:px-6 lg:px-8">
+        <nav class="ui-tabs" aria-label="Foydalanuvchilar bo'limlari">
+            <a href="{{ route('admin.users.list') }}">Foydalanuvchilar <span class="ui-count">{{ $counts['all'] }}</span></a>
+            <a href="{{ route('admin.users.index') }}" @if ($tab === 'pending') aria-current="page" @endif>Tasdiq kutayotganlar <span @class(['ui-count', 'ui-count--alert' => $counts['pending'] > 0])>{{ $counts['pending'] }}</span></a>
+            <a href="{{ route('admin.users.index', ['tab' => 'rejected']) }}" @if ($tab === 'rejected') aria-current="page" @endif>Rad etilganlar <span class="ui-count">{{ $counts['rejected'] }}</span></a>
+        </nav>
 
-        <section class="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-            <h3 class="font-semibold text-slate-900">Tasdiq kutayotganlar</h3>
-            <div class="mt-4 space-y-4">
-                @forelse ($pendingUsers as $user)
-                    <div class="grid gap-3 rounded-lg border border-slate-200 p-4 md:grid-cols-[1.2fr_1fr_auto_auto] md:items-center">
-                        <div>
-                            <div class="font-semibold text-slate-900">{{ $user->name }}</div>
-                            <div class="text-sm text-slate-500">{{ $user->email }}</div>
-                            <div class="mt-1 text-xs text-slate-400">
-                                {{ $user->login }}
-                                @if ($user->department)
-                                    / {{ $user->department->name }}
-                                @endif
-                            </div>
-                        </div>
+        <div class="grid gap-3">
+            @forelse ($users as $user)
+                <div class="ui-card grid items-center gap-3.5 md:grid-cols-[48px_minmax(0,1.2fr)_150px_200px_auto]">
+                    <span class="ui-avatar h-11 w-11">{{ $initials($user->name) }}</span>
+                    <div class="min-w-0">
+                        <b class="block truncate text-[14px] font-medium">{{ $user->name }}</b>
+                        <span class="block truncate text-xs text-muted">{{ $user->email }} · {{ $user->login }}</span>
+                        <span class="block text-xs text-muted">Ariza: {{ $ago($user->created_at) }}@if ($user->phone) · <span class="ui-mono text-xs">{{ $user->phone }}</span>@endif</span>
+                    </div>
+                    <div class="text-[13px]">
+                        <span class="block text-xs text-muted">Bo'lim</span>
+                        {{ $user->department?->name ?? '—' }}
+                    </div>
 
-                        <form method="POST" action="{{ route('admin.users.update', $user) }}" class="contents">
+                    @if ($tab === 'pending')
+                        <form method="POST" action="{{ route('admin.users.update', $user) }}" id="approve-{{ $user->id }}">
                             @csrf
                             @method('PATCH')
-                            <input type="hidden" name="decision" value="approve" />
-                            <select name="role" class="rounded-md border-slate-300 shadow-sm">
+                            <input type="hidden" name="decision" value="approve">
+                            <label class="block text-xs text-muted" for="role-{{ $user->id }}">Rol (siz tanlaysiz)</label>
+                            <select id="role-{{ $user->id }}" name="role" class="ui-input py-1.5">
                                 @foreach ($roles as $role)
-                                    <option value="{{ $role->value }}">{{ $role->label() }}</option>
+                                    <option value="{{ $role->value }}" @selected($role === \App\Enums\UserRole::Requester)>{{ $role->label() }}</option>
                                 @endforeach
                             </select>
-                            <button class="rounded-md bg-cyan-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-cyan-800">Tasdiqlash</button>
                         </form>
-
-                        <form method="POST" action="{{ route('admin.users.update', $user) }}">
-                            @csrf
-                            @method('PATCH')
-                            <input type="hidden" name="decision" value="reject" />
-                            <button class="rounded-md border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-100">
-                                Rad etish
-                            </button>
-                        </form>
-                    </div>
-                @empty
-                    <p class="text-sm text-slate-500">Kutilayotgan foydalanuvchi yo'q.</p>
-                @endforelse
-            </div>
-        </section>
-
-        @if ($rejectedUsers->isNotEmpty())
-            <section class="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-                <h3 class="font-semibold text-slate-900">Rad etilgan so'rovlar</h3>
-                <div class="mt-4 space-y-3">
-                    @foreach ($rejectedUsers as $user)
-                        <div class="rounded-lg border border-rose-100 bg-rose-50 p-4">
-                            <div class="font-semibold text-slate-900">{{ $user->name }}</div>
-                            <div class="text-sm text-slate-600">{{ $user->email }}</div>
-                            <div class="mt-1 text-xs text-rose-700">So'rov rad etilgan</div>
+                        <div class="flex flex-wrap gap-2 md:justify-end">
+                            <button type="submit" form="approve-{{ $user->id }}" class="btn btn-primary">Tasdiqlash</button>
+                            <form method="POST" action="{{ route('admin.users.update', $user) }}">
+                                @csrf
+                                @method('PATCH')
+                                <input type="hidden" name="decision" value="reject">
+                                <button type="submit" class="btn btn-secondary !text-red-700">Rad etish</button>
+                            </form>
                         </div>
-                    @endforeach
+                    @else
+                        <div><span class="status-badge status--closed">So'rov rad etilgan</span></div>
+                        <div class="flex flex-wrap gap-2 md:justify-end">
+                            <a href="{{ route('admin.users.profile', ['user' => $user->id]) }}" class="btn btn-secondary">Profilni ochish</a>
+                        </div>
+                    @endif
                 </div>
-            </section>
+            @empty
+                <div class="ui-card py-8 text-center text-muted">
+                    {{ $tab === 'pending' ? "Tasdiq kutayotgan foydalanuvchi yo'q." : "Rad etilgan so'rov yo'q." }}
+                </div>
+            @endforelse
+        </div>
+
+        @if ($tab === 'pending')
+            <p class="ui-note mt-3">Ro'yxatdan o'tishda rol so'ralmaydi: rolni tasdiqlash vaqtida siz tanlaysiz.</p>
         @endif
     </div>
 </x-app-layout>

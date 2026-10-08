@@ -1,216 +1,105 @@
+@php
+    $isCreate = $selectedUser === null;
+    $isSelf = ! $isCreate && $selectedUser->is(auth()->user());
+    $currentRole = old('role', $selectedUser?->getRoleNames()->first() ?? \App\Enums\UserRole::Requester->value);
+    $formId = 'user-profile-form';
+@endphp
+
 <x-app-layout>
     <x-slot name="header">
-        <div>
-            <h2 class="font-['Space_Grotesk'] text-2xl font-bold">Foydalanuvchi profili</h2>
-            <p class="mt-1 text-sm text-slate-500">Foydalanuvchi ma'lumotlari va tizimdagi holati.</p>
+        <div class="flex flex-wrap items-start justify-between gap-3">
+            <div class="min-w-0">
+                <div class="pg-crumb"><a href="{{ route('admin.users.list') }}" class="hover:text-ink">Odamlar › Foydalanuvchilar</a></div>
+                <h2>{{ $isCreate ? 'Yangi foydalanuvchi' : $selectedUser->name }}</h2>
+                <p class="pg-sub">{{ $isCreate ? "Hisob yaratiladi va darhol tasdiqlangan bo'ladi." : 'Profilni tahrirlash' }}</p>
+            </div>
+            @if (! $isCreate && ! $isSelf)
+                <form method="POST" action="{{ route('admin.users.password-reset', $selectedUser) }}">
+                    @csrf
+                    <button type="submit" class="btn btn-secondary">Parolni tiklash</button>
+                </form>
+            @endif
         </div>
     </x-slot>
 
-    <div class="mx-auto max-w-none space-y-5 px-4 pt-8 sm:px-6 lg:px-8">
-        <div class="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
-            <section class="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-                <div class="relative z-0 h-44 bg-[#123b2f]">
-                    <div class="h-full w-full bg-[linear-gradient(135deg,#123b2f_0%,#0f8f6b_52%,#fda13f_100%)] opacity-90"></div>
-                </div>
+    <div class="mx-auto max-w-none px-4 pt-6 sm:px-6 lg:px-8">
+        @if ($isSelf)
+            <p class="ui-note mb-3">Bu sizning hisobingiz. O'z ma'lumotlaringizni <a href="{{ route('profile.edit') }}">Profil</a> sahifasida o'zgartirasiz.</p>
+        @endif
 
-                <div class="relative z-10 px-5 pb-6">
-                    <div class="-mt-14 flex justify-center">
-                        <span class="admin-profile-token relative z-20 inline-flex h-28 w-28 items-center justify-center rounded-full border-4 border-white bg-emerald-100 text-4xl font-bold text-emerald-700 shadow-sm">
-                            {{ mb_substr($selectedUser->name, 0, 1) }}
-                        </span>
+        <form id="{{ $formId }}" method="POST" action="{{ $isCreate ? route('admin.users.store') : route('admin.users.profile.update', $selectedUser) }}" x-data="{ dirty: false }" @input="dirty = true" @change="dirty = true">
+            @csrf
+            @unless ($isCreate)
+                @method('PATCH')
+            @endunless
+
+            <fieldset @disabled($isSelf) class="ui-split" style="--split-side: 340px">
+                <div class="ui-card">
+                    <h3 class="ui-card__title mb-3">Asosiy ma'lumotlar</h3>
+                    @include('admin.users.partials.fields', ['user' => $selectedUser, 'compact' => false])
+
+                    <div class="mb-3 mt-5">
+                        <h3 class="ui-card__title">Parol</h3>
+                        <p class="ui-card__sub">{{ $isCreate ? 'Kamida 8 belgi' : "Bo'sh qoldirsangiz o'zgarmaydi" }}</p>
                     </div>
-
-                    <div class="mt-6 overflow-hidden rounded-lg border border-slate-200">
-                        <div class="grid grid-cols-[0.85fr_1.15fr] border-b border-slate-200 px-4 py-3 text-sm">
-                            <div class="text-slate-500">F.I.Sh.</div>
-                            <div class="font-semibold text-slate-900">: {{ $selectedUser->name }}</div>
+                    <div class="grid gap-3.5 sm:grid-cols-2">
+                        <div>
+                            <label class="ui-field-label" for="password">{{ $isCreate ? 'Parol' : 'Yangi parol' }}</label>
+                            <x-password-input id="password" name="password" class="ui-input" autocomplete="new-password" :required="$isCreate" />
+                            <x-input-error :messages="$errors->get('password')" class="mt-1" />
                         </div>
-                        <div class="grid grid-cols-[0.85fr_1.15fr] border-b border-slate-200 px-4 py-3 text-sm">
-                            <div class="text-slate-500">Email</div>
-                            <div class="font-semibold text-slate-900">: {{ $selectedUser->email }}</div>
-                        </div>
-                        <div class="grid grid-cols-[0.85fr_1.15fr] border-b border-slate-200 px-4 py-3 text-sm">
-                            <div class="text-slate-500">Telefon raqami</div>
-                            <div class="font-semibold text-slate-900">: {{ $selectedUser->phone ?? '-' }}</div>
-                        </div>
-                        <div class="grid grid-cols-[0.85fr_1.15fr] border-b border-slate-200 px-4 py-3 text-sm">
-                            <div class="text-slate-500">Ro'yxatdan o'tgan sana</div>
-                            <div class="font-semibold text-slate-900">: {{ $selectedUser->created_at?->format('d M, Y') }}</div>
-                        </div>
-                        <div class="grid grid-cols-[0.85fr_1.15fr] px-4 py-3 text-sm">
-                            <div class="text-slate-500">Holat</div>
-                            <div>
-                                @if ($selectedUser->approved_at && $selectedUser->is_active)
-                                    <span class="admin-profile-status rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">Faol</span>
-                                @elseif (! $selectedUser->is_active)
-                                    <span class="admin-profile-status rounded-full bg-rose-100 px-3 py-1 text-xs font-semibold text-rose-700">Nofaol</span>
-                                @else
-                                    <span class="admin-profile-status rounded-full bg-yellow-100 px-3 py-1 text-xs font-semibold text-yellow-700">Kutilmoqda</span>
-                                @endif
-                            </div>
+                        <div>
+                            <label class="ui-field-label" for="password_confirmation">Tasdiqlash</label>
+                            <x-password-input id="password_confirmation" name="password_confirmation" class="ui-input" autocomplete="new-password" :required="$isCreate" />
                         </div>
                     </div>
                 </div>
-            </section>
 
-            <section class="rounded-lg border border-slate-200 bg-white shadow-sm">
-                <div class="border-b border-slate-200 px-5 py-4">
-                    <h3 class="font-['Space_Grotesk'] text-lg font-bold text-slate-900">Foydalanuvchi profili</h3>
-                </div>
-
-                <div class="p-5">
-                    @php
-                        $selectedRole = $selectedUser->getRoleNames()->first();
-                        $selectedStatus = $selectedUser->approved_at && $selectedUser->is_active
-                            ? 'active'
-                            : (! $selectedUser->is_active ? 'inactive' : 'pending');
-                    @endphp
-
-                    @if ($selectedUser->is(auth()->user()))
-                        <div class="space-y-4">
-                            <div class="grid gap-2 sm:grid-cols-[220px_1fr] sm:items-center">
-                                <label class="text-sm text-slate-600">Ism</label>
-                                <input value="{{ $selectedUser->name }}" class="rounded-md border-slate-300 shadow-sm" readonly>
-                            </div>
-                            <div class="grid gap-2 sm:grid-cols-[220px_1fr] sm:items-center">
-                                <label class="text-sm text-slate-600">Email</label>
-                                <input value="{{ $selectedUser->email }}" class="rounded-md border-slate-300 shadow-sm" readonly>
-                            </div>
-                            <div class="grid gap-2 sm:grid-cols-[220px_1fr] sm:items-center">
-                                <label class="text-sm text-slate-600">Login</label>
-                                <input value="{{ $selectedUser->login }}" class="rounded-md border-slate-300 shadow-sm" readonly>
-                            </div>
-                            <div class="grid gap-2 sm:grid-cols-[220px_1fr] sm:items-center">
-                                <label class="text-sm text-slate-600">Telefon</label>
-                                <input value="{{ $selectedUser->phone ?? '-' }}" class="rounded-md border-slate-300 shadow-sm" readonly>
-                            </div>
-                            <div class="grid gap-2 sm:grid-cols-[220px_1fr] sm:items-center">
-                                <label class="text-sm text-slate-600">Lavozim</label>
-                                <input value="{{ $selectedUser->job_title ?: $selectedUser->display_role }}" class="rounded-md border-slate-300 shadow-sm" readonly>
-                            </div>
-                            <div class="grid gap-2 sm:grid-cols-[220px_1fr] sm:items-center">
-                                <label class="text-sm text-slate-600">Bo'lim</label>
-                                <input value="{{ $selectedUser->department?->name ?? '-' }}" class="rounded-md border-slate-300 shadow-sm" readonly>
-                            </div>
-                            <div class="grid gap-2 sm:grid-cols-[220px_1fr] sm:items-center">
-                                <label class="text-sm text-slate-600">Rol</label>
-                                <input value="{{ $selectedUser->display_role }}" class="rounded-md border-slate-300 shadow-sm" readonly>
-                            </div>
-
-                            <a href="{{ route('profile.edit') }}" class="inline-flex rounded-md bg-violet-700 px-5 py-2 text-sm font-semibold text-white transition hover:bg-violet-800">
-                                Profilni tahrirlash
-                            </a>
+                <div class="grid gap-3">
+                    <div class="ui-card grid gap-3">
+                        <h3 class="ui-card__title">Rol va holat</h3>
+                        <div>
+                            <label class="ui-field-label" for="role">Rol</label>
+                            <select id="role" name="role" class="ui-input" required>
+                                @foreach ($roles as $role)
+                                    <option value="{{ $role->value }}" @selected($currentRole === $role->value)>{{ $role->label() }}</option>
+                                @endforeach
+                            </select>
+                            <x-input-error :messages="$errors->get('role')" class="mt-1" />
                         </div>
-                    @else
-                        <form method="POST" action="{{ route('admin.users.profile.update', $selectedUser) }}" class="space-y-4">
-                            @csrf
-                            @method('PATCH')
+                        @include('admin.users.partials.status-fields', ['user' => $selectedUser, 'boxed' => false])
+                    </div>
 
-                            <div class="grid gap-2 sm:grid-cols-[220px_1fr] sm:items-start">
-                                <label for="name" class="pt-2 text-sm text-slate-600">Ism</label>
-                                <div>
-                                    <input id="name" name="name" value="{{ old('name', $selectedUser->name) }}" class="w-full rounded-md border-slate-300 shadow-sm">
-                                    <x-input-error :messages="$errors->get('name')" class="mt-2" />
-                                </div>
-                            </div>
-
-                            <div class="grid gap-2 sm:grid-cols-[220px_1fr] sm:items-start">
-                                <label for="email" class="pt-2 text-sm text-slate-600">Email</label>
-                                <div>
-                                    <input id="email" name="email" type="email" value="{{ old('email', $selectedUser->email) }}" class="w-full rounded-md border-slate-300 shadow-sm">
-                                    <x-input-error :messages="$errors->get('email')" class="mt-2" />
-                                </div>
-                            </div>
-
-                            <div class="grid gap-2 sm:grid-cols-[220px_1fr] sm:items-start">
-                                <label for="login" class="pt-2 text-sm text-slate-600">Login</label>
-                                <input id="login" value="{{ $selectedUser->login }}" class="w-full rounded-md border-slate-300 bg-slate-50 text-slate-500 shadow-sm" readonly>
-                            </div>
-
-                            <div class="grid gap-2 sm:grid-cols-[220px_1fr] sm:items-start">
-                                <label for="phone" class="pt-2 text-sm text-slate-600">Telefon</label>
-                                <div>
-                                    <input id="phone" name="phone" value="{{ old('phone', $selectedUser->phone) }}" placeholder="+998 90 000 00 00" class="w-full rounded-md border-slate-300 shadow-sm">
-                                    <x-input-error :messages="$errors->get('phone')" class="mt-2" />
-                                </div>
-                            </div>
-
-                            <div class="grid gap-2 sm:grid-cols-[220px_1fr] sm:items-start">
-                                <label for="job_title" class="pt-2 text-sm text-slate-600">Lavozim</label>
-                                <div>
-                                    <input id="job_title" name="job_title" value="{{ old('job_title', $selectedUser->job_title) }}" class="w-full rounded-md border-slate-300 shadow-sm">
-                                    <x-input-error :messages="$errors->get('job_title')" class="mt-2" />
-                                </div>
-                            </div>
-
-                            <div class="grid gap-2 sm:grid-cols-[220px_1fr] sm:items-start">
-                                <label for="department_id" class="pt-2 text-sm text-slate-600">Bo'lim</label>
-                                <div>
-                                    <select id="department_id" name="department_id" class="w-full rounded-md border-slate-300 shadow-sm">
-                                        <option value="">Bo'lim tanlanmagan</option>
-                                        @foreach ($departments as $department)
-                                            <option value="{{ $department->id }}" @selected((string) old('department_id', $selectedUser->department_id) === (string) $department->id)>{{ $department->name }}</option>
-                                        @endforeach
-                                    </select>
-                                    <x-input-error :messages="$errors->get('department_id')" class="mt-2" />
-                                </div>
-                            </div>
-
-                            <div class="grid gap-2 sm:grid-cols-[220px_1fr] sm:items-start">
-                                <label for="role" class="pt-2 text-sm text-slate-600">Rol</label>
-                                <div>
-                                    <select id="role" name="role" class="w-full rounded-md border-slate-300 shadow-sm">
-                                        @foreach ($roles as $role)
-                                            <option value="{{ $role->value }}" @selected(old('role', $selectedRole) === $role->value)>{{ $role->label() }}</option>
-                                        @endforeach
-                                    </select>
-                                    <x-input-error :messages="$errors->get('role')" class="mt-2" />
-                                </div>
-                            </div>
-
-                            <div class="grid gap-2 sm:grid-cols-[220px_1fr] sm:items-start">
-                                <label for="status" class="pt-2 text-sm text-slate-600">Holat</label>
-                                <div>
-                                    <select id="status" name="status" class="w-full rounded-md border-slate-300 shadow-sm">
-                                        @foreach ($statuses as $value => $label)
-                                            <option value="{{ $value }}" @selected(old('status', $selectedStatus) === $value)>{{ $label }}</option>
-                                        @endforeach
-                                    </select>
-                                    <x-input-error :messages="$errors->get('status')" class="mt-2" />
-                                </div>
-                            </div>
-
-                            <div class="rounded-lg border border-slate-200 bg-slate-50 p-4">
-                                <label class="inline-flex items-start gap-3">
-                                    <input
-                                        type="checkbox"
-                                        name="can_access_app_dashboard"
-                                        value="1"
-                                        @checked($errors->any() ? old('can_access_app_dashboard') : $selectedUser->can_access_app_dashboard)
-                                        class="mt-1 h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
-                                    >
-                                    <span>
-                                        <span class="block text-sm font-semibold text-slate-700">Dashboardga ruxsat berilsin</span>
-                                        <span class="mt-1 block text-sm text-slate-500">Bu ruxsat faqat Rahbar roli tanlanganda amal qiladi.</span>
-                                    </span>
-                                </label>
-                            </div>
-
-                            <div class="flex flex-wrap items-center gap-3 border-t border-slate-200 pt-4">
-                                <a href="{{ route('admin.users.list') }}" class="inline-flex rounded-md border border-slate-300 px-5 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
-                                    Ortga qaytish
-                                </a>
-                                <button class="inline-flex rounded-md bg-emerald-600 px-5 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700">
-                                    Saqlash
-                                </button>
-                                <a href="{{ route('admin.users.profile', ['user' => $selectedUser->id]) }}" class="inline-flex rounded-md border border-slate-300 px-5 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
-                                    Bekor qilish
-                                </a>
-                            </div>
-                        </form>
-                    @endif
+                    @unless ($isCreate)
+                        <div class="ui-card">
+                            <h3 class="ui-card__title mb-3">Faollik</h3>
+                            <dl class="ui-kv">
+                                <dt>Ro'yxatdan o'tgan</dt>
+                                <dd class="ui-mono">{{ $selectedUser->created_at?->format('d.m.Y') ?? '—' }}</dd>
+                                <dt>Tasdiqlangan</dt>
+                                <dd class="ui-mono">{{ $selectedUser->approved_at?->format('d.m.Y') ?? '—' }}</dd>
+                                <dt>So'nggi faollik</dt>
+                                <dd class="ui-mono">{{ isset($lastActivity[$selectedUser->id]) ? $lastActivity[$selectedUser->id]->format('d.m.Y H:i') : '—' }}</dd>
+                                <dt>Login</dt>
+                                <dd class="ui-mono">{{ $selectedUser->login ?? '—' }}</dd>
+                            </dl>
+                        </div>
+                    @endunless
                 </div>
-            </section>
-        </div>
+            </fieldset>
+
+            @unless ($isSelf)
+                <div class="ui-savebar">
+                    <span class="text-[13px]">
+                        <template x-if="dirty"><span><span class="ui-dirty-dot"></span>Saqlanmagan o'zgarishlar bor</span></template>
+                        <template x-if="!dirty"><span class="text-muted">{{ $isCreate ? 'Yangi foydalanuvchi' : 'Foydalanuvchi profili' }}</span></template>
+                    </span>
+                    <span class="flex gap-2">
+                        <a href="{{ route('admin.users.list', $isCreate ? [] : ['user' => $selectedUser->id]) }}" class="btn btn-secondary">Bekor qilish</a>
+                        <button type="submit" class="btn btn-primary">{{ $isCreate ? 'Yaratish' : 'Saqlash' }}</button>
+                    </span>
+                </div>
+            @endunless
+        </form>
     </div>
 </x-app-layout>

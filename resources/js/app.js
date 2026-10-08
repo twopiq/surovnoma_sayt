@@ -1,4 +1,5 @@
 import "./bootstrap";
+import "../css/admin-pages.css";
 
 import Alpine from "alpinejs";
 

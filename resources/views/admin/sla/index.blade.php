@@ -1,50 +1,91 @@
+@php
+    $workdayHours = round($workdayMinutes / 60, 2);
+    $ordered = collect($priorities)->sortByDesc(fn ($priority) => $priority->level())->values();
+@endphp
+
 <x-app-layout>
     <x-slot name="header">
         <div>
-            <h2 class="font-['Space_Grotesk'] text-2xl font-bold">Deadline sozlamalari</h2>
-            <p class="mt-1 text-sm text-slate-500">Muhimlik darajasiga qarab murojaat bajarilish muddatini belgilang.</p>
+            <div class="pg-crumb">Sozlamalar</div>
+            <h2>Deadline sozlamalari</h2>
+            <p class="pg-sub">Muhimlik darajasiga qarab murojaat bajarilish muddatini belgilang.</p>
         </div>
     </x-slot>
 
-    <div class="mx-auto max-w-none space-y-6 px-4 pt-8 sm:px-6 lg:px-8">
-        @include('admin.dispatch.partials.top-menu')
+    <div class="mx-auto max-w-none px-4 pt-6 sm:px-6 lg:px-8">
+        <p class="ui-note mb-4">
+            <span>1 ish kuni hozirgi ish kalendari bo'yicha <b>{{ $workdayHours }} soat</b> deb olinadi. Ish vaqtini <a href="{{ route('admin.dispatch.work-schedule') }}">Ish kunlari</a> sahifasida o'zgartirasiz.</span>
+        </p>
 
-        <form method="POST" action="{{ route('admin.dispatch.deadlines.update') }}" class="space-y-6">
+        <form method="POST" action="{{ route('admin.dispatch.deadlines.update') }}" x-data="{ dirty: false }" @input="dirty = true">
             @csrf
             @method('PUT')
-            <section class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-                <div class="flex flex-col gap-1 border-b border-slate-100 pb-4">
-                    <h3 class="font-semibold text-slate-950">Muhimlik bo'yicha deadline</h3>
-                    <p class="text-sm text-slate-500">1 ish kuni hozirgi ish kalendari bo'yicha {{ round($workdayMinutes / 60, 2) }} soat deb olinadi.</p>
-                </div>
 
-                <div class="mt-4 space-y-3">
-                    @foreach ($priorities as $index => $priority)
-                        @php($profile = $profiles->firstWhere('priority', $priority->value))
-                        @php($deadlineDays = $profile ? round($profile->duration_minutes / $workdayMinutes, 2) : 1)
-                        <div class="grid gap-3 rounded-lg border border-slate-100 bg-slate-50 p-3 md:grid-cols-[1.2fr_1fr_1fr_1fr] md:items-center">
-                            <input type="hidden" name="profiles[{{ $index }}][priority]" value="{{ $priority->value }}">
-                            <label class="block">
-                                <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Nomi</span>
-                                <input name="profiles[{{ $index }}][name]" value="{{ $profile->name ?? $priority->label() }}" class="w-full rounded-md border-slate-300 shadow-sm" />
-                            </label>
-                            <label class="block">
-                                <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Deadline kuni</span>
-                                <input type="number" step="0.01" min="0.01" name="profiles[{{ $index }}][deadline_days]" value="{{ old("profiles.$index.deadline_days", $deadlineDays) }}" class="w-full rounded-md border-slate-300 shadow-sm" />
-                            </label>
-                            <label class="block">
-                                <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Ogohlantirish (daq.)</span>
-                                <input type="number" min="1" name="profiles[{{ $index }}][warning_minutes]" value="{{ $profile->warning_minutes ?? 30 }}" class="w-full rounded-md border-slate-300 shadow-sm" />
-                            </label>
-                            <div class="text-sm font-semibold text-slate-700">{{ $priority->label() }}</div>
+            <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                @foreach ($ordered as $index => $priority)
+                    @php
+                        $profile = $profiles->firstWhere('priority', $priority->value);
+                        $deadlineDays = old("profiles.$index.deadline_days", $profile ? round($profile->duration_minutes / $workdayMinutes, 2) : 1);
+                        $warning = old("profiles.$index.warning_minutes", $profile->warning_minutes ?? 30);
+                    @endphp
+                    <div class="ui-card flex flex-col gap-3.5"
+                         x-data="{ days: {{ (float) $deadlineDays }}, warn: {{ (int) $warning }}, perDay: {{ $workdayMinutes }} }">
+                        <input type="hidden" name="profiles[{{ $index }}][priority]" value="{{ $priority->value }}">
+                        <div class="flex items-center justify-between">
+                            <span class="status-badge status--{{ $priority->tone() }}">{{ $priority->label() }}</span>
+                            <x-ui.priority :priority="$priority" :label="false" />
                         </div>
-                    @endforeach
-                </div>
 
-                <div class="mt-5 flex justify-end border-t border-slate-100 pt-4">
-                    <button class="rounded-md bg-cyan-700 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-cyan-800">Saqlash</button>
-                </div>
-            </section>
+                        <div>
+                            <label class="ui-field-label" for="name-{{ $index }}">Nomi</label>
+                            <input id="name-{{ $index }}" name="profiles[{{ $index }}][name]" value="{{ old("profiles.$index.name", $profile->name ?? $priority->label()) }}" class="ui-input" required>
+                        </div>
+
+                        <div>
+                            <label class="ui-field-label" for="days-{{ $index }}">Bajarilish muddati</label>
+                            <div class="flex items-center gap-2">
+                                <input id="days-{{ $index }}" type="number" step="0.01" min="0.01" max="365" name="profiles[{{ $index }}][deadline_days]" x-model.number="days" value="{{ $deadlineDays }}" class="ui-input ui-mono w-[100px]" required>
+                                <span class="text-[13px] text-muted">ish kuni</span>
+                            </div>
+                            <p class="ui-hint">= <span x-text="(Math.round(days * perDay / 6) / 10).toLocaleString('uz')">{{ round($deadlineDays * $workdayMinutes / 60, 1) }}</span> soat ish vaqti (1 kun = {{ $workdayHours }} soat)</p>
+                            <x-input-error :messages="$errors->get("profiles.$index.deadline_days")" class="mt-1" />
+                        </div>
+
+                        <div>
+                            <label class="ui-field-label" for="warn-{{ $index }}">Ogohlantirish</label>
+                            <div class="flex items-center gap-2">
+                                <input id="warn-{{ $index }}" type="number" min="1" name="profiles[{{ $index }}][warning_minutes]" x-model.number="warn" value="{{ $warning }}" class="ui-input ui-mono w-[100px]" required>
+                                <span class="text-[13px] text-muted">daqiqa oldin</span>
+                            </div>
+                            <x-input-error :messages="$errors->get("profiles.$index.warning_minutes")" class="mt-1" />
+                        </div>
+
+                        <div>
+                            <div class="mb-1 text-xs text-muted">Muddat shkalasi</div>
+                            @php($warnShare = min(100, round($warning / max(1, $deadlineDays * $workdayMinutes) * 100)))
+                            <div class="flex h-3 overflow-hidden rounded-full bg-sunken" aria-hidden="true">
+                                <i class="block h-full bg-accent" :style="`width: ${100 - Math.min(100, Math.round(warn / Math.max(1, days * perDay) * 100))}%`" style="width: {{ 100 - $warnShare }}%"></i>
+                                <i class="block h-full" :style="`width: ${Math.min(100, Math.round(warn / Math.max(1, days * perDay) * 100))}%; background: rgb(var(--c-status-in-progress-dot))`" style="width: {{ $warnShare }}%; background: rgb(var(--c-status-in-progress-dot))"></i>
+                            </div>
+                            <div class="dash-legend mt-1.5">
+                                <span><i style="background: rgb(var(--c-accent))"></i>Odatiy</span>
+                                <span><i style="background: rgb(var(--c-status-in-progress-dot))"></i>Ogohlantirish zonasi</span>
+                            </div>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+
+            <div class="ui-savebar">
+                <span class="text-[13px]">
+                    <template x-if="dirty"><span><span class="ui-dirty-dot"></span>Saqlanmagan o'zgarishlar bor</span></template>
+                    <template x-if="!dirty"><span class="text-muted">Barcha o'zgarishlar saqlangan</span></template>
+                </span>
+                <span class="flex gap-2">
+                    <a href="{{ route('admin.dispatch.deadlines') }}" class="btn btn-secondary">Bekor qilish</a>
+                    <button type="submit" class="btn btn-primary">Saqlash</button>
+                </span>
+            </div>
         </form>
     </div>
 </x-app-layout>

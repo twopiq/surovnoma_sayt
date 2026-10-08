@@ -3,20 +3,7 @@
         $user = auth()->user();
     @endphp
 
-    @if ($user->hasRole(\App\Enums\UserRole::Admin->value))
-        <x-slot name="header">
-            <div class="flex items-center justify-between">
-                <div>
-                    <h2 class="font-['Space_Grotesk'] text-2xl font-bold">Dispetcher doskasi</h2>
-                    <p class="mt-1 text-sm text-slate-500">Faol murojaatlarning holatlar bo'yicha ko'rinishi</p>
-                </div>
-            </div>
-        </x-slot>
-
-        <div class="mx-auto max-w-none space-y-6 px-4 pt-8 sm:px-6 lg:px-8">
-            <livewire:admin.dispatch-board />
-        </div>
-    @elseif ($user->hasRole(\App\Enums\UserRole::Executor->value))
+    @if ($user->hasRole(\App\Enums\UserRole::Executor->value))
         @php
             $workloadSummary = $homeData['workloadSummary'];
             $stats = $homeData['stats'];
@@ -29,7 +16,7 @@
         <x-slot name="header">
             <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div>
-                    <h2 class="font-['Space_Grotesk'] text-2xl font-bold">Ijrochi bosh sahifasi</h2>
+                    <h2 class="font-display text-2xl font-bold">Ijrochi bosh sahifasi</h2>
                     <p class="mt-1 text-sm text-slate-500">Joriy ishlar, muddatlar va qabul qilish mumkin bo'lgan murojaatlar.</p>
                 </div>
                 <div class="flex flex-wrap gap-2">
@@ -47,25 +34,25 @@
             <section class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                 <div class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
                     <div class="text-sm font-medium text-slate-500">Menga biriktirilgan</div>
-                    <div class="mt-4 font-['Space_Grotesk'] text-4xl font-bold text-slate-900">{{ $stats['active_count'] }}</div>
+                    <div class="mt-4 font-display text-4xl font-bold text-slate-900">{{ $stats['active_count'] }}</div>
                     <div class="mt-2 text-sm text-slate-500">Faol ishlar soni</div>
                 </div>
 
                 <div class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
                     <div class="text-sm font-medium text-slate-500">Jarayonda</div>
-                    <div class="mt-4 font-['Space_Grotesk'] text-4xl font-bold text-slate-900">{{ $stats['in_progress_count'] }}</div>
+                    <div class="mt-4 font-display text-4xl font-bold text-slate-900">{{ $stats['in_progress_count'] }}</div>
                     <div class="mt-2 text-sm text-slate-500">Hozir bajarilayotgan vazifalar</div>
                 </div>
 
                 <div class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
                     <div class="text-sm font-medium text-slate-500">Bugungi muddat</div>
-                    <div class="mt-4 font-['Space_Grotesk'] text-4xl font-bold {{ $stats['due_today_count'] > 0 ? 'text-orange-700' : 'text-slate-900' }}">{{ $stats['due_today_count'] }}</div>
+                    <div class="mt-4 font-display text-4xl font-bold {{ $stats['due_today_count'] > 0 ? 'text-orange-700' : 'text-slate-900' }}">{{ $stats['due_today_count'] }}</div>
                     <div class="mt-2 text-sm text-slate-500">Bugun tugaydigan ishlar</div>
                 </div>
 
                 <div class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
                     <div class="text-sm font-medium text-slate-500">Kechikkan bo'shlar</div>
-                    <div class="mt-4 font-['Space_Grotesk'] text-4xl font-bold {{ $stats['overdue_count'] > 0 ? 'text-rose-700' : 'text-slate-900' }}">
+                    <div class="mt-4 font-display text-4xl font-bold {{ $stats['overdue_count'] > 0 ? 'text-rose-700' : 'text-slate-900' }}">
                         {{ $stats['overdue_count'] }}
                     </div>
                     <div class="mt-2 text-sm text-slate-500">Qabul qilish mumkin</div>
@@ -75,7 +62,7 @@
             <section class="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
                 <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                     <div>
-                    <h3 class="font-['Space_Grotesk'] text-lg font-bold text-slate-900">Joriy yuklama</h3>
+                    <h3 class="font-display text-lg font-bold text-slate-900">Joriy yuklama</h3>
                     <p class="mt-1 text-sm text-slate-500">Faol ishlar muhimlik darajasiga qarab hisoblanadi.</p>
                     </div>
                     <div class="rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white">
@@ -86,15 +73,15 @@
                 <div class="mt-5 grid gap-4 md:grid-cols-3">
                     <div class="rounded-lg border border-slate-200 bg-slate-50 p-4">
                         <div class="text-sm text-slate-500">Ishlatilgan yuklama</div>
-                        <div class="mt-3 font-['Space_Grotesk'] text-3xl font-bold text-slate-900">{{ $workloadSummary['used_units'] }}</div>
+                        <div class="mt-3 font-display text-3xl font-bold text-slate-900">{{ $workloadSummary['used_units'] }}</div>
                     </div>
                     <div class="rounded-lg border border-slate-200 bg-slate-50 p-4">
                         <div class="text-sm text-slate-500">Qolgan yuklama</div>
-                        <div class="mt-3 font-['Space_Grotesk'] text-3xl font-bold text-emerald-700">{{ $workloadSummary['remaining_units'] }}</div>
+                        <div class="mt-3 font-display text-3xl font-bold text-emerald-700">{{ $workloadSummary['remaining_units'] }}</div>
                     </div>
                     <div class="rounded-lg border border-slate-200 bg-slate-50 p-4">
                         <div class="text-sm text-slate-500">Ortiqcha yuklama</div>
-                        <div class="mt-3 font-['Space_Grotesk'] text-3xl font-bold {{ $workloadSummary['overload_units'] > 0 ? 'text-orange-700' : 'text-slate-900' }}">
+                        <div class="mt-3 font-display text-3xl font-bold {{ $workloadSummary['overload_units'] > 0 ? 'text-orange-700' : 'text-slate-900' }}">
                             {{ $workloadSummary['overload_units'] }}
                         </div>
                     </div>
@@ -195,14 +182,14 @@
     @else
         <x-slot name="header">
             <div>
-                <h2 class="font-['Space_Grotesk'] text-2xl font-bold">Bosh sahifa</h2>
+                <h2 class="font-display text-2xl font-bold">Bosh sahifa</h2>
                 <p class="mt-1 text-sm text-slate-500">Sizning ish maydoningizga mos asosiy yo'nalishlar.</p>
             </div>
         </x-slot>
 
         <div class="mx-auto max-w-none px-4 pt-8 sm:px-6 lg:px-8">
             <div class="rounded-lg border border-slate-200 bg-white p-8 text-center shadow-sm">
-                <h3 class="font-['Space_Grotesk'] text-xl font-bold text-slate-900">Sahifa tayyorlanmoqda</h3>
+                <h3 class="font-display text-xl font-bold text-slate-900">Sahifa tayyorlanmoqda</h3>
                 <p class="mt-3 text-sm leading-6 text-slate-500">
                     Sizning rol uchun Home sahifasi keyingi bosqichda boyitiladi. Hozircha chap menyudagi tegishli bo'limlardan foydalanishingiz mumkin.
                 </p>

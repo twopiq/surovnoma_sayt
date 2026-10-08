@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
         <div class="flex items-center justify-between gap-3">
-            <h2 class="font-['Space_Grotesk'] text-2xl font-bold">Bajarilgan topshiriqlar arxivi</h2>
+            <h2 class="font-display text-2xl font-bold">Bajarilgan topshiriqlar arxivi</h2>
             <a href="{{ route('executor.tickets.index') }}" class="rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100">Faol vazifalar</a>
         </div>
     </x-slot>

@@ -3,7 +3,7 @@
         <div class="mb-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div>
                 <p class="text-sm font-semibold uppercase tracking-wide text-cyan-700">Bildirishnomalar</p>
-                <h1 class="mt-2 font-['Space_Grotesk'] text-3xl font-bold text-slate-950">Barcha xabarlar</h1>
+                <h1 class="mt-2 font-display text-3xl font-bold text-slate-950">Barcha xabarlar</h1>
                 <p class="mt-2 max-w-2xl text-sm text-slate-600">
                     Sizga yuborilgan tizim xabarlari shu yerda saqlanadi. Xabarni bosib unga bog'liq sahifaga o'ting.
                 </p>

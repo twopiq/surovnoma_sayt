@@ -11,7 +11,7 @@
 
         <div class="flex items-center gap-3">
             <a href="{{ $backUrl }}" class="inline-flex items-center justify-center rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">Ortga qaytish</a>
-            <h2 class="font-['Space_Grotesk'] text-2xl font-bold">Dispetcher kartochkasi</h2>
+            <h2 class="font-display text-2xl font-bold">Dispetcher kartochkasi</h2>
         </div>
     </x-slot>
 
@@ -26,12 +26,12 @@
                             <div class="font-semibold text-slate-700">{{ $history->user?->name ?? 'Tizim' }}</div>
                             <div class="text-slate-600">
                                 @if ($history->from_status)
-                                    <span class="font-semibold" style="{{ $history->from_status->textStyle() }}">{{ $history->from_status->label() }}</span>
+                                    <span class="font-semibold {{ $history->from_status->textCssClass() }}">{{ $history->from_status->label() }}</span>
                                 @else
                                     <span class="font-semibold text-slate-400">Boshlanish</span>
                                 @endif
                                 <span class="px-1 text-slate-400">-&gt;</span>
-                                <span class="font-semibold" style="{{ $history->to_status->textStyle() }}">{{ $history->to_status->label() }}</span>
+                                <span class="font-semibold {{ $history->to_status->textCssClass() }}">{{ $history->to_status->label() }}</span>
                             </div>
                             @if ($history->note)
                                 <div class="mt-1 text-slate-500">{{ $history->note }}</div>
@@ -54,7 +54,7 @@
                 <button class="mt-4 rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700">Saqlash</button>
             </form>
 
-            <form method="POST" action="{{ route('admin.dispatch.assign', $ticket) }}" class="rounded-2xl border border-slate-200 bg-white p-6">
+            <form id="assign" method="POST" action="{{ route('admin.dispatch.assign', $ticket) }}" class="scroll-mt-4 rounded-2xl border border-slate-200 bg-white p-6">
                 @csrf
                 <h3 class="font-semibold">Taqsimlash</h3>
                 <div class="mt-4 space-y-4">

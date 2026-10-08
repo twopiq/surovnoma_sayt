@@ -212,4 +212,18 @@ class User extends Authenticatable
             return UserRole::from($firstRole)->label();
         });
     }
+
+    /**
+     * Dizayn tizimidagi rol aksenti (<body data-role="...">): bir nechta rol bo'lsa eng yuqorisi.
+     */
+    public function themeRole(): string
+    {
+        return match (true) {
+            $this->hasRole(UserRole::Admin->value) => 'admin',
+            $this->hasRole(UserRole::Manager->value) => 'rahbar',
+            $this->hasRole(UserRole::Operator->value) => 'operator',
+            $this->hasRole(UserRole::Executor->value) => 'ijrochi',
+            default => 'murojaatchi',
+        };
+    }
 }

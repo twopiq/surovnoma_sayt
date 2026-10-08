@@ -22,7 +22,7 @@ class ExecutorTicketController extends Controller
         $executor = auth()->user();
 
         $myTickets = Ticket::query()
-            ->with(['assignedExecutor', 'requester', 'category', 'slaProfile'])
+            ->with(['assignedExecutor', 'requester', 'category', 'slaProfile', 'attachments:id,ticket_id,original_name'])
             ->where('assigned_executor_id', $executor->id)
             ->whereNotIn('status', [
                 TicketStatus::Completed->value,
@@ -33,7 +33,7 @@ class ExecutorTicketController extends Controller
             ->paginate(12, ['*'], 'my_page');
 
         $availableTickets = Ticket::query()
-            ->with(['assignedExecutor', 'requester', 'category', 'slaProfile'])
+            ->with(['assignedExecutor', 'requester', 'category', 'slaProfile', 'attachments:id,ticket_id,original_name'])
             ->whereNull('assigned_executor_id')
             ->whereIn('status', [TicketStatus::New->value, TicketStatus::Assigned->value, TicketStatus::Returned->value, TicketStatus::Overdue->value])
             ->latest('deadline_at')
@@ -49,7 +49,7 @@ class ExecutorTicketController extends Controller
     public function archive(): View
     {
         $tickets = Ticket::query()
-            ->with(['assignedExecutor', 'requester', 'category', 'slaProfile'])
+            ->with(['assignedExecutor', 'requester', 'category', 'slaProfile', 'attachments:id,ticket_id,original_name'])
             ->where('assigned_executor_id', auth()->id())
             ->whereIn('status', [
                 TicketStatus::Completed->value,

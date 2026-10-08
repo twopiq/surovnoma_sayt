@@ -1,9 +1,7 @@
 @props(['tone' => 'surface'])
 
 @php
-    $buttonClasses = $tone === 'sidebar'
-        ? 'border-white/20 bg-white/10 text-cyan-50 hover:bg-white/20'
-        : 'border-slate-300 bg-white text-slate-700 hover:bg-emerald-50';
+    $buttonClasses = 'border-line-strong bg-surface text-ink hover:bg-sunken';
 @endphp
 
 <button
@@ -11,7 +9,7 @@
     x-data="{ theme: document.documentElement.dataset.theme || 'light' }"
     x-init="window.addEventListener('theme-changed', event => theme = event.detail)"
     x-on:click="window.toggleTheme($event)"
-    {{ $attributes->merge(['class' => "inline-flex h-9 w-9 items-center justify-center rounded-md border shadow-sm transition {$buttonClasses}"]) }}
+    {{ $attributes->merge(['class' => "inline-flex h-9 w-9 items-center justify-center rounded-md border transition {$buttonClasses}"]) }}
     aria-label="Mavzuni almashtirish"
 >
     <svg x-show="theme === 'dark'" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">

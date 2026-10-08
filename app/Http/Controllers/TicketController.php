@@ -26,7 +26,7 @@ class TicketController extends Controller
             ->countBy(fn (Ticket $ticket): string => $ticket->status->value);
 
         $tickets = (clone $query)
-            ->with(['category', 'assignedExecutor', 'slaProfile'])
+            ->with(['category', 'assignedExecutor', 'slaProfile', 'attachments:id,ticket_id,original_name'])
             ->latest()
             ->paginate(12);
 

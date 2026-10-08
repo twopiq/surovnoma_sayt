@@ -58,4 +58,28 @@ enum TicketPriority: string
             self::Unassigned => 0,
         };
     }
+
+    /** Dizayndagi 4 ustunli chiziq belgisi uchun daraja (0–4). */
+    public function level(): int
+    {
+        return match ($this) {
+            self::Low => 1,
+            self::Medium => 2,
+            self::High => 3,
+            self::Urgent => 4,
+            self::Unassigned => 0,
+        };
+    }
+
+    /** Dizayndagi holat rangi (Deadline kartalari badge'i uchun). */
+    public function tone(): string
+    {
+        return match ($this) {
+            self::Urgent => 'new',
+            self::High => 'in-progress',
+            self::Medium => 'assigned',
+            self::Low => 'completed',
+            self::Unassigned => 'closed',
+        };
+    }
 }

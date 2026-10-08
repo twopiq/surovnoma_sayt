@@ -1,8 +1,8 @@
 @props([
     'items' => [],
     'height' => 260,
-    'stroke' => '#36c1ba',
-    'fill' => 'rgba(54, 193, 186, 0.24)',
+    'stroke' => 'rgb(var(--c-accent))',
+    'fill' => 'rgb(var(--c-accent) / 0.18)',
 ])
 
 @php
@@ -39,16 +39,16 @@
     <svg viewBox="0 0 {{ $width }} {{ $height }}" class="h-full w-full" preserveAspectRatio="none" aria-hidden="true">
         @foreach ($gridValues as $index => $value)
             @php($y = $paddingTop + (($plotHeight / 4) * $index))
-            <line x1="{{ $paddingLeft }}" y1="{{ $y }}" x2="{{ $width - $paddingRight }}" y2="{{ $y }}" stroke="rgba(148, 163, 184, 0.22)" stroke-dasharray="4 6" />
+            <line x1="{{ $paddingLeft }}" y1="{{ $y }}" x2="{{ $width - $paddingRight }}" y2="{{ $y }}" style="stroke: rgb(var(--c-line))" stroke-dasharray="4 6" />
             <text x="0" y="{{ $y + 4 }}" font-size="12" fill="rgba(100, 116, 139, 0.9)">{{ $value }}</text>
         @endforeach
 
         @if ($area !== '')
-            <polygon points="{{ $area }}" fill="{{ $fill }}" />
-            <polyline points="{{ $line }}" fill="none" stroke="{{ $stroke }}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+            <polygon points="{{ $area }}" style="fill: {{ $fill }}" />
+            <polyline points="{{ $line }}" fill="none" style="stroke: {{ $stroke }}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
 
             @foreach ($points as $point)
-                <circle cx="{{ $point['x'] }}" cy="{{ $point['y'] }}" r="3.5" fill="{{ $stroke }}" />
+                <circle cx="{{ $point['x'] }}" cy="{{ $point['y'] }}" r="3.5" style="fill: {{ $stroke }}" />
                 <text x="{{ $point['x'] }}" y="{{ $height - 10 }}" text-anchor="middle" font-size="12" fill="rgba(71, 85, 105, 0.95)">{{ $point['label'] }}</text>
             @endforeach
         @endif

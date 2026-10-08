@@ -104,7 +104,7 @@ class ReturnRequestFlowTest extends TestCase
 
         $this->get(route('guest.tickets.show', $ticket))
             ->assertOk()
-            ->assertSee('Home');
+            ->assertSee('href="'.route('home').'"', false);
     }
 
     public function test_admin_can_clear_executor_assignment_and_return_ticket_to_common_pool(): void

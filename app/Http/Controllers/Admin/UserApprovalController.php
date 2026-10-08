@@ -7,9 +7,14 @@ use App\Http\Controllers\Controller;
 use App\Models\Department;
 use App\Models\User;
 use App\Support\TableExport;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules;
 use Illuminate\View\View;
@@ -17,55 +22,66 @@ use Spatie\Permission\Models\Role;
 
 class UserApprovalController extends Controller
 {
-    public function index(): View
+    /** Ro'yxat segmentlari (dizayn: UsersA). "Tasdiq kutayotganlar" alohida sahifa — UsersBPending. */
+    public const SEGMENTS = [
+        'all' => 'Hammasi',
+        'new' => 'Yangi (7 kun)',
+        'inactive' => 'Nofaol',
+    ];
+
+    public function index(Request $request): View
     {
-        $pendingUsers = User::query()->with(['department', 'roles'])->whereNull('approved_at')->where('is_active', true)->latest()->get();
+        $tab = $request->query('tab') === 'rejected' ? 'rejected' : 'pending';
 
         return view('admin.users.index', [
-            'pendingUsers' => $pendingUsers,
-            'pendingCount' => $pendingUsers->count(),
-            'rejectedUsers' => User::query()->with(['department', 'roles'])->whereNull('approved_at')->where('is_active', false)->latest()->limit(20)->get(),
+            'tab' => $tab,
+            'users' => User::query()
+                ->with(['department', 'roles'])
+                ->whereNull('approved_at')
+                ->where('is_active', $tab === 'pending')
+                ->latest()
+                ->get(),
+            'counts' => $this->counts(),
             'roles' => UserRole::cases(),
         ]);
     }
 
     public function list(Request $request): View
     {
-        $perPage = in_array((int) $request->input('per_page', 10), [10, 25, 50], true)
-            ? (int) $request->input('per_page', 10)
-            : 10;
-
         $users = $this->usersListQuery($request)
             ->latest()
-            ->paginate($perPage)
+            ->paginate(25)
             ->withQueryString();
+
+        $selectedUser = $request->filled('user')
+            ? User::query()->with(['department', 'roles'])->find($request->integer('user'))
+            : null;
 
         return view('admin.users.list', [
             'users' => $users,
-            'perPage' => $perPage,
             'filters' => $this->userListFilters($request),
+            'segments' => self::SEGMENTS,
+            'counts' => $this->counts(),
             'roles' => UserRole::cases(),
-            'statuses' => $this->userStatusOptions(),
-            'pendingCount' => User::query()->whereNull('approved_at')->where('is_active', true)->count(),
+            'departments' => Department::query()->where('is_active', true)->orderBy('name')->get(),
+            'selectedUser' => $selectedUser,
+            'lastActivity' => $this->lastActivity($users->getCollection()->pluck('id')->push($selectedUser?->id)->filter()->all()),
         ]);
     }
 
-    public function recent(): View
+    public function recent(): RedirectResponse
     {
-        return view('admin.users.recent', [
-            'users' => User::query()
-                ->with(['department', 'roles'])
-                ->latest()
-                ->paginate(15),
-            'pendingCount' => User::query()->whereNull('approved_at')->where('is_active', true)->count(),
-        ]);
+        return redirect()->route('admin.users.list', ['segment' => 'new']);
     }
 
     public function create(): View
     {
-        return view('admin.users.create', [
+        return view('admin.users.profile', [
+            'selectedUser' => null,
             'departments' => Department::query()->where('is_active', true)->orderBy('name')->get(),
             'roles' => UserRole::cases(),
+            'statuses' => $this->userStatusOptions(),
+            'lastActivity' => [],
         ]);
     }
 
@@ -78,11 +94,9 @@ class UserApprovalController extends Controller
             'department_id' => ['nullable', 'exists:departments,id'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
             'role' => ['required', Rule::in(UserRole::values())],
+            'can_access_app_dashboard' => ['nullable', 'boolean'],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
-        ], [
-            'name.regex' => "F.I.Sh. kamida ism va familiyadan iborat bo'lishi kerak.",
-            'phone.regex' => "Telefon raqami +998 99 999 99 99 ko'rinishida bo'lishi kerak.",
-        ]);
+        ], $this->messages());
 
         $user = User::query()->create([
             'name' => $data['name'],
@@ -97,8 +111,11 @@ class UserApprovalController extends Controller
 
         Role::findOrCreate($data['role'], 'web');
         $user->assignRole($data['role']);
+        $user->forceFill([
+            'can_access_app_dashboard' => $data['role'] === UserRole::Manager->value && (bool) ($data['can_access_app_dashboard'] ?? false),
+        ])->save();
 
-        return redirect()->route('admin.users.list')->with('status', 'Foydalanuvchi yaratildi.');
+        return redirect()->route('admin.users.list', ['user' => $user->id])->with('status', 'Foydalanuvchi yaratildi.');
     }
 
     public function export(Request $request)
@@ -129,18 +146,20 @@ class UserApprovalController extends Controller
         ]);
     }
 
-    public function profile(Request $request): View
+    public function profile(Request $request): View|RedirectResponse
     {
-        $selectedUser = User::query()
-            ->with(['department', 'roles'])
-            ->find($request->integer('user')) ?? auth()->user()->load(['department', 'roles']);
+        $selectedUser = User::query()->with(['department', 'roles'])->find($request->integer('user'));
+
+        if (! $selectedUser) {
+            return redirect()->route('admin.users.list');
+        }
 
         return view('admin.users.profile', [
             'selectedUser' => $selectedUser,
-            'users' => User::query()->with(['roles'])->latest()->limit(12)->get(),
             'departments' => Department::query()->where('is_active', true)->orderBy('name')->get(),
             'roles' => UserRole::cases(),
             'statuses' => $this->userStatusOptions(),
+            'lastActivity' => $this->lastActivity([$selectedUser->id]),
         ]);
     }
 
@@ -157,10 +176,9 @@ class UserApprovalController extends Controller
             'role' => ['required', Rule::in(UserRole::values())],
             'status' => ['required', Rule::in(array_keys($this->userStatusOptions()))],
             'can_access_app_dashboard' => ['nullable', 'boolean'],
-        ], [
-            'name.regex' => "F.I.Sh. kamida ism va familiyadan iborat bo'lishi kerak.",
-            'phone.regex' => "Telefon raqami +998 99 999 99 99 ko'rinishida bo'lishi kerak.",
-        ]);
+            'password' => ['nullable', 'confirmed', Rules\Password::defaults()],
+            'return' => ['nullable', Rule::in(['list'])],
+        ], $this->messages());
 
         Role::findOrCreate($data['role'], 'web');
 
@@ -189,13 +207,28 @@ class UserApprovalController extends Controller
                 ? (bool) ($data['can_access_app_dashboard'] ?? false)
                 : false,
             ...$statusValues,
+            ...(filled($data['password'] ?? null) ? ['password' => Hash::make($data['password'])] : []),
         ])->save();
 
         $user->syncRoles([$data['role']]);
 
-        return redirect()
-            ->route('admin.users.profile', ['user' => $user->id])
-            ->with('status', 'Foydalanuvchi maʼlumotlari yangilandi.');
+        $redirect = ($data['return'] ?? null) === 'list'
+            ? redirect()->route('admin.users.list', [
+                ...array_filter(\Illuminate\Support\Arr::only((array) $request->input('keep', []), ['segment', 'search', 'role', 'department_id', 'page']), 'filled'),
+                'user' => $user->id,
+            ])
+            : redirect()->route('admin.users.profile', ['user' => $user->id]);
+
+        return $redirect->with('status', 'Foydalanuvchi maʼlumotlari yangilandi.');
+    }
+
+    public function sendPasswordReset(User $user): RedirectResponse
+    {
+        $status = Password::sendResetLink(['email' => $user->email]);
+
+        return back()->with('status', $status === Password::RESET_LINK_SENT
+            ? "Parolni tiklash havolasi {$user->email} manziliga yuborildi."
+            : __($status));
     }
 
     public function update(Request $request, User $user): RedirectResponse
@@ -240,10 +273,37 @@ class UserApprovalController extends Controller
             'can_access_app_dashboard' => (bool) ($data['can_access_app_dashboard'] ?? false),
         ])->save();
 
-        return back()->with('status', 'Manager uchun dashboard ruxsati yangilandi.');
+        return back()->with('status', 'Rahbar uchun dashboard ruxsati yangilandi.');
     }
 
-    protected function usersListQuery(Request $request)
+    protected function counts(): array
+    {
+        return [
+            'all' => User::query()->count(),
+            'pending' => User::query()->whereNull('approved_at')->where('is_active', true)->count(),
+            'rejected' => User::query()->whereNull('approved_at')->where('is_active', false)->count(),
+            'new' => User::query()->where('created_at', '>=', now()->subDays(7))->count(),
+            'inactive' => User::query()->where('is_active', false)->count(),
+        ];
+    }
+
+    /** @return array<int, Carbon> foydalanuvchi id => so'nggi faollik (database sessiyalaridan) */
+    protected function lastActivity(array $userIds): array
+    {
+        if ($userIds === [] || ! Schema::hasTable('sessions')) {
+            return [];
+        }
+
+        return DB::table('sessions')
+            ->whereIn('user_id', $userIds)
+            ->groupBy('user_id')
+            ->selectRaw('user_id, max(last_activity) as last_activity')
+            ->pluck('last_activity', 'user_id')
+            ->map(fn ($timestamp) => Carbon::createFromTimestamp((int) $timestamp))
+            ->all();
+    }
+
+    protected function usersListQuery(Request $request): Builder
     {
         $filters = $this->userListFilters($request);
 
@@ -262,50 +322,51 @@ class UserApprovalController extends Controller
                 });
             })
             ->when($filters['role'] !== '', fn ($query) => $query->role($filters['role']))
-            ->when($filters['date'] !== '', fn ($query) => $query->whereDate('created_at', $filters['date']))
-            ->when($filters['status'] !== '', function ($query) use ($filters): void {
-                match ($filters['status']) {
-                    'active' => $query->whereNotNull('approved_at')->where('is_active', true),
-                    'pending' => $query->whereNull('approved_at')->where('is_active', true),
-                    'inactive' => $query->where('is_active', false),
-                    default => null,
-                };
-            });
+            ->when($filters['department_id'], fn ($query, int $id) => $query->where('department_id', $id))
+            ->when($filters['segment'] === 'new', fn ($query) => $query->where('created_at', '>=', now()->subDays(7)))
+            ->when($filters['segment'] === 'inactive', fn ($query) => $query->where('is_active', false));
     }
 
     protected function userListFilters(Request $request): array
     {
         $role = (string) $request->input('role', '');
-        $status = (string) $request->input('status', '');
-        $date = (string) $request->input('date', '');
+        $segment = (string) $request->input('segment', 'all');
 
         return [
             'search' => trim((string) $request->input('search', '')),
             'role' => in_array($role, UserRole::values(), true) ? $role : '',
-            'status' => array_key_exists($status, $this->userStatusOptions()) ? $status : '',
-            'date' => preg_match('/^\d{4}-\d{2}-\d{2}$/', $date) ? $date : '',
+            'department_id' => $request->integer('department_id') ?: null,
+            'segment' => array_key_exists($segment, self::SEGMENTS) ? $segment : 'all',
         ];
     }
 
     protected function userStatusOptions(): array
     {
         return [
-            'active' => 'Active',
-            'pending' => 'Pending',
-            'inactive' => 'Inactive',
+            'active' => 'Faol',
+            'pending' => 'Kutilmoqda',
+            'inactive' => 'Nofaol',
         ];
     }
 
     protected function userStatusLabel(User $user): string
     {
         if ($user->approved_at && $user->is_active) {
-            return 'Active';
+            return 'Faol';
         }
 
         if (! $user->is_active) {
-            return 'Inactive';
+            return 'Nofaol';
         }
 
-        return 'Pending';
+        return 'Kutilmoqda';
+    }
+
+    protected function messages(): array
+    {
+        return [
+            'name.regex' => "F.I.Sh. kamida ism va familiyadan iborat bo'lishi kerak.",
+            'phone.regex' => "Telefon raqami +998 99 999 99 99 ko'rinishida bo'lishi kerak.",
+        ];
     }
 }

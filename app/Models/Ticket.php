@@ -160,6 +160,54 @@ class Ticket extends Model
             && ! in_array($this->status, [TicketStatus::Completed, TicketStatus::Closed, TicketStatus::Rejected], true);
     }
 
+    /** Arxiv uchun: murojaat yakunlangan vaqt (bajarilgan, rad etilgan yoki oxirgi o'zgarish). */
+    public function finishedAt(): ?\Illuminate\Support\Carbon
+    {
+        return $this->completed_at ?? $this->rejected_at ?? $this->closed_at ?? $this->updated_at;
+    }
+
+    /** Yechim davomiyligi: "3 s 40 daq" / "2 kun 4 s". */
+    public function resolutionLabel(): string
+    {
+        $finished = $this->finishedAt();
+
+        if (! $this->created_at || ! $finished) {
+            return '—';
+        }
+
+        $minutes = (int) abs($this->created_at->diffInMinutes($finished));
+
+        return match (true) {
+            $minutes < 60 => $minutes.' daq',
+            $minutes < 24 * 60 => intdiv($minutes, 60).' s '.($minutes % 60).' daq',
+            default => intdiv($minutes, 24 * 60).' kun '.intdiv($minutes % (24 * 60), 60).' s',
+        };
+    }
+
+    /** Arxiv natijasi: [yorliq, ton] — Muddatida / Kechikib / Rad etilgan. */
+    public function resultLabel(): array
+    {
+        return match (true) {
+            $this->status === TicketStatus::Rejected => ['Rad etilgan', 'closed'],
+            ! $this->deadline_at || ! $this->completed_at => ['Muddatsiz', 'closed'],
+            $this->completed_at->lte($this->deadline_at) => ['Muddatida', 'completed'],
+            default => ['Kechikib', 'new'],
+        };
+    }
+
+    /** Muddatning qancha qismi o'tgani (0–100) — SLA chizig'i uchun; muddat yo'q bo'lsa null. */
+    public function slaElapsedPercent(): ?int
+    {
+        if (! $this->deadline_at || ! $this->created_at) {
+            return null;
+        }
+
+        $total = max(1, $this->created_at->diffInSeconds($this->deadline_at, true));
+        $elapsed = $this->created_at->diffInSeconds(now(), false);
+
+        return (int) max(0, min(100, round($elapsed / $total * 100)));
+    }
+
     public function receivedAtLabel(): string
     {
         return $this->created_at?->format('d.m.Y H:i') ?? '-';

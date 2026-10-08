@@ -2,7 +2,7 @@
     <x-slot name="header">
         <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div>
-                <h2 class="font-['Space_Grotesk'] text-2xl font-bold text-slate-950">Oylik hisobot</h2>
+                <h2 class="font-display text-2xl font-bold text-slate-950">Oylik hisobot</h2>
                 <p class="mt-1 text-sm text-slate-500">Tanlangan oy bo'yicha natijalar, reyting va shikoyatlar</p>
             </div>
 
@@ -66,7 +66,7 @@
                             </div>
                         </div>
 
-                        <div class="mt-4 font-['Space_Grotesk'] text-3xl font-bold theme-ink">{{ $stat['value'] }}</div>
+                        <div class="mt-4 font-display text-3xl font-bold theme-ink">{{ $stat['value'] }}</div>
                         <div class="mt-2 text-xs font-bold uppercase theme-muted">{{ $stat['label'] }}</div>
                     </div>
                 @endforeach
@@ -75,7 +75,7 @@
             <section class="theme-panel rounded-lg border p-5 shadow-sm">
                 <div class="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
                     <div>
-                        <h3 class="font-['Space_Grotesk'] text-lg font-bold theme-ink">Bajarilgan murojaatlar diagrammasi</h3>
+                        <h3 class="font-display text-lg font-bold theme-ink">Bajarilgan murojaatlar diagrammasi</h3>
                         <p class="mt-1 text-sm theme-muted">
                             {{ $completionChartMeta['executor_label'] }} / {{ $completionChartMeta['period_label'] }} / {{ $completionChartMeta['range_label'] }}
                         </p>
@@ -135,7 +135,7 @@
                     <x-dashboard-bar-chart
                         :items="$completionChartItems"
                         :max="$completionChartMax"
-                        accent="#7c3aed"
+                        accent="rgb(var(--c-accent))"
                         empty-text="Tanlangan kesimda bajarilgan murojaatlar yo'q."
                         :min-width="$completionChartOptions['scope'] === 'employees' ? 760 : 920"
                         :height="300"
@@ -148,7 +148,7 @@
             <div style="display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 1rem; width: 100%;">
                 <section class="theme-panel rounded-lg border p-5 shadow-sm" style="min-width: 0;">
                     <div>
-                        <h3 class="font-['Space_Grotesk'] text-lg font-bold theme-ink">Xodimlar natijasi</h3>
+                        <h3 class="font-display text-lg font-bold theme-ink">Xodimlar natijasi</h3>
                         <p class="mt-1 text-sm theme-muted">Topshiriqlarni yakunlash bo'yicha taqsimot</p>
                     </div>
 
@@ -156,7 +156,7 @@
                         <x-dashboard-bar-chart
                             :items="$employeeResults"
                             :max="$employeeMax"
-                            accent="#3b82f6"
+                            accent="rgb(var(--c-role-operator))"
                             empty-text="Bu oy yakunlangan ishlar hali yo'q."
                             :min-width="560"
                             :slot-size="70"
@@ -167,7 +167,7 @@
 
                 <section class="theme-panel rounded-lg border p-5 shadow-sm" style="min-width: 0;">
                     <div>
-                        <h3 class="font-['Space_Grotesk'] text-lg font-bold theme-ink">Oylik ko'rsatkichlar</h3>
+                        <h3 class="font-display text-lg font-bold theme-ink">Oylik ko'rsatkichlar</h3>
                         <p class="mt-1 text-sm theme-muted">Asosiy indikatorlar taqsimoti</p>
                     </div>
 
@@ -175,7 +175,7 @@
                         <x-dashboard-bar-chart
                             :items="$monthlyIndicators"
                             :max="$indicatorMax"
-                            accent="#8b5cf6"
+                            accent="rgb(var(--c-role-admin))"
                             :min-width="320"
                             :slot-size="80"
                         />
@@ -186,7 +186,7 @@
             <section class="theme-panel overflow-hidden rounded-lg border shadow-sm">
                 <div class="flex items-center justify-between border-b border-slate-200 px-5 py-4">
                     <div>
-                        <h3 class="font-['Space_Grotesk'] text-lg font-bold theme-ink">Top bajaruvchilar</h3>
+                        <h3 class="font-display text-lg font-bold theme-ink">Top bajaruvchilar</h3>
                         <p class="mt-1 text-sm theme-muted">Faol murojaatlar yuklamasi bo'yicha saralangan</p>
                     </div>
                     <a href="{{ route('manager.dashboard', array_merge(request()->query(), ['chart_scope' => 'employees'])) }}" class="text-sm font-semibold text-violet-700 transition hover:text-violet-800">
@@ -219,7 +219,7 @@
                                     <td class="px-5 py-3 text-slate-600">{{ $executor['email'] }}</td>
                                     <td class="px-5 py-3 text-slate-600">{{ $executor['phone'] ?? '-' }}</td>
                                     <td class="px-5 py-3 text-right">
-                                        <div class="font-['Space_Grotesk'] text-base font-bold text-slate-900">{{ $executor['workload_units'] }}</div>
+                                        <div class="font-display text-base font-bold text-slate-900">{{ $executor['workload_units'] }}</div>
                                         <div class="text-xs text-slate-500">{{ $executor['active_count'] }} ta faol murojaat</div>
                                     </td>
                                 </tr>
@@ -235,7 +235,7 @@
 
             <section class="theme-panel rounded-lg border p-5 shadow-sm">
                 <div>
-                    <h3 class="font-['Space_Grotesk'] text-lg font-bold theme-ink">Faol ishlar kesimi</h3>
+                    <h3 class="font-display text-lg font-bold theme-ink">Faol ishlar kesimi</h3>
                     <p class="mt-1 text-sm theme-muted">Har bir xodimdagi jarayondagi ishlar</p>
                 </div>
 
@@ -243,7 +243,7 @@
                     <x-dashboard-bar-chart
                         :items="$activeWorkload"
                         :max="$activeWorkloadMax"
-                        accent="#14b8a6"
+                        accent="rgb(var(--c-status-completed-dot))"
                         empty-text="Ijrochilar ro'yxati hali mavjud emas."
                         :min-width="920"
                         :height="360"

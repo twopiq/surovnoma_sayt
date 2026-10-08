@@ -1,83 +1,104 @@
-<x-guest-layout>
-    <div class="mb-6 flex items-start justify-between gap-4">
-        <div>
-            <h1 class="font-['Space_Grotesk'] text-2xl font-bold">Guest forma</h1>
-            <p class="mt-2 text-sm text-slate-500">Yuborilgandan keyin ticket ID va maxfiy tracking code beriladi.</p>
-        </div>
-        <a href="{{ route('home') }}" class="rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100">Home</a>
-    </div>
+<x-public-layout title="Murojaat yuborish">
+    <h1 class="pb-5 pt-4 font-display text-[30px] font-semibold leading-9">Murojaat yuborish</h1>
 
-    <form method="POST" action="{{ route('guest.store') }}" enctype="multipart/form-data" class="space-y-4">
-        @csrf
-        <input type="hidden" name="{{ \App\Services\GuestRequestGuard::FORM_TIME_FIELD }}" value="{{ $formStartedToken }}">
-        <div class="absolute -left-[9999px] h-0 w-0 overflow-hidden" aria-hidden="true">
-            <label for="{{ \App\Services\GuestRequestGuard::HONEYPOT_FIELD }}">Veb-sayt</label>
-            <input type="text" id="{{ \App\Services\GuestRequestGuard::HONEYPOT_FIELD }}" name="{{ \App\Services\GuestRequestGuard::HONEYPOT_FIELD }}" tabindex="-1" autocomplete="off">
-        </div>
-        @if ($errors->any())
-            <div class="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-                Forma yuborilmadi. Iltimos, xatolarni to'g'rilang.
+    <div class="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
+        <form method="POST" action="{{ route('guest.store') }}" enctype="multipart/form-data" class="rounded-3xl border border-line bg-surface p-5 sm:p-6">
+            @csrf
+            <input type="hidden" name="{{ \App\Services\GuestRequestGuard::FORM_TIME_FIELD }}" value="{{ $formStartedToken }}">
+            <div class="absolute -left-[9999px] h-0 w-0 overflow-hidden" aria-hidden="true">
+                <label for="{{ \App\Services\GuestRequestGuard::HONEYPOT_FIELD }}">Veb-sayt</label>
+                <input type="text" id="{{ \App\Services\GuestRequestGuard::HONEYPOT_FIELD }}" name="{{ \App\Services\GuestRequestGuard::HONEYPOT_FIELD }}" tabindex="-1" autocomplete="off">
             </div>
-        @endif
-        <div class="grid gap-4 sm:grid-cols-2">
-            <div>
-                <x-input-label for="name" value="F.I.Sh." />
-                <x-text-input id="name" name="name" class="mt-1 block w-full" :value="old('name')" required />
-                <x-input-error :messages="$errors->get('name')" class="mt-2" />
+
+            @if ($errors->any())
+                <p class="ui-note mb-4 !bg-red-50 !text-red-800">Forma yuborilmadi. Iltimos, belgilangan maydonlarni to'g'rilang.</p>
+            @endif
+
+            <div class="grid gap-4 sm:grid-cols-2">
+                <div>
+                    <label class="ui-field-label" for="name">F.I.Sh.</label>
+                    <input id="name" name="name" value="{{ old('name') }}" required placeholder="Insonov Odam Kishi o'g'li" class="pub-input">
+                    <x-input-error :messages="$errors->get('name')" class="mt-1" />
+                </div>
+                <div>
+                    <x-phone-input id="phone_display" name="phone" :value="old('phone')" required hint="" />
+                </div>
+                <div>
+                    <label class="ui-field-label" for="email">Email</label>
+                    <input id="email" type="email" name="email" value="{{ old('email') }}" required placeholder="institut@ttysi.uz" class="pub-input">
+                    <x-input-error :messages="$errors->get('email')" class="mt-1" />
+                </div>
+                <div>
+                    <label class="ui-field-label" for="department">Ishlaydigan bo'lim</label>
+                    <input id="department" name="department" value="{{ old('department') }}" placeholder="Tarmoqlarni boshqarish" class="pub-input">
+                    <x-input-error :messages="$errors->get('department')" class="mt-1" />
+                </div>
             </div>
-            <x-phone-input id="phone_display" name="phone" :value="old('phone')" required />
-        </div>
-        <div class="grid gap-4 sm:grid-cols-2">
-            <div>
-                <x-input-label for="email" value="Email" />
-                <x-text-input id="email" type="email" name="email" class="mt-1 block w-full" :value="old('email')" required />
-                <x-input-error :messages="$errors->get('email')" class="mt-2" />
+
+            <div class="mt-4">
+                <label class="ui-field-label" for="job_title">Lavozim</label>
+                <input id="job_title" name="job_title" value="{{ old('job_title') }}" placeholder="Muhandis" class="pub-input">
+                <x-input-error :messages="$errors->get('job_title')" class="mt-1" />
             </div>
-            <div>
-                <x-input-label for="department" value="Ishlaydigan bo'lim" />
-                <x-text-input id="department" name="department" class="mt-1 block w-full" :value="old('department')" />
-                <x-input-error :messages="$errors->get('department')" class="mt-2" />
+
+            <div class="mt-4">
+                <label class="ui-field-label" for="category_id">Muammo kategoriyasi</label>
+                <select id="category_id" name="category_id" required class="pub-input">
+                    <option value="">Tanlang</option>
+                    @foreach ($categories as $category)
+                        <option value="{{ $category->id }}" @selected(old('category_id') == $category->id)>{{ $category->name }}</option>
+                    @endforeach
+                </select>
+                <x-input-error :messages="$errors->get('category_id')" class="mt-1" />
             </div>
-        </div>
-        <div>
-            <x-input-label for="job_title" value="Lavozim" />
-            <x-text-input id="job_title" name="job_title" class="mt-1 block w-full" :value="old('job_title')" />
-            <x-input-error :messages="$errors->get('job_title')" class="mt-2" />
-        </div>
-        <div>
-            <x-input-label for="category_id" value="Muammo kategoriyasi" />
-            <select id="category_id" name="category_id" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-cyan-500 focus:ring-cyan-500" required>
-                <option value="">Tanlang</option>
-                @foreach ($categories as $category)
-                    <option value="{{ $category->id }}" @selected(old('category_id') == $category->id)>{{ $category->name }}</option>
-                @endforeach
-            </select>
-            <x-input-error :messages="$errors->get('category_id')" class="mt-2" />
-        </div>
-        <div>
-            <x-input-label for="description" value="Tavsif" />
-            <textarea id="description" name="description" rows="6" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-cyan-500 focus:ring-cyan-500" required>{{ old('description') }}</textarea>
-            <x-input-error :messages="$errors->get('description')" class="mt-2" />
-        </div>
-        @if (config('guest_limits.max_files') > 0)
-        <div>
-            <x-input-label for="attachments" value="Fayllar" />
-            <x-file-upload-input id="attachments" name="attachments[]" class="mt-1" :max-files="config('guest_limits.max_files')" :max-size-kb="config('guest_limits.max_file_size_kb')" />
-            <x-input-error :messages="$errors->get('attachments')" class="mt-2" />
-            <x-input-error :messages="$errors->get('attachments.*')" class="mt-2" />
-        </div>
-        @endif
-        @if ($captchaSiteKey)
-            <div>
-                <div class="cf-turnstile" data-sitekey="{{ $captchaSiteKey }}"></div>
-                <x-input-error :messages="$errors->get('captcha')" class="mt-2" />
+
+            <div class="mt-4">
+                <label class="ui-field-label" for="description">Tavsif</label>
+                <textarea id="description" name="description" rows="5" required placeholder="Muammoni qisqa va aniq yozing: nima, qayerda, qachondan beri?" class="pub-input min-h-[112px]">{{ old('description') }}</textarea>
+                <x-input-error :messages="$errors->get('description')" class="mt-1" />
             </div>
-            <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
-        @endif
-        <div style="align-items: center;" class="flex justify-between">
-            <a href="{{ route('home') }}" class="text-sm text-slate-500 underline">Asosiy ekran</a>
-            <a href="{{ route('guest.track') }}" class="text-sm text-slate-500 underline">Avvalgi murojaatni kuzatish</a>
-            <x-primary-button class="bg-cyan-700 hover:bg-cyan-800">Yuborish</x-primary-button>
-        </div>
-    </form>
-</x-guest-layout>
+
+            @if (config('guest_limits.max_files') > 0)
+                <div class="mt-4">
+                    <label class="ui-field-label" for="attachments">
+                        Fayllar
+                        <span class="font-normal text-muted">(ixtiyoriy, {{ config('guest_limits.max_files') }} tagacha, har biri {{ \App\Support\TicketFileUpload::maxFileSizeLabel(config('guest_limits.max_file_size_kb')) }})</span>
+                    </label>
+                    <x-file-upload-input id="attachments" name="attachments[]" :max-files="config('guest_limits.max_files')" :max-size-kb="config('guest_limits.max_file_size_kb')" />
+                    <x-input-error :messages="$errors->get('attachments')" class="mt-1" />
+                    <x-input-error :messages="$errors->get('attachments.*')" class="mt-1" />
+                </div>
+            @endif
+
+            @if ($captchaSiteKey)
+                <div class="mt-4">
+                    <div class="cf-turnstile" data-sitekey="{{ $captchaSiteKey }}"></div>
+                    <x-input-error :messages="$errors->get('captcha')" class="mt-1" />
+                </div>
+                <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+            @endif
+
+            <div class="mt-5 flex flex-wrap justify-end gap-2">
+                <button type="reset" class="btn btn-secondary btn-lg">Tozalash</button>
+                <button type="submit" class="btn btn-primary btn-lg">Yuborish</button>
+            </div>
+        </form>
+
+        <aside class="grid gap-4">
+            <div class="rounded-3xl border border-line bg-surface p-5">
+                <h3 class="mb-2 text-base font-semibold">Keyin nima bo'ladi?</h3>
+                <ul class="pub-list">
+                    <li><span class="pub-num">1</span>Ticket ID va maxfiy kod beriladi</li>
+                    <li><span class="pub-num">2</span>Operator murojaatni ko'rib chiqadi</li>
+                    <li><span class="pub-num">3</span>Ijrochi muammoni hal qiladi</li>
+                </ul>
+            </div>
+            <p class="ui-note"><span><b class="text-accent-strong">Kodni saqlang.</b> Maxfiy kod keyin qayta ko'rsatilmaydi.</span></p>
+            <div class="rounded-3xl border border-line bg-surface p-5">
+                <h3 class="mb-1 text-base font-semibold">Avval yuborganmisiz?</h3>
+                <p class="mb-3 text-sm text-muted">Ticket ID va kod bilan holatni ko'ring.</p>
+                <a href="{{ route('guest.track') }}" class="btn btn-secondary">Holatni kuzatish</a>
+            </div>
+        </aside>
+    </div>
+</x-public-layout>

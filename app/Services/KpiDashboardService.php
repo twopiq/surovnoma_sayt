@@ -300,7 +300,7 @@ class KpiDashboardService
 
     protected function completionTrend(Carbon $start, Carbon $end, array $filters): Collection
     {
-        $days = $start->diffInDays($end) + 1;
+        $days = (int) $start->copy()->startOfDay()->diffInDays($end->copy()->startOfDay()) + 1;
 
         if ($days <= 45) {
             return collect(range(0, $days - 1))->map(function (int $index) use ($start, $filters): array {

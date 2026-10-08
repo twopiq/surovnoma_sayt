@@ -5,15 +5,21 @@ namespace App\Http\Controllers;
 use App\Enums\TicketStatus;
 use App\Enums\UserRole;
 use App\Models\Ticket;
+use App\Services\AdminHomeService;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Contracts\View\View;
 
 class AppHomeController extends Controller
 {
-    public function __invoke(): View|RedirectResponse
+    public function __invoke(Request $request, AdminHomeService $adminHome): View|RedirectResponse
     {
         $user = auth()->user();
         $homeData = [];
+
+        if ($user->hasRole(UserRole::Admin->value)) {
+            return view('admin.home', $adminHome->data($request));
+        }
 
         if ($user->hasSystemRole(UserRole::Executor)) {
             $homeData = $this->executorHomeData($user->id);
@@ -45,7 +51,7 @@ class AppHomeController extends Controller
         ];
 
         $activeQuery = Ticket::query()
-            ->with(['assignedExecutor', 'requester', 'category', 'slaProfile'])
+            ->with(['assignedExecutor', 'requester', 'category', 'slaProfile', 'attachments:id,ticket_id,original_name'])
             ->where('assigned_executor_id', $executorId)
             ->whereIn('status', $activeStatuses);
 
@@ -77,7 +83,7 @@ class AppHomeController extends Controller
             ->count();
 
         $overdueTickets = Ticket::query()
-            ->with(['assignedExecutor', 'requester', 'category', 'slaProfile'])
+            ->with(['assignedExecutor', 'requester', 'category', 'slaProfile', 'attachments:id,ticket_id,original_name'])
             ->whereNull('assigned_executor_id')
             ->where('status', TicketStatus::Overdue->value)
             ->orderByRaw('deadline_at is null')
@@ -92,7 +98,7 @@ class AppHomeController extends Controller
             ->count();
 
         $availableTickets = Ticket::query()
-            ->with(['assignedExecutor', 'requester', 'category', 'slaProfile'])
+            ->with(['assignedExecutor', 'requester', 'category', 'slaProfile', 'attachments:id,ticket_id,original_name'])
             ->whereNull('assigned_executor_id')
             ->whereIn('status', [TicketStatus::New->value, TicketStatus::Assigned->value, TicketStatus::Returned->value])
             ->orderByRaw('deadline_at is null')

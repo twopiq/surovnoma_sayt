@@ -11,7 +11,7 @@
 - Amaliy texnik bazis: OWASP Top 10 / ASVS L2.
 
 ## P0 — Kritik (darhol)
-- [x] **(2026-10-08)** Fayllar endi `local` diskda; `GET /attachments/{id}` (`TicketAttachmentController`, rol/egalik tekshiruvi + audit log); eski fayllar uchun `php artisan attachments:make-private`; test: `AttachmentAccessTest`. Qoldi: guest/executor/admin sahifalarida fayl ro'yxati umuman ko'rsatilmaydi (kerak bo'lsa qo'shish). Prod'da buyruqni ishga tushirish kerak.
+- [x] **(2026-10-08)** Fayllar endi `local` diskda; `GET /attachments/{id}` (`TicketAttachmentController`, rol/egalik tekshiruvi + audit log); eski fayllar uchun `php artisan attachments:make-private`; test: `AttachmentAccessTest`. Qoldi: guest/executor/admin sahifalarida fayl ro'yxati umuman ko'rsatilmaydi (kerak bo'lsa qo'shish). Prod'da buyruq ishga tushirildi (2026-10-08), `.env` web orqali ochiq emas (404) — tekshirildi.
 - [ ] **KPI API login rate limitsiz.** `routes/api.php` `/auth/login` — brute-force mumkin. `throttle` (masalan 5/min login+IP) qo'shish.
 - [ ] **KPI CORS default `*` + credentials.** `app/Http/Middleware/KpiApiCors.php` — env bo'lmasa `*`. Default'ni bo'sh ro'yxat qilish, `*` ni credentials bilan taqiqlash. `env()` → `config()` ga ko'chirish (config:cache da `env()` null qaytaradi!). `KpiAuthController` dagi `env()` ham shunday.
 - [ ] **Telegram webhook secretsiz ochiq.** `TelegramWebhookController` — secret bo'sh bo'lsa har kim update yubora oladi. Prod'da secret majburiy (yo'q bo'lsa 403). Path'dagi secret (`/webhook/{secret}`) loglarga tushadi — faqat header varianti qolsin.

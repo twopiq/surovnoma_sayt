@@ -75,9 +75,9 @@ class ManagerDashboardController extends Controller
         $employeeMax = max(1, (int) $employeeResults->max('value'));
 
         $monthlyIndicators = collect([
-            ['label' => 'Yakunlangan', 'value' => $completedCount, 'hex' => '#14b8a6'],
-            ['label' => 'Shikoyatlar', 'value' => $complaintsCount, 'hex' => '#f43f5e'],
-            ['label' => 'Reyting x10', 'value' => (int) round($averageRating * 10), 'hex' => '#8b5cf6'],
+            ['label' => 'Yakunlangan', 'value' => $completedCount, 'hex' => 'rgb(var(--c-status-completed-dot))'],
+            ['label' => 'Shikoyatlar', 'value' => $complaintsCount, 'hex' => 'rgb(var(--c-status-new-dot))'],
+            ['label' => 'Reyting x10', 'value' => (int) round($averageRating * 10), 'hex' => 'rgb(var(--c-role-admin))'],
         ]);
 
         $indicatorMax = max(1, (int) $monthlyIndicators->max('value'));

@@ -19,6 +19,7 @@ use App\Http\Controllers\OperatorTicketController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\TicketAttachmentController;
 use App\Http\Controllers\TicketController;
+use App\Enums\UserRole;
 use App\Support\TicketFileUpload;
 use Illuminate\Support\Facades\Route;
 
@@ -56,6 +57,10 @@ Route::prefix('guest')->name('guest.')->group(function () {
 Route::middleware(['auth', 'approved'])->group(function () {
     Route::get('/app/home', AppHomeController::class)->name('app.home');
     Route::get('/app/dashboard', AppDashboardController::class)->name('app.dashboard');
+    Route::get('/app/dashboard/export', [AppDashboardController::class, 'export'])->name('app.dashboard.export');
+    Route::post('/app/dashboard/widgets/{widget}', [AppDashboardController::class, 'toggleWidget'])
+        ->middleware('role:'.UserRole::Admin->value)
+        ->name('app.dashboard.widgets.toggle');
     Route::get('/app/settings', [ProfileController::class, 'settings'])->name('app.settings');
     Route::patch('/app/settings/email', [ProfileController::class, 'updateEmail'])->name('settings.email.update');
     Route::post('/app/settings/telegram/link-token', [ProfileController::class, 'regenerateTelegramLink'])->name('settings.telegram.regenerate');
@@ -115,6 +120,8 @@ Route::middleware(['auth', 'approved'])->group(function () {
         Route::put('/dispatch/deadlines', [SlaSettingsController::class, 'updateDeadlines'])->name('dispatch.deadlines.update');
         Route::get('/dispatch/work-schedule', [SlaSettingsController::class, 'workSchedule'])->name('dispatch.work-schedule');
         Route::put('/dispatch/work-schedule', [SlaSettingsController::class, 'updateWorkSchedule'])->name('dispatch.work-schedule.update');
+        Route::post('/dispatch/holidays', [SlaSettingsController::class, 'storeHoliday'])->name('dispatch.holidays.store');
+        Route::delete('/dispatch/holidays/{holiday}', [SlaSettingsController::class, 'destroyHoliday'])->name('dispatch.holidays.destroy');
         Route::get('/dispatch/status/{status}', [DispatchController::class, 'status'])->name('dispatch.status');
         Route::get('/dispatch/{ticket}', [DispatchController::class, 'show'])->name('dispatch.show');
         Route::post('/dispatch/{ticket}/assign', [DispatchController::class, 'assign'])->name('dispatch.assign');
@@ -130,6 +137,9 @@ Route::middleware(['auth', 'approved'])->group(function () {
         Route::post('/users', [UserApprovalController::class, 'store'])->name('users.store');
         Route::get('/users/profile', [UserApprovalController::class, 'profile'])->name('users.profile');
         Route::patch('/users/{user}/profile', [UserApprovalController::class, 'updateProfile'])->name('users.profile.update');
+        Route::post('/users/{user}/password-reset', [UserApprovalController::class, 'sendPasswordReset'])
+            ->middleware('throttle:6,1')
+            ->name('users.password-reset');
         Route::patch('/users/{user}', [UserApprovalController::class, 'update'])->name('users.update');
         Route::patch('/users/{user}/dashboard-access', [UserApprovalController::class, 'updateDashboardAccess'])->name('users.dashboard-access');
 

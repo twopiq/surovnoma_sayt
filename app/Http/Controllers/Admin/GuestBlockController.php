@@ -15,7 +15,7 @@ class GuestBlockController extends Controller
 {
     public function index(Request $request): View
     {
-        $status = $request->input('status') === 'unblocked' ? 'unblocked' : 'active';
+        $status = in_array($request->input('status'), ['unblocked', 'all'], true) ? $request->input('status') : 'active';
         $search = trim((string) $request->input('q'));
 
         $blocks = GuestBlock::query()
@@ -38,11 +38,35 @@ class GuestBlockController extends Controller
             ->paginate(20)
             ->withQueryString();
 
+        $topReasons = GuestBlock::query()
+            ->where('blocked_at', '>=', now()->subDays(30))
+            ->selectRaw('reason, count(*) as total')
+            ->groupBy('reason')
+            ->orderByDesc('total')
+            ->limit(5)
+            ->get();
+
         return view('admin.guest-blocks.index', [
             'blocks' => $blocks,
             'status' => $status,
             'search' => $search,
-            'activeCount' => GuestBlock::query()->active()->count(),
+            'counts' => [
+                'active' => GuestBlock::query()->active()->count(),
+                'unblocked' => GuestBlock::query()->whereNotNull('unblocked_at')->count(),
+                'all' => GuestBlock::query()->count(),
+            ],
+            'maxAttempts' => max(1, (int) GuestBlock::query()->max('attempts_count')),
+            'topReasons' => $topReasons->map(fn ($row) => [
+                'label' => GuestBlock::REASONS[$row->reason] ?? $row->reason,
+                'total' => (int) $row->total,
+                'tone' => $row->reason === 'manual' ? 'line-strong' : (str_starts_with((string) $row->reason, 'bot') ? 'status-in-progress-dot' : 'status-new-dot'),
+            ]),
+            'protection' => [
+                'captcha' => filled(config('services.turnstile.site_key')) && filled(config('services.turnstile.secret_key')),
+                'alert' => (bool) config('guest_limits.alert_enabled'),
+                'whitelist' => count(config('guest_limits.whitelist_ips', [])),
+                'currentIp' => $request->ip(),
+            ],
         ]);
     }
 

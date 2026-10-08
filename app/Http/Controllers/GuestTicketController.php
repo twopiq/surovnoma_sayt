@@ -133,14 +133,15 @@ class GuestTicketController extends Controller
         abort_unless(session("guest_ticket_access.{$ticket->id}") === true, 403);
 
         $ticket->load([
-            'comments' => fn ($query) => $query->where('is_public', true)->latest(),
+            'comments' => fn ($query) => $query->where('is_public', true)->with('user:id,name')->latest(),
             'attachments',
             'category',
+            'assignedDepartment',
             'assignedExecutor',
             'slaProfile',
         ]);
 
-        return view('guest.show', compact('ticket'));
+        return view('guest.track', compact('ticket'));
     }
 
     protected function blockedResponse(GuestBlock $block): Response
