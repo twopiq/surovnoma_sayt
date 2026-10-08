@@ -162,6 +162,12 @@ class UserApprovalController extends Controller
             'roles' => UserRole::cases(),
             'statuses' => $this->userStatusOptions(),
             'lastActivity' => $this->lastActivity([$selectedUser->id]),
+            'deletePhrase' => self::deletePhrase($selectedUser),
+            'deleteImpact' => [
+                'requested' => \App\Models\Ticket::query()->where('requester_id', $selectedUser->id)->count(),
+                'executed' => \App\Models\Ticket::query()->where('assigned_executor_id', $selectedUser->id)->count(),
+                'operated' => \App\Models\Ticket::query()->where('operator_id', $selectedUser->id)->count(),
+            ],
         ]);
     }
 
@@ -261,6 +267,58 @@ class UserApprovalController extends Controller
         ])->save();
 
         return back()->with('status', "Ro'yxatdan o'tish so'rovi rad etildi.");
+    }
+
+    /** Tasodifiy o'chirishga qarshi: foydalanuvchi loginini qo'lda yozib, oxiriga shu so'zni qo'shish shart. */
+    public const DELETE_PHRASE_SUFFIX = 'delete user';
+
+    public static function deletePhrase(User $user): string
+    {
+        return $user->login.' '.self::DELETE_PHRASE_SUFFIX;
+    }
+
+    public function destroy(Request $request, User $user, \App\Services\AuditService $audit): RedirectResponse
+    {
+        $admin = $request->user();
+        $phrase = trim((string) $request->input('confirmation'));
+
+        if ($user->is($admin)) {
+            return back()->withErrors(['delete' => "O'z hisobingizni o'chira olmaysiz."]);
+        }
+
+        if ($phrase !== self::deletePhrase($user)) {
+            return back()->withErrors(['delete' => "Tasdiqlash matni mos kelmadi — o'chirish bekor qilindi. Aynan «".self::deletePhrase($user)."» deb yozing."]);
+        }
+
+        $isLastAdmin = $user->hasRole(UserRole::Admin->value)
+            && User::role(UserRole::Admin->value)->where('is_active', true)->whereKeyNot($user->id)->doesntExist();
+
+        if ($isLastAdmin) {
+            return back()->withErrors(['delete' => "Bu oxirgi faol administrator — uni o'chirib bo'lmaydi."]);
+        }
+
+        $snapshot = [
+            'id' => $user->id,
+            'name' => $user->name,
+            'login' => $user->login,
+            'email' => $user->email,
+            'role' => $user->getRoleNames()->first(),
+        ];
+
+        \Illuminate\Support\Facades\DB::transaction(function () use ($user): void {
+            DB::table('sessions')->where('user_id', $user->id)->delete();
+            DB::table('notifications')->where('notifiable_type', $user->getMorphClass())->where('notifiable_id', $user->id)->delete();
+            DB::table('password_reset_tokens')->where('email', $user->email)->delete();
+            $user->syncRoles([]);
+            $user->delete(); // murojaat, izoh, tarix va h.k. saqlanadi — bog'lanish nullOnDelete
+        });
+
+        $audit->log($admin->id, 'user.deleted', "Foydalanuvchi o'chirildi: {$snapshot['name']} ({$snapshot['login']})", null, [
+            ...$snapshot,
+            'ip' => $request->ip(),
+        ]);
+
+        return redirect()->route('admin.users.list')->with('status', "«{$snapshot['name']}» foydalanuvchisi o'chirildi.");
     }
 
     public function updateDashboardAccess(Request $request, User $user): RedirectResponse

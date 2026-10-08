@@ -104,26 +104,13 @@
                 </form>
 
                 @if ($showReturnRequest)
-                    <form method="POST" action="{{ route('executor.tickets.return', $ticket) }}" class="rounded-2xl border border-slate-200 bg-white p-6">
+                    <form method="POST" action="{{ route('executor.tickets.return', $ticket) }}" class="rounded-2xl border border-slate-200 bg-white p-6"
+                          onsubmit="return confirm('Murojaat sizdan olinib, umumiy navbatga qaytariladi. Davom etilsinmi?')">
                         @csrf
-                        <h3 class="font-semibold">Qaytarish so'rovi</h3>
-                        <textarea
-                            name="reason"
-                            rows="3"
-                            class="mt-4 block w-full rounded-md border-slate-300 shadow-sm"
-                            placeholder="Sabab"
-                            @disabled($hasPendingReturnRequest)
-                            required
-                        ></textarea>
-                        <button
-                            @disabled($hasPendingReturnRequest)
-                            class="mt-4 rounded-full px-4 py-2 text-sm font-semibold text-white {{ $hasPendingReturnRequest ? 'cursor-not-allowed bg-slate-300 text-slate-600' : 'bg-amber-600' }}"
-                        >
-                            {{ $hasPendingReturnRequest ? "So'rov yuborildi" : 'Adminga qaytarish' }}
-                        </button>
-                        <p class="mt-3 text-sm text-slate-500">
-                            {{ $hasPendingReturnRequest ? "Admindan javob kelmaguncha qayta so'rov yuborib bo'lmaydi." : "Agar murojaatni qaytarish kerak bo'lsa, sababini yozib yuboring." }}
-                        </p>
+                        <h3 class="font-semibold">Murojaatni qaytarish</h3>
+                        <textarea name="reason" rows="3" minlength="5" class="mt-4 block w-full rounded-md border-slate-300 shadow-sm" placeholder="Nega bajara olmaysiz? (kamida 5 belgi)" required></textarea>
+                        <button class="btn btn-secondary mt-4">Navbatga qaytarish</button>
+                        <p class="mt-3 text-sm text-slate-500">Murojaat sizdan olinadi va qabul qilinmagan holatiga — umumiy navbatga qaytadi. Boshqa ijrochi yoki admin uni oladi; admin xabardor qilinadi.</p>
                     </form>
                 @endif
             @else

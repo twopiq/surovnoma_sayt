@@ -133,7 +133,9 @@ class ExecutorTicketController extends Controller
 
         $this->ticketService->requestReturn($ticket, auth()->user(), $data['reason']);
 
-        return back()->with('status', "Qaytarish so'rovi yuborildi.");
+        return redirect()
+            ->route('executor.tickets.index')
+            ->with('status', "{$ticket->reference} umumiy navbatga qaytarildi.");
     }
 
     public function comment(Request $request, Ticket $ticket): RedirectResponse

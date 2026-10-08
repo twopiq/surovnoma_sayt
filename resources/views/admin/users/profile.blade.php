@@ -101,5 +101,36 @@
                 </div>
             @endunless
         </form>
+
+        @if (! $isCreate && ! $isSelf)
+            <section id="delete-user" class="ui-card mt-6 scroll-mt-4 !border-red-300" x-data="{ phrase: '', expected: @js($deletePhrase) }">
+                <h3 class="ui-card__title !text-red-800">Xavfli zona: foydalanuvchini o'chirish</h3>
+                <p class="mt-1 text-[13px] text-muted">
+                    Hisob butunlay o'chiriladi, foydalanuvchi tizimdan chiqariladi va qayta kira olmaydi. Bu amalni qaytarib bo'lmaydi.
+                    Murojaatlar, izohlar va holat tarixi saqlanib qoladi — ulardagi bog'lanish «noma'lum foydalanuvchi» bo'ladi.
+                </p>
+                <ul class="mt-2 text-[13px] text-muted">
+                    <li>Murojaatchi sifatida: <b class="ui-mono text-ink">{{ $deleteImpact['requested'] }}</b> ta murojaat</li>
+                    <li>Ijrochi sifatida biriktirilgan: <b class="ui-mono text-ink">{{ $deleteImpact['executed'] }}</b> ta murojaat (ijrochisiz qoladi)</li>
+                    <li>Operator sifatida kiritgan: <b class="ui-mono text-ink">{{ $deleteImpact['operated'] }}</b> ta murojaat</li>
+                </ul>
+
+                @error('delete')
+                    <p class="ui-note mt-3 !bg-red-50 !text-red-800">{{ $message }}</p>
+                @enderror
+
+                <form method="POST" action="{{ route('admin.users.destroy', $selectedUser) }}" class="mt-3 grid max-w-[480px] gap-2">
+                    @csrf
+                    @method('DELETE')
+                    <label class="ui-field-label" for="delete-confirmation">
+                        Tasdiqlash uchun qo'lda yozing: <span class="ui-mono select-none rounded bg-sunken px-1.5 py-0.5 !text-red-800">{{ $deletePhrase }}</span>
+                    </label>
+                    <input id="delete-confirmation" name="confirmation" type="text" x-model="phrase" autocomplete="off" spellcheck="false"
+                           onpaste="return false" ondrop="return false" class="ui-input ui-mono" placeholder="{{ $selectedUser->login }} …">
+                    <p class="ui-hint">Nusxalab qo'yish o'chirilgan. Matn to'liq mos kelmasa, o'chirish bekor qilinadi.</p>
+                    <button type="submit" class="btn btn-danger justify-self-start" :disabled="phrase.trim() !== expected">Foydalanuvchini o'chirish</button>
+                </form>
+            </section>
+        @endif
     </div>
 </x-app-layout>

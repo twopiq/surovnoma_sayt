@@ -145,6 +145,7 @@
                             @csrf
                             <button type="submit" class="btn btn-secondary w-full">Parolni tiklash havolasini yuborish</button>
                         </form>
+                        <a href="{{ route('admin.users.profile', ['user' => $selectedUser->id]) }}#delete-user" class="mt-3 inline-block text-[13px] font-semibold text-red-700 hover:underline">Foydalanuvchini o'chirish…</a>
                     @endif
                 @else
                     <div class="py-6 text-center">

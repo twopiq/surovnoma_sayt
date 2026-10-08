@@ -40,6 +40,9 @@
             ['label' => 'Ish kunlari', 'href' => route('admin.dispatch.work-schedule'), 'active' => request()->routeIs('admin.dispatch.work-schedule'), 'icon' => 'calendar'],
             ['label' => 'Guest himoya', 'href' => route('admin.guest-blocks.index'), 'active' => request()->routeIs('admin.guest-blocks.*'), 'icon' => 'shield'],
             ['label' => 'Zahira nusxalar', 'href' => route('admin.backups.index'), 'active' => request()->routeIs('admin.backups.*'), 'icon' => 'database'],
+            ['group' => 'Tizim'],
+            ['label' => 'Tizim holati', 'href' => route('admin.system.health'), 'active' => request()->routeIs('admin.system.health'), 'icon' => 'pulse'],
+            ['label' => 'Loglar', 'href' => route('admin.system.logs'), 'active' => request()->routeIs('admin.system.logs*'), 'icon' => 'logs'],
             ['group' => ''],
             $notificationsItem,
         ];
@@ -77,6 +80,8 @@
         'shield' => '<path d="M10 3 4.5 5v4.5c0 3.5 2.3 6 5.5 7.5 3.2-1.5 5.5-4 5.5-7.5V5z"/>',
         'archive' => '<rect x="3" y="4" width="14" height="4" rx="1"/><path d="M4.5 8v7.5h11V8M8 11.5h4"/>',
         'clock' => '<circle cx="10" cy="10" r="7"/><path d="M10 6v4l2.5 1.5"/>',
+        'pulse' => '<path d="M2.5 10h3l2-5 3.5 10 2-5h4.5"/>',
+        'logs' => '<rect x="4" y="3" width="12" height="14" rx="1.5"/><path d="M7 7h6M7 10h6M7 13h4"/>',
         'database' => '<ellipse cx="10" cy="5" rx="6" ry="2.5"/><path d="M4 5v10c0 1.4 2.7 2.5 6 2.5s6-1.1 6-2.5V5M4 10c0 1.4 2.7 2.5 6 2.5s6-1.1 6-2.5"/>',
         'calendar' => '<rect x="3.5" y="4.5" width="13" height="12" rx="1.5"/><path d="M3.5 8h13M7 3v3M13 3v3"/>',
         'notifications' => '<path d="M5 14V9.5a5 5 0 0 1 10 0V14l1.3 1.8H3.7zM8.3 17.5a2 2 0 0 0 3.4 0"/>',

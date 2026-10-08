@@ -292,20 +292,33 @@ class TicketService
         return $updated->fresh();
     }
 
+    /**
+     * Ijrochi murojaatni qaytaradi: admin tasdig'isiz murojaat ijrochidan bo'shatiladi va qabul qilinmagan
+     * holatiga (umumiy navbat, "Yangi") qaytadi. Bo'lim, kategoriya, muhimlik va muddat saqlanadi.
+     */
     public function requestReturn(Ticket $ticket, User $executor, string $reason): Ticket
     {
         return DB::transaction(function () use ($ticket, $executor, $reason): Ticket {
+            $this->resolvePendingReturnRequests($ticket, $executor);
+
             TicketReturnRequest::create([
                 'ticket_id' => $ticket->id,
                 'executor_id' => $executor->id,
                 'reason' => $reason,
+                'resolved_at' => now(),
+                'resolved_by' => $executor->id,
             ]);
 
-            $updated = $this->transition($ticket, $executor, TicketStatus::Returned, ExternalStatus::InProgress, $reason, 'ticket.returned', 'Ijrochi murojaatni qaytardi');
+            $ticket->forceFill([
+                'assigned_executor_id' => null,
+                'metadata' => array_merge($ticket->metadata ?? [], ['deadline_notifications' => []]),
+            ])->save();
+
+            $updated = $this->transition($ticket, $executor, TicketStatus::New, ExternalStatus::Accepted, $reason, 'ticket.returned', 'Ijrochi murojaatni umumiy navbatga qaytardi');
 
             $this->notifyAdmins(
-                'Murojaat qaytarildi',
-                "{$updated->reference} bo'yicha qaytarish so'rovi keldi.",
+                'Murojaat navbatga qaytdi',
+                "{$updated->reference}: {$executor->name} murojaatni qaytardi. Sabab: {$reason}",
                 route('admin.dispatch.show', $updated),
                 [
                     'kind' => 'ticket_returned',

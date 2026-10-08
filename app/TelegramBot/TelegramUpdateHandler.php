@@ -946,7 +946,7 @@ class TelegramUpdateHandler
         if ($ticket->assigned_executor_id !== $user?->id || ! in_array($ticket->status, [TicketStatus::Assigned, TicketStatus::InProgress], true)) {
             $this->bot->sendMessage($chatId, new TelegramMessage(
                 'Qaytarib bo\'lmaydi',
-                "Bu murojaat bo'yicha qaytarish so'rovi yuborib bo'lmaydi.",
+                "Bu murojaatni hozir qaytarib bo'lmaydi.",
                 null,
                 $this->executorTicketActionButtons(collect([$ticket]), $user),
             ));
@@ -961,7 +961,7 @@ class TelegramUpdateHandler
 
         $this->bot->sendMessage($chatId, new TelegramMessage(
             'Qaytarish sababi',
-            "{$ticket->reference} bo'yicha adminga qaytarish sababini yozing. Bekor qilish uchun /cancel yuboring.",
+            "{$ticket->reference} nega bajara olmasligingizni yozing — murojaat sizdan olinib, umumiy navbatga qaytadi. Bekor qilish uchun /cancel yuboring.",
         ));
     }
 
@@ -989,7 +989,7 @@ class TelegramUpdateHandler
         } catch (\Throwable $exception) {
             Cache::forget($this->stateKey($chatId));
             $this->bot->sendMessage($chatId, new TelegramMessage(
-                "So'rov yuborilmadi",
+                "Qaytarib bo'lmadi",
                 $exception->getMessage(),
                 null,
                 $this->menuButtons($user),
@@ -1001,7 +1001,7 @@ class TelegramUpdateHandler
         Cache::forget($this->stateKey($chatId));
 
         $this->bot->sendMessage($chatId, new TelegramMessage(
-            "Qaytarish so'rovi yuborildi",
+            'Murojaat navbatga qaytarildi',
             $this->ticketSummary($updated),
             route('executor.tickets.show', $updated),
             $this->menuButtons($user),

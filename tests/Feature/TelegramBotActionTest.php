@@ -85,8 +85,9 @@ class TelegramBotActionTest extends TestCase
 
         $ticket->refresh();
 
-        $this->assertSame(TicketStatus::Returned, $ticket->status);
-        $this->assertTrue($ticket->hasPendingReturnRequest());
+        $this->assertSame(TicketStatus::New, $ticket->status);
+        $this->assertNull($ticket->assigned_executor_id);
+        $this->assertFalse($ticket->hasPendingReturnRequest());
     }
 
     public function test_executor_can_comment_ticket_from_telegram(): void

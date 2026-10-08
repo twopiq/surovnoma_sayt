@@ -17,24 +17,42 @@ class ReturnRequestFlowTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_executor_return_button_stays_inactive_while_request_is_pending(): void
+    public function test_executor_return_puts_ticket_back_to_unaccepted_pool_without_admin(): void
     {
         $this->seed(DatabaseSeeder::class);
 
         $executor = User::query()->where('email', 'executor@rtt.local')->firstOrFail();
         $ticket = Ticket::query()->where('assigned_executor_id', $executor->id)->firstOrFail();
+        $before = $ticket->only(['assigned_department_id', 'category_id', 'priority', 'deadline_at']);
 
         $this->actingAs($executor)->post(route('executor.tickets.start', $ticket));
         $this->actingAs($executor)->post(route('executor.tickets.return', $ticket), [
             'reason' => 'Qaytarish uchun test sababi.',
+        ])->assertRedirect(route('executor.tickets.index'));
+
+        $ticket->refresh();
+
+        $this->assertNull($ticket->assigned_executor_id);
+        $this->assertSame(TicketStatus::New, $ticket->status);
+        $this->assertFalse($ticket->hasPendingReturnRequest());
+        $this->assertSame($before['assigned_department_id'], $ticket->assigned_department_id);
+        $this->assertSame($before['category_id'], $ticket->category_id);
+        $this->assertDatabaseHas('ticket_return_requests', [
+            'ticket_id' => $ticket->id,
+            'executor_id' => $executor->id,
+            'reason' => 'Qaytarish uchun test sababi.',
+        ]);
+        $this->assertDatabaseHas('ticket_status_histories', [
+            'ticket_id' => $ticket->id,
+            'to_status' => TicketStatus::New->value,
+            'note' => 'Qaytarish uchun test sababi.',
         ]);
 
-        $response = $this->actingAs($executor)->get(route('executor.tickets.show', $ticket->fresh()));
-
-        $response
+        // Murojaat umumiy navbatda — ijrochilar uni qayta olishi mumkin
+        $this->actingAs($executor)
+            ->get(route('executor.tickets.show', $ticket))
             ->assertOk()
-            ->assertSee("So'rov yuborildi")
-            ->assertSee("Admindan javob kelmaguncha qayta so'rov yuborib bo'lmaydi.");
+            ->assertSee('Bajarishga olish');
     }
 
     public function test_admin_assignment_resolves_pending_return_request(): void
@@ -50,7 +68,7 @@ class ReturnRequestFlowTest extends TestCase
             'reason' => 'Qaytarish uchun test sababi.',
         ]);
 
-        $this->assertTrue($ticket->fresh()->hasPendingReturnRequest());
+        $this->assertNull($ticket->fresh()->assigned_executor_id);
 
         $departmentId = Department::query()->firstOrFail()->id;
         $categoryId = Category::query()->firstOrFail()->id;

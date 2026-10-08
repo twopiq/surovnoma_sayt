@@ -204,8 +204,8 @@ class NotificationAndAttachmentTest extends TestCase
             ->post(route('executor.tickets.return', $ticket), [
                 'reason' => 'Ijro qilish uchun maʼlumot yetarli emas.',
             ])
-            ->assertRedirect(route('executor.tickets.show', $ticket))
-            ->assertSessionHas('status', "Qaytarish so'rovi yuborildi.");
+            ->assertRedirect(route('executor.tickets.index'))
+            ->assertSessionHas('status', "{$ticket->reference} umumiy navbatga qaytarildi.");
 
         Notification::assertSentTo(
             $admin,
@@ -340,18 +340,24 @@ class NotificationAndAttachmentTest extends TestCase
 
         $ticket->refresh();
 
-        $this->assertSame(TicketStatus::Returned, $ticket->status);
+        // Qaytarilgan murojaat qabul qilinmagan holatga — umumiy navbatga tushadi
+        $this->assertSame(TicketStatus::New, $ticket->status);
+        $this->assertNull($ticket->assigned_executor_id);
 
         $this->actingAs($executor)
             ->get(route('executor.tickets.show', $ticket))
             ->assertOk()
-            ->assertSee('Qayta qabul qilish');
+            ->assertSee('Bajarishga olish');
+
+        // Navbatdan qayta olish yuklama limitiga kiradi — ijrochining boshqa faol ishlari yakunlangan deb olamiz
+        Ticket::query()->where('assigned_executor_id', $executor->id)->update(['status' => TicketStatus::Completed->value]);
 
         $this->actingAs($executor)
             ->post(route('executor.tickets.start', $ticket))
-            ->assertSessionHas('status', 'Murojaat qayta qabul qilindi.');
+            ->assertSessionHasNoErrors()->assertSessionHas('status');
 
         $this->assertSame(TicketStatus::InProgress, $ticket->fresh()->status);
+        $this->assertSame($executor->id, $ticket->fresh()->assigned_executor_id);
     }
 
     public function test_executor_can_see_and_claim_unassigned_ticket(): void
@@ -429,7 +435,7 @@ class NotificationAndAttachmentTest extends TestCase
             ->assertOk()
             ->assertSee('Murojaat allaqachon bajarildi deb yuborilgan.')
             ->assertSee('cursor-not-allowed bg-slate-300 text-slate-600', false)
-            ->assertDontSee("Adminga qaytarish");
+            ->assertDontSee("Navbatga qaytarish");
 
         $this->actingAs($executor)
             ->get(route('executor.tickets.archive'))

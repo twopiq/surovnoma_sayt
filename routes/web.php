@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\DispatchController;
 use App\Http\Controllers\Admin\GuestBlockController;
 use App\Http\Controllers\Admin\GuestSettingsController;
 use App\Http\Controllers\Admin\SlaSettingsController;
+use App\Http\Controllers\Admin\SystemController;
 use App\Http\Controllers\Admin\UserApprovalController;
 use App\Http\Controllers\AppHomeController;
 use App\Http\Controllers\AppDashboardController;
@@ -148,6 +149,9 @@ Route::middleware(['auth', 'approved'])->group(function () {
         Route::post('/users/{user}/password-reset', [UserApprovalController::class, 'sendPasswordReset'])
             ->middleware('throttle:6,1')
             ->name('users.password-reset');
+        Route::delete('/users/{user}', [UserApprovalController::class, 'destroy'])
+            ->middleware('throttle:10,1')
+            ->name('users.destroy');
         Route::patch('/users/{user}', [UserApprovalController::class, 'update'])->name('users.update');
         Route::patch('/users/{user}/dashboard-access', [UserApprovalController::class, 'updateDashboardAccess'])->name('users.dashboard-access');
 
@@ -160,6 +164,10 @@ Route::middleware(['auth', 'approved'])->group(function () {
         Route::post('/guest-blocks/{guestBlock}/unblock', [GuestBlockController::class, 'unblock'])->name('guest-blocks.unblock');
         Route::get('/guest-blocks/settings', [GuestSettingsController::class, 'edit'])->name('guest-blocks.settings');
         Route::put('/guest-blocks/settings', [GuestSettingsController::class, 'update'])->name('guest-blocks.settings.update');
+
+        Route::get('/system/health', [SystemController::class, 'health'])->name('system.health');
+        Route::get('/system/logs', [SystemController::class, 'logs'])->name('system.logs');
+        Route::get('/system/logs/{file}/download', [SystemController::class, 'download'])->where('file', '[A-Za-z0-9_.-]+')->name('system.logs.download');
 
         Route::get('/backups', [BackupController::class, 'index'])->name('backups.index');
         Route::post('/backups', [BackupController::class, 'store'])->middleware('throttle:10,1')->name('backups.store');

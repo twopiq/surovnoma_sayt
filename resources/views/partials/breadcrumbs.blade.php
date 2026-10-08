@@ -9,7 +9,7 @@
     };
 
     // Admin sahifalari (dizayn: admin-pages.md) sarlavhasida o'z yo'l ko'rsatkichi bor — takrorlanmasin.
-    $adminHasOwnCrumb = request()->routeIs('admin.users.*', 'admin.guest-blocks.*', 'admin.backups.*', 'admin.dispatch.tickets', 'admin.dispatch.archive', 'admin.dispatch.deadlines', 'admin.dispatch.work-schedule', 'admin.sla.*')
+    $adminHasOwnCrumb = request()->routeIs('admin.users.*', 'admin.guest-blocks.*', 'admin.backups.*', 'admin.system.*', 'admin.dispatch.tickets', 'admin.dispatch.archive', 'admin.dispatch.deadlines', 'admin.dispatch.work-schedule', 'admin.sla.*')
         || (request()->routeIs('app.home') && auth()->user()?->hasRole(\App\Enums\UserRole::Admin->value));
 
     if ($adminHasOwnCrumb) {

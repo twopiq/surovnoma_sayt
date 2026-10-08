@@ -23,6 +23,11 @@ return Application::configure(basePath: dirname(__DIR__))
             ->when(fn () => \App\Support\BackupSchedule::enabled())
             ->withoutOverlapping();
 
+        // Tizim holati sahifasi cron ishlayotganini shu belgidan biladi
+        $schedule->call(fn () => \App\Models\SystemSetting::put('scheduler.heartbeat', now()->toIso8601String()))
+            ->everyMinute()
+            ->name('scheduler-heartbeat');
+
         $schedule->command('tickets:send-deadline-alerts')
             ->everyMinute()
             ->withoutOverlapping();
