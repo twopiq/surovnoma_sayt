@@ -200,7 +200,7 @@
                             <tr>
                                 <th class="px-5 py-3">SL.</th>
                                 <th class="px-5 py-3">Image</th>
-                                <th class="px-5 py-3">Name</th>
+                                <th class="px-5 py-3">Ism</th>
                                 <th class="px-5 py-3">Email</th>
                                 <th class="px-5 py-3">Phone</th>
                                 <th class="px-5 py-3 text-right">Yuklama</th>

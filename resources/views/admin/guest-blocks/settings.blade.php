@@ -33,7 +33,7 @@
             ],
         ],
         'Fayllar' => [
-            'desc' => "Faqat guest formasi uchun. Ro'yxatdan o'tgan foydalanuvchilarga ta'sir qilmaydi.",
+            'desc' => "Faqat mehmon formasi uchun. Ro'yxatdan o'tgan foydalanuvchilarga ta'sir qilmaydi.",
             'fields' => [
                 $numberField('max_files', 'Maksimal fayllar soni', $limits['max_files'], "0 = fayl yuklab bo'lmaydi"),
                 $numberField('max_file_size_mb', 'Har bir fayl hajmi (MB)', round($limits['max_file_size_kb'] / 1024, 1), '', '0.5'),
@@ -44,7 +44,7 @@
 
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-display text-2xl font-bold">Guest himoya sozlamalari</h2>
+        <h2 class="font-display text-2xl font-bold">Mehmon himoyasi sozlamalari</h2>
     </x-slot>
 
     <div class="mx-auto max-w-none space-y-6 px-4 pt-8 sm:px-6 lg:px-8">

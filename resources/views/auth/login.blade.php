@@ -4,7 +4,7 @@
             <h1 class="font-display text-2xl font-bold text-slate-900">Kirish forma</h1>
             <p class="mt-2 text-sm text-slate-500">Hisobingiz orqali murojaatlarni boshqaring va kuzating.</p>
         </div>
-        <a href="{{ route('home') }}" class="rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100">Home</a>
+        <a href="{{ route('home') }}" class="rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100">Bosh sahifa</a>
     </div>
 
     <x-auth-session-status class="mb-4" :status="session('status')" />

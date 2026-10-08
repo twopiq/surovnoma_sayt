@@ -14,8 +14,8 @@
     <x-slot name="header">
         <div>
             <div class="pg-crumb">Sozlamalar</div>
-            <h2>Guest himoya</h2>
-            <p class="pg-sub">Spam va suiiste'molga qarshi bloklangan guest qurilmalar.</p>
+            <h2>Mehmon himoyasi</h2>
+            <p class="pg-sub">Spam va suiiste'molga qarshi bloklangan mehmon qurilmalari.</p>
         </div>
     </x-slot>
 

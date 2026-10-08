@@ -37,7 +37,7 @@
                 style="min-width: {{ $width }}px;"
             @endunless
             role="img"
-            aria-label="Dashboard chart"
+            aria-label="Diagramma"
         >
             <defs>
                 <linearGradient id="{{ $gradientId }}" x1="0" x2="0" y1="0" y2="1">

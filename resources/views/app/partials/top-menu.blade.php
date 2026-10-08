@@ -1,7 +1,7 @@
 @php
     $dashboardTabs = [
         [
-            'label' => 'Dashboard',
+            'label' => 'Hisobot',
             'href' => route('app.dashboard'),
             'active' => request()->routeIs('app.dashboard'),
         ],

@@ -29,7 +29,7 @@
 
         $sidebarItems = [
             ['label' => 'Bosh sahifa', 'href' => route('app.home'), 'active' => request()->routeIs('app.home'), 'icon' => 'home'],
-            ['label' => 'Dashboard', 'href' => route('app.dashboard'), 'active' => request()->routeIs('app.dashboard'), 'icon' => 'dashboard'],
+            ['label' => 'Hisobot', 'href' => route('app.dashboard'), 'active' => request()->routeIs('app.dashboard'), 'icon' => 'dashboard'],
             ['group' => 'Ish'],
             ['label' => 'Murojaatlar', 'href' => route('admin.dispatch.tickets'), 'active' => request()->routeIs('admin.dispatch.tickets', 'admin.dispatch.index', 'admin.dispatch.status', 'admin.dispatch.show') && request()->query('source') !== 'archive', 'icon' => 'tickets'],
             ['label' => 'Arxiv', 'href' => route('admin.dispatch.archive'), 'active' => request()->routeIs('admin.dispatch.archive') || (request()->routeIs('admin.dispatch.show') && request()->query('source') === 'archive'), 'icon' => 'archive'],
@@ -38,7 +38,7 @@
             ['group' => 'Sozlamalar'],
             ['label' => 'Deadline', 'href' => route('admin.dispatch.deadlines'), 'active' => request()->routeIs('admin.dispatch.deadlines', 'admin.sla.*'), 'icon' => 'clock'],
             ['label' => 'Ish kunlari', 'href' => route('admin.dispatch.work-schedule'), 'active' => request()->routeIs('admin.dispatch.work-schedule'), 'icon' => 'calendar'],
-            ['label' => 'Guest himoya', 'href' => route('admin.guest-blocks.index'), 'active' => request()->routeIs('admin.guest-blocks.*'), 'icon' => 'shield'],
+            ['label' => 'Mehmon himoyasi', 'href' => route('admin.guest-blocks.index'), 'active' => request()->routeIs('admin.guest-blocks.*'), 'icon' => 'shield'],
             ['label' => 'Zahira nusxalar', 'href' => route('admin.backups.index'), 'active' => request()->routeIs('admin.backups.*'), 'icon' => 'database'],
             ['group' => 'Tizim'],
             ['label' => 'Tizim holati', 'href' => route('admin.system.health'), 'active' => request()->routeIs('admin.system.health'), 'icon' => 'pulse'],
@@ -61,7 +61,7 @@
                 'icon' => 'tickets',
             ]] : []),
             ...($user?->canAccessAppDashboard() ? [[
-                'label' => $isManagerWithDashboard ? 'Bosh sahifa' : 'Dashboard',
+                'label' => $isManagerWithDashboard ? 'Bosh sahifa' : 'Hisobot',
                 'href' => route('app.dashboard'),
                 'active' => request()->routeIs('app.dashboard'),
                 'icon' => $isManagerWithDashboard ? 'home' : 'dashboard',

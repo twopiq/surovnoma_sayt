@@ -24,6 +24,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Sana matnlari ("8 soniya avval", oy nomlari) lotin yozuvida — `uz` Carbon'da kirillcha
+        if (str_starts_with((string) config('app.locale'), 'uz')) {
+            \Illuminate\Support\Carbon::setLocale('uz_Latn');
+        }
+
         try {
             GuestSetting::applyToConfig();
         } catch (\Throwable) {

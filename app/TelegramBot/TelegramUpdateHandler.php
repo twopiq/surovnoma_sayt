@@ -270,7 +270,7 @@ class TelegramUpdateHandler
         if (! $user) {
             $this->bot->sendMessage($chatId, new TelegramMessage(
                 'Assalomu alaykum!',
-                "RTT Markazi botiga xush kelibsiz. Akkaunt ulanmagan chatda faqat bir martalik guest murojaat yuborish yoki tracking kod orqali holatni tekshirish mumkin. Doimiy foydalanish uchun saytdan ro'yxatdan o'ting.",
+                "RTT Markazi botiga xush kelibsiz. Akkaunt ulanmagan chatda faqat bir martalik mehmon murojaati yuborish yoki tracking kod orqali holatni tekshirish mumkin. Doimiy foydalanish uchun saytdan ro'yxatdan o'ting.",
                 null,
                 $this->menuButtons(null, $chatId),
             ));
@@ -293,7 +293,7 @@ class TelegramUpdateHandler
         if (! $user) {
             $this->bot->sendMessage($chatId, new TelegramMessage(
                 'RTT Markazi',
-                "Akkaunt ulanmagan. Guest murojaat yuborish bir marta ishlaydi; keyin saytdan ro'yxatdan o'ting.",
+                "Akkaunt ulanmagan. Mehmon murojaati yuborish bir marta ishlaydi; keyin saytdan ro'yxatdan o'ting.",
                 null,
                 $this->menuButtons(null, $chatId),
             ));
@@ -482,7 +482,7 @@ class TelegramUpdateHandler
         $this->bot->sendMessage($chatId, new TelegramMessage(
             'Kategoriya tanlang',
             $mode === 'guest'
-                ? "Guest murojaat uchun muammo kategoriyasini tanlang."
+                ? "Mehmon murojaati uchun muammo kategoriyasini tanlang."
                 : "Yangi murojaat uchun muammo kategoriyasini tanlang.",
             null,
             $buttons,
@@ -611,7 +611,7 @@ class TelegramUpdateHandler
         Cache::forever($this->guestCreatedKey($chatId), $ticket->id);
 
         $this->bot->sendMessage($chatId, new TelegramMessage(
-            'Guest murojaat yuborildi',
+            'Mehmon murojaati yuborildi',
             "Murojaat raqami: {$ticket->reference}\nTracking kod: {$trackingCode}\nHolatni tekshirish uchun shu ikki qiymatni saqlab qo'ying.\n\nDoimiy kabinet va to'liq imkoniyatlar uchun saytdan ro'yxatdan o'ting.",
             route('register'),
             [
@@ -669,7 +669,7 @@ class TelegramUpdateHandler
         ], now()->addMinutes(10));
 
         $this->bot->sendMessage($chatId, new TelegramMessage(
-            'Guest holatini tekshirish',
+            'Murojaat holatini tekshirish',
             "Murojaat raqami va tracking kodni bitta xabarda yuboring.\nMasalan: RTT-20260525-0001 ABCD1234\nBekor qilish uchun /cancel.",
         ));
     }
@@ -1273,11 +1273,11 @@ class TelegramUpdateHandler
     {
         $this->bot->sendMessage($chatId, new TelegramMessage(
             "Ro'yxatdan o'ting",
-            "Bu chatda guest murojaat yuborish imkoniyati bir marta ishlaydi. Keyingi murojaatlarni kabinet orqali yuborish va kuzatish uchun saytdan ro'yxatdan o'ting.",
+            "Bu chatda mehmon murojaati yuborish imkoniyati bir marta ishlaydi. Keyingi murojaatlarni kabinet orqali yuborish va kuzatish uchun saytdan ro'yxatdan o'ting.",
             route('register'),
             [
                 [
-                    ['text' => 'Guest holatini tekshirish', 'callback_data' => 'guest:track'],
+                    ['text' => 'Murojaat holatini tekshirish', 'callback_data' => 'guest:track'],
                 ],
             ],
         ));
@@ -1578,12 +1578,12 @@ class TelegramUpdateHandler
 
             if (! $this->guestTicketAlreadyCreated($chatId)) {
                 $buttons[] = [
-                    ['text' => 'Guest murojaat yuborish', 'callback_data' => 'guest:create'],
+                    ['text' => 'Mehmon murojaati yuborish', 'callback_data' => 'guest:create'],
                 ];
             }
 
             $buttons[] = [
-                ['text' => 'Guest holatini tekshirish', 'callback_data' => 'guest:track'],
+                ['text' => 'Murojaat holatini tekshirish', 'callback_data' => 'guest:track'],
             ];
             $buttons[] = [
                 ['text' => 'Saytdagi akkauntni ulash', 'callback_data' => 'link'],
@@ -1635,7 +1635,7 @@ class TelegramUpdateHandler
         if ($user->hasSystemRole(UserRole::Manager)) {
             $buttons[] = [
                 ['text' => 'Rahbar xulosa', 'callback_data' => 'manager:summary'],
-                ['text' => 'Dashboard', 'url' => route('manager.dashboard')],
+                ['text' => 'Hisobot', 'url' => route('manager.dashboard')],
             ];
         }
 

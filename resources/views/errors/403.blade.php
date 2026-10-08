@@ -4,7 +4,7 @@
     'headline' => "Kirish rad etildi",
     'lead' => "Bu bo'limni ko'rish uchun sizda yetarli ruxsat yo'q. Agar bu xato deb o'ylasangiz, administratorga murojaat qiling.",
     'details' => [
-        'Role' => auth()->user()?->display_role ?? 'Guest',
+        'Role' => auth()->user()?->display_role ?? 'Mehmon',
         'Status' => 'Forbidden',
     ],
 ])

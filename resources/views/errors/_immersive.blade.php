@@ -31,8 +31,8 @@
                     </a>
 
                     <nav class="flex flex-wrap justify-center gap-2 font-semibold tracking-wide">
-                        <a href="{{ route('guest.create') }}" class="transition hover:text-[#fff]">[ Guest forma ]</a>
-                        <a href="{{ route('guest.track') }}" class="transition hover:text-[#fff]">[ Guest kuzatuvi ]</a>
+                        <a href="{{ route('guest.create') }}" class="transition hover:text-[#fff]">[ Mehmon formasi ]</a>
+                        <a href="{{ route('guest.track') }}" class="transition hover:text-[#fff]">[ Holatni kuzatish ]</a>
                         <a href="{{ route('register') }}" class="transition hover:text-[#fff]">[ Ro'yxatdan o'tish ]</a>
                         <a href="{{ route('login') }}" class="transition hover:text-[#fff]">[ Kirish ]</a>
                     </nav>

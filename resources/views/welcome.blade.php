@@ -36,7 +36,7 @@
                 <li><span class="pub-num">{!! $check !!}</span>Holatni istalgan vaqt kuzating</li>
             </ul>
             <div class="mt-auto flex flex-wrap gap-2">
-                <a href="{{ route('guest.create') }}" class="btn btn-primary btn-lg">Guest forma</a>
+                <a href="{{ route('guest.create') }}" class="btn btn-primary btn-lg">Mehmon formasi</a>
                 <a href="{{ route('guest.track') }}" class="btn btn-secondary btn-lg">Holatni kuzatish</a>
             </div>
         </section>

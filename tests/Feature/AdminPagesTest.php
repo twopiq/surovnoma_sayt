@@ -48,7 +48,7 @@ class AdminPagesTest extends TestCase
             route('admin.users.index', ['tab' => 'rejected']) => ['Rad etilganlar'],
             route('admin.users.profile', ['user' => $user->id]) => ['Rol va holat', 'Faollik'],
             route('admin.users.create') => ['Yangi foydalanuvchi'],
-            route('admin.guest-blocks.index', ['status' => 'all']) => ['Guest himoya', 'Himoya holati'],
+            route('admin.guest-blocks.index', ['status' => 'all']) => ['Mehmon himoyasi', 'Himoya holati'],
             route('admin.dispatch.deadlines') => ['Deadline sozlamalari', 'Muddat shkalasi'],
             route('admin.dispatch.work-schedule') => ['Ish kunlari', 'Bayram va istisno kunlar'],
             route('admin.dispatch.archive', ['period' => 'all']) => ['Murojaatlar arxivi', $archived->reference, 'Holat tarixi', 'Muddatida'],
@@ -72,7 +72,7 @@ class AdminPagesTest extends TestCase
         $this->actingAs($this->admin)->get(route('admin.dispatch.tickets'))
             ->assertOk()
             ->assertSee('Bosh sahifa')
-            ->assertSee('Guest himoya')
+            ->assertSee('Mehmon himoyasi')
             ->assertSee('Ish kunlari')
             ->assertDontSee('Ticket management')
             ->assertDontSee('Users CRUD');

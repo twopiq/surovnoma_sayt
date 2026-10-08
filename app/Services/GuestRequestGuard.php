@@ -309,7 +309,7 @@ class GuestRequestGuard
         ]);
 
         $message = new TelegramMessage(
-            "Yangi guest blok: BLOK-{$block->id}",
+            "Yangi mehmon bloki: BLOK-{$block->id}",
             implode("\n", $lines),
             route('admin.guest-blocks.index'),
         );
