@@ -24,7 +24,7 @@ return Application::configure(basePath: dirname(__DIR__))
             ->withoutOverlapping();
 
         // Tizim holati sahifasi cron ishlayotganini shu belgidan biladi
-        $schedule->call(fn () => \App\Models\SystemSetting::put('scheduler.heartbeat', now()->toIso8601String()))
+        $schedule->call(fn () => \App\Models\SystemSetting::heartbeat())
             ->everyMinute()
             ->name('scheduler-heartbeat');
 

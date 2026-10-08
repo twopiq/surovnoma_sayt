@@ -11,7 +11,8 @@
 - [ ] Topilgan xatolarni tuzatish va testlarni yangi notification'ga moslash, ularni yashil holatga keltirish.
 - Fayllar: `app/Http/Controllers/Auth/PasswordResetLinkController.php`, `NewPasswordController.php`, `app/Notifications/ResetPasswordNotification.php`, `app/Models/User.php:165`, `resources/views/auth/{forgot,reset}-password.blade.php`, `tests/Feature/Auth/PasswordResetTest.php`.
 
-### 2. Breadcrumb (Admin / Ticket management / Tickets) ni to'g'rilash
+### 2. Breadcrumb (Admin / Ticket management / Tickets) ni to'g'rilash — ✅ BAJARILDI (2026-10-08)
+`partials/breadcrumbs.blade.php` qayta yozildi: faqat ichki sahifalarda (murojaat kartasi, yaratish, arxiv, holat, doska) "Ota › Joriy", o'zbekcha, sarlavha ustida; ota havola murojaat qayerdan ochilganiga qarab (`?source=archive|home|board`) va doim shu foydalanuvchi kira oladigan route; yuqori darajadagi sahifalarda chiqmaydi (yon menyu yetarli); takroriy bo'g'inlar yo'q. Test: `BreadcrumbTest`.
 Fayl: `resources/views/partials/breadcrumbs.blade.php` (`layouts/app.blade.php:37` da ulanadi).
 - [ ] Har bir oraliq element **ishlaydigan havola** bo'lsin (oxirgisi — joriy sahifa, havolasiz).
 - [ ] **Faqat foydalanuvchi kira oladigan** sahifalar ko'rsatilsin: havola berishdan oldin rol/ruxsatni tekshirish (masalan `Admin` → `dashboard` faqat admin uchun; manager/executor/operator/requester uchun o'z bosh sahifasi). Ruxsati yo'q bo'g'in ko'rsatilmasin.

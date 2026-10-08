@@ -31,4 +31,16 @@ class SystemSetting extends Model
     {
         static::query()->updateOrCreate(['key' => $key], ['value' => is_bool($value) ? (int) $value : $value]);
     }
+
+    /** Rejalashtiruvchi "yurak urishi": jadval hali bo'lmasa ham cron'ni yiqitmaydi. */
+    public static function heartbeat(): void
+    {
+        try {
+            if (Schema::hasTable('system_settings')) {
+                static::put('scheduler.heartbeat', now()->toIso8601String());
+            }
+        } catch (\Throwable $e) {
+            report($e);
+        }
+    }
 }

@@ -127,13 +127,13 @@
                                 <input type="hidden" name="assigned_department_id" value="{{ $selected->assigned_department_id }}">
                             @endif
 
-                            <fieldset class="grid gap-2">
+                            <fieldset class="grid min-w-0 gap-2">
                                 <legend class="sr-only">Ijrochi</legend>
                                 @foreach ($executors as $executor)
-                                    <label @class(['flex cursor-pointer items-center justify-between gap-3 rounded-md border border-line px-3 py-2.5 has-[:checked]:border-accent has-[:checked]:bg-accent-soft', 'opacity-60' => $executor['vacation']])>
-                                        <span class="flex min-w-0 items-center gap-2">
+                                    <label @class(['flex min-w-0 cursor-pointer items-center justify-between gap-3 rounded-md border border-line px-3 py-2.5 has-[:checked]:border-accent has-[:checked]:bg-accent-soft', 'opacity-60' => $executor['vacation']])>
+                                        <span class="flex min-w-0 flex-1 items-center gap-2">
                                             <input type="radio" name="assigned_executor_id" value="{{ $executor['id'] }}" class="shrink-0" @checked((string) old('assigned_executor_id', $selected->assigned_executor_id) === (string) $executor['id']) @disabled($executor['vacation']) required>
-                                            <span class="min-w-0">
+                                            <span class="min-w-0 flex-1">
                                                 <b class="block truncate text-[14px] font-medium">{{ $executor['name'] }}</b>
                                                 <span class="block text-xs text-muted">{{ $executor['vacation'] ? "Ta'tilda" : $executor['used'].' / '.$maxUnits.' birlik' }}</span>
                                             </span>

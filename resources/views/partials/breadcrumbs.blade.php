@@ -1,123 +1,77 @@
 @php
+    /*
+     * Yo'l ko'rsatkich (breadcrumb): faqat ichki sahifalarda — "Ota sahifa › Joriy sahifa".
+     * Yuqori darajadagi sahifalarda chiqmaydi (yon menyu yetarli). Ota sahifa doim shu foydalanuvchi
+     * kira oladigan route (joriy sahifa bilan bir middleware guruhida), murojaat qayerdan ochilgan bo'lsa — o'sha joy.
+     */
+    $routeTicket = request()->route('ticket');
+    $ticketLabel = $routeTicket instanceof \App\Models\Ticket ? $routeTicket->reference : 'Murojaat';
+    $source = request()->query('source');
     $crumbs = [];
 
-    $add = function (string $label, ?string $url = null) use (&$crumbs): void {
-        $crumbs[] = [
-            'label' => $label,
-            'url' => $url,
+    if (request()->routeIs('tickets.show', 'tickets.create')) {
+        $crumbs = [
+            ['Murojaatlarim', route('tickets.index')],
+            [request()->routeIs('tickets.create') ? 'Yangi murojaat' : $ticketLabel, null],
         ];
-    };
-
-    // Admin sahifalari (dizayn: admin-pages.md) sarlavhasida o'z yo'l ko'rsatkichi bor — takrorlanmasin.
-    $adminHasOwnCrumb = request()->routeIs('admin.users.*', 'admin.guest-blocks.*', 'admin.backups.*', 'admin.system.*', 'admin.dispatch.tickets', 'admin.dispatch.archive', 'admin.dispatch.deadlines', 'admin.dispatch.work-schedule', 'admin.sla.*')
-        || (request()->routeIs('app.home') && auth()->user()?->hasRole(\App\Enums\UserRole::Admin->value));
-
-    if ($adminHasOwnCrumb) {
-        // bo'sh
-    } elseif (request()->routeIs('admin.users.*')) {
-        $add('Admin', route('dashboard'));
-        $add('Users', route('admin.users.list'));
-
-        if (request()->routeIs('admin.users.index')) {
-            $add('Registration approvals');
-        } elseif (request()->routeIs('admin.users.recent')) {
-            $add('Recent registrations');
-        } elseif (request()->routeIs('admin.users.create')) {
-            $add('Add user');
-        } elseif (request()->routeIs('admin.users.profile')) {
-            $add('User profile');
-        } else {
-            $add('User management');
-        }
-    } elseif (request()->routeIs('admin.dispatch.*')) {
-        $add('Admin', route('dashboard'));
-        $add('Ticket management', route('admin.dispatch.tickets'));
-
-        if (request()->routeIs('admin.dispatch.index')) {
-            $add('Dispatch board');
-        } elseif (request()->routeIs('admin.dispatch.archive')) {
-            $add('Archive');
-        } elseif (request()->routeIs('admin.dispatch.status')) {
-            $add('Status');
-        } elseif (request()->routeIs('admin.dispatch.show')) {
-            $add('Ticket card');
-        } elseif (request()->routeIs('admin.dispatch.deadlines')) {
-            $add('Deadline settings');
-        } elseif (request()->routeIs('admin.dispatch.work-schedule')) {
-            $add('Work schedule');
-        } else {
-            $add('Tickets');
-        }
-    } elseif (request()->routeIs('admin.departments.*')) {
-        $add('Admin', route('dashboard'));
-        $add('Departments');
-    } elseif (request()->routeIs('admin.categories.*')) {
-        $add('Admin', route('dashboard'));
-        $add('Categories');
-    } elseif (request()->routeIs('admin.sla.*')) {
-        $add('Admin', route('dashboard'));
-        $add('SLA settings');
-    } elseif (request()->routeIs('app.dashboard')) {
-        $add('Home', route('app.home'));
-        $add('Dashboard');
-    } elseif (request()->routeIs('app.home')) {
-        $add('Home');
-    } elseif (request()->routeIs('app.settings')) {
-        $add('Home', route('app.home'));
-        $add('Settings');
-    } elseif (request()->routeIs('manager.dashboard*')) {
-        $add('Home', route('app.home'));
-        $add('Manager dashboard');
-    } elseif (request()->routeIs('executor.tickets.*')) {
-        $add('Home', route('app.home'));
-        $add('Executor tickets', route('executor.tickets.index'));
-
-        if (request()->routeIs('executor.tickets.archive')) {
-            $add('Archive');
-        } elseif (request()->routeIs('executor.tickets.show')) {
-            $add('Ticket card');
-        }
-    } elseif (request()->routeIs('operator.tickets.*')) {
-        $add('Home', route('app.home'));
-        $add('Operator tickets', route('operator.tickets.index'));
-
-        if (request()->routeIs('operator.tickets.create')) {
-            $add('Create ticket');
-        } elseif (request()->routeIs('operator.tickets.show')) {
-            $add('Ticket card');
-        }
-    } elseif (request()->routeIs('tickets.*')) {
-        $add('Home', route('app.home'));
-        $add('Tickets', route('tickets.index'));
-
-        if (request()->routeIs('tickets.create')) {
-            $add('Create ticket');
-        } elseif (request()->routeIs('tickets.show')) {
-            $add('Ticket card');
-        }
-    } elseif (request()->routeIs('notifications.*')) {
-        $add('Home', route('app.home'));
-        $add('Bildirishnomalar');
-    } elseif (request()->routeIs('profile.edit')) {
-        $add('Home', route('app.home'));
-        $add('Profile');
-    } elseif (request()->routeIs('dashboard')) {
-        $add('Admin');
+    } elseif (request()->routeIs('operator.tickets.show', 'operator.tickets.create')) {
+        $crumbs = [
+            ['Operator murojaatlari', route('operator.tickets.index')],
+            [request()->routeIs('operator.tickets.create') ? 'Yangi murojaat' : $ticketLabel, null],
+        ];
+    } elseif (request()->routeIs('executor.tickets.archive')) {
+        $crumbs = [
+            ['Mening vazifalarim', route('executor.tickets.index')],
+            ['Arxiv', null],
+        ];
+    } elseif (request()->routeIs('executor.tickets.show')) {
+        $crumbs = [
+            match ($source) {
+                'archive' => ['Arxiv', route('executor.tickets.archive')],
+                'home' => ['Bosh sahifa', route('app.home')],
+                default => ['Mening vazifalarim', route('executor.tickets.index')],
+            },
+            [$ticketLabel, null],
+        ];
+    } elseif (request()->routeIs('admin.dispatch.show')) {
+        $crumbs = [
+            match ($source) {
+                'archive' => ['Arxiv', route('admin.dispatch.archive')],
+                'home' => ['Bosh sahifa', route('app.home')],
+                'board' => ['Doska', route('admin.dispatch.index')],
+                default => ['Murojaatlar', route('admin.dispatch.tickets')],
+            },
+            [$ticketLabel, null],
+        ];
+    } elseif (request()->routeIs('admin.dispatch.status')) {
+        $status = \App\Enums\TicketStatus::tryFrom((string) request()->route('status'));
+        $crumbs = [
+            ['Doska', route('admin.dispatch.index')],
+            [$status?->label() ?? 'Holat', null],
+        ];
+    } elseif (request()->routeIs('admin.dispatch.index')) {
+        $crumbs = [
+            ['Murojaatlar', route('admin.dispatch.tickets')],
+            ['Doska', null],
+        ];
     }
 @endphp
 
-@if (count($crumbs) > 0)
-    <nav class="flex flex-wrap items-center justify-end gap-2 text-sm text-slate-500" aria-label="Breadcrumb">
-        @foreach ($crumbs as $index => $crumb)
-            @if ($index > 0)
-                <span class="text-slate-300">/</span>
-            @endif
-
-            @if ($crumb['url'] && ! $loop->last)
-                <a href="{{ $crumb['url'] }}" class="font-medium transition hover:text-cyan-700">{{ $crumb['label'] }}</a>
-            @else
-                <span class="{{ $loop->last ? 'font-semibold text-cyan-700' : 'font-medium' }}">{{ $crumb['label'] }}</span>
-            @endif
-        @endforeach
+@if ($crumbs !== [])
+    <nav class="pg-crumb mb-1" aria-label="Yo'l ko'rsatkich">
+        <ol class="flex flex-wrap items-center gap-1.5">
+            @foreach ($crumbs as [$label, $url])
+                <li class="flex items-center gap-1.5">
+                    @if (! $loop->first)
+                        <span aria-hidden="true">›</span>
+                    @endif
+                    @if ($url && ! $loop->last)
+                        <a href="{{ $url }}" class="hover:text-ink hover:underline">{{ $label }}</a>
+                    @else
+                        <span @class(['text-ink' => $loop->last]) @if ($loop->last) aria-current="page"@endif>{{ $label }}</span>
+                    @endif
+                </li>
+            @endforeach
+        </ol>
     </nav>
 @endif

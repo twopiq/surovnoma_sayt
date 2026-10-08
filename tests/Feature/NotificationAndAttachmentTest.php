@@ -521,7 +521,7 @@ class NotificationAndAttachmentTest extends TestCase
             ->assertOk()
             ->assertSee(route('executor.tickets.archive'), false)
             ->assertSeeText('Ortga qaytish')
-            ->assertSee('href="'.route('executor.tickets.index').'"', false);
+            ->assertSee('>Arxiv</a>', false); // breadcrumb: arxivdan ochilgan — arxivga qaytadi
     }
 
     private function fakePdfFiles(int $count): array

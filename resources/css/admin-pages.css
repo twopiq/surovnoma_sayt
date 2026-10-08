@@ -344,6 +344,26 @@
     display: grid;
     gap: 12px;
     align-items: start;
+    min-width: 0;
+}
+
+/* Grid ustunidagi bloklar kontentdan tor bo'la olsin (aks holda uzun matn/select ustundan va sahifadan chiqib ketadi) */
+.ui-split > *,
+.ui-split__side,
+.ui-split__side form,
+.ui-split__side > * {
+    min-width: 0;
+}
+
+/* Brauzer standarti fieldset uchun min-width: min-content — uni bekor qilamiz */
+fieldset {
+    min-width: 0;
+}
+
+.ui-split__side select,
+.ui-split__side input:not([type="checkbox"]):not([type="radio"]),
+.ui-split__side textarea {
+    max-width: 100%;
 }
 
 @media (min-width: 1024px) {
