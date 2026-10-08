@@ -25,10 +25,14 @@
         <input id="{{ $fieldId('email') }}" name="email" type="email" class="ui-input" value="{{ old('email', $user?->email) }}" required>
         <x-input-error :messages="$errors->get('email')" class="mt-1" />
     </div>
-    <div>
-        <label class="ui-field-label" for="{{ $fieldId('login') }}">Login</label>
-        <input id="{{ $fieldId('login') }}" type="text" class="ui-input ui-mono bg-sunken text-muted" value="{{ $user?->login ?? 'Avtomatik yaratiladi' }}" disabled>
-    </div>
+    @if ($user)
+        <div>
+            <label class="ui-field-label" for="{{ $fieldId('login') }}">Login</label>
+            <input id="{{ $fieldId('login') }}" type="text" class="ui-input ui-mono bg-sunken text-muted" value="{{ $user->login }}" disabled>
+        </div>
+    @else
+        <x-login-picker :source="$fieldId('name')" :value="old('login')" />
+    @endif
     <div>
         <x-phone-input :id="$fieldId('phone')" :value="old('phone', $user?->phone)" hint="" />
         <x-input-error :messages="$errors->get('phone')" class="mt-1" />

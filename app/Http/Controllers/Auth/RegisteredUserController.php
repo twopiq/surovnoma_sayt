@@ -36,8 +36,10 @@ class RegisteredUserController extends Controller
             'job_title' => ['nullable', 'string', 'max:255'],
             'department_id' => ['nullable', 'exists:departments,id'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
+            'login' => \App\Support\LoginSuggester::rules(),
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ], [
+            ...\App\Support\LoginSuggester::messages(),
             'name.regex' => "F.I.Sh. kamida ism va familiyadan iborat bo'lishi kerak.",
             'phone.required' => 'Telefon raqamini kiriting.',
             'phone.regex' => "Telefon raqami +998 99 999 99 99 ko'rinishida bo'lishi va 9 ta raqamdan iborat bo'lishi kerak.",
@@ -45,6 +47,7 @@ class RegisteredUserController extends Controller
 
         $user = User::create([
             'name' => $request->name,
+            'login' => $request->filled('login') ? $request->login : null,
             'phone' => $request->phone,
             'job_title' => $request->job_title,
             'department_id' => $request->department_id,

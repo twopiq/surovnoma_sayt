@@ -26,6 +26,10 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/pending-approval', [HomeController::class, 'pendingApproval'])->name('pending-approval');
+// Ro'yxatdan o'tish va admin "Yangi foydalanuvchi" formasida login takliflari (F.I. dan)
+Route::get('/login-suggestions', \App\Http\Controllers\LoginSuggestionController::class)
+    ->middleware('throttle:30,1')
+    ->name('login.suggestions');
 Route::get('/_errors/{code}', function (string $code) {
     $views = [
         '403' => 'errors.403',

@@ -43,6 +43,8 @@
             <x-input-error :messages="$errors->get('email')" class="mt-2" />
         </div>
 
+        <x-login-picker source="name" :value="old('login')" input-class="mt-1 block w-full rounded-md" />
+
         <div class="grid gap-4 sm:grid-cols-2">
             <div>
                 <x-input-label for="password" value="Parol" />

@@ -34,7 +34,7 @@ class RegistrationTest extends TestCase
             'email' => 'test@example.com',
             'name' => 'Test User',
             'phone' => '+998 91 234 56 78',
-            'login' => 'test.user',
+            'login' => 'user.test', // F.I.: familiya "Test", ism "User" → ism.familiya
         ]);
     }
 }

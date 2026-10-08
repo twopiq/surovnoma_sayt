@@ -282,28 +282,10 @@ class User extends Authenticatable
         ])->save();
     }
 
+    /** Login tanlanmagan bo'lsa — F.I. dan eng birinchi taklif (20 belgigacha). */
     public static function generateUniqueLogin(string $name, ?int $ignoreUserId = null): string
     {
-        $base = Str::of($name)
-            ->ascii()
-            ->lower()
-            ->replaceMatches('/[^a-z0-9]+/', '.')
-            ->trim('.')
-            ->value();
-
-        $base = $base !== '' ? $base : 'user';
-        $candidate = $base;
-        $suffix = 1;
-
-        while (static::query()
-            ->when($ignoreUserId, fn ($query) => $query->whereKeyNot($ignoreUserId))
-            ->where('login', $candidate)
-            ->exists()) {
-            $candidate = "{$base}{$suffix}";
-            $suffix++;
-        }
-
-        return $candidate;
+        return \App\Support\LoginSuggester::suggest($name, 1, $ignoreUserId)[0];
     }
 
     protected function displayRole(): Attribute

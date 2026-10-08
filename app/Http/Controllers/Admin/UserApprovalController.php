@@ -93,13 +93,15 @@ class UserApprovalController extends Controller
             'job_title' => ['nullable', 'string', 'max:255'],
             'department_id' => ['nullable', 'exists:departments,id'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
+            'login' => \App\Support\LoginSuggester::rules(),
             'role' => ['required', Rule::in(UserRole::values())],
             'can_access_app_dashboard' => ['nullable', 'boolean'],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
-        ], $this->messages());
+        ], [...$this->messages(), ...\App\Support\LoginSuggester::messages()]);
 
         $user = User::query()->create([
             'name' => $data['name'],
+            'login' => $data['login'] ?? null,
             'phone' => $data['phone'] ?? null,
             'job_title' => $data['job_title'] ?? null,
             'department_id' => $data['department_id'] ?? null,
