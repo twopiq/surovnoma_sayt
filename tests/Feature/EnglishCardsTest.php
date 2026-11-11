@@ -56,6 +56,14 @@ class EnglishCardsTest extends TestCase
             ->assertDontSee('side-nav__item');
     }
 
+    public function test_pdf_export_assets_are_shipped(): void
+    {
+        // PDF brauzerda yaratiladi; kutubxona va shriftlar repozitoriyda turishi shart (CDN ishlatilmaydi).
+        foreach (['english-pdf.js', 'vendor/jspdf.umd.min.js', 'vendor/IBMPlexSans-Regular.ttf', 'vendor/IBMPlexSans-SemiBold.ttf'] as $file) {
+            $this->assertFileExists(public_path("english-assets/{$file}"));
+        }
+    }
+
     public function test_owner_creates_updates_and_deletes_sets(): void
     {
         $owner = $this->owner();
