@@ -15,6 +15,13 @@
   max-width: 860px; color: var(--ink); font: 16px/1.5 var(--body);
 }
 
+/* alohida sahifa qobig'i: yuqori panel (nom + asosiy saytga qaytish) */
+.myen.myen-page { margin: 0 auto; padding: 0 16px 72px; }
+.myen .top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding-block: 16px; margin-bottom: 20px; border-bottom: 1px solid var(--line); }
+.myen .brand { display: flex; align-items: center; gap: 9px; font: 600 1.3rem var(--display); color: var(--ink); text-decoration: none; }
+.myen .brand i { width: 26px; height: 19px; border-radius: 4px; background: var(--surface); border: 1.5px solid var(--ink); border-top: 5px solid var(--rule); }
+.myen a.btn { text-decoration: none; display: inline-flex; align-items: center; }
+
 .myen * { box-sizing: border-box; }
 .myen h1, .myen h2 { font-family: var(--display); text-wrap: balance; margin: 0; line-height: 1.15; }
 .myen h1 { font-size: 1.9rem; font-weight: 800; }

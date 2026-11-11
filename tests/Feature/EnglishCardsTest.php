@@ -49,7 +49,11 @@ class EnglishCardsTest extends TestCase
         $owner = $this->owner();
 
         $this->actingAs($owner)->get(route('profile.edit'))->assertOk()->assertSee(route('english.index'))->assertSee('Ingliz tili');
-        $this->actingAs($owner)->get(route('english.index'))->assertOk()->assertSee('english-app')->assertSee('english-assets/english.js');
+        // Alohida sayt ko'rinishi: asosiy saytning yon menyusi yo'q, faqat qaytish tugmasi bor.
+        $this->actingAs($owner)->get(route('english.index'))->assertOk()
+            ->assertSee('english-app')->assertSee('english-assets/english.js')
+            ->assertSee("So'rovnomaga qaytish")->assertSee(route('app.home'))
+            ->assertDontSee('side-nav__item');
     }
 
     public function test_owner_creates_updates_and_deletes_sets(): void
