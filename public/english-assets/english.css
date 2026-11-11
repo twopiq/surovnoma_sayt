@@ -81,6 +81,19 @@
 .myen .btn.sm { padding: 6px 10px; font-size: .85rem; }
 .myen .term.fresh { animation: fresh 1.6s ease-out; }
 @keyframes fresh { from { background: var(--accent-soft); } to { background: transparent; } }
+.myen .term.verbs { grid-template-columns: 26px 1fr 1fr 1fr 1.4fr 112px 68px; }
+.myen .term.verbs .tact.wide { grid-column: 6 / 8; }
+.myen .qadd.verbs { grid-template-columns: 1fr 1fr 1fr 1.4fr auto; }
+.myen #rows { display: flex; flex-direction: column; }
+.myen #rows.verbs .erow { grid-template-columns: 26px 1fr 1fr 1fr 1.4fr auto; }
+.myen .kinds { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; border: 0; padding: 0; margin: 0; min-width: 0; }
+.myen .kinds legend { padding: 0; margin-bottom: 6px; }
+.myen .kind { display: flex; align-items: center; gap: 10px; padding: 12px 14px; background: var(--surface); border: 1.5px solid var(--line); border-radius: 10px; cursor: pointer; }
+.myen .kind:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); }
+.myen .kind input { width: 18px; height: 18px; flex: none; padding: 0; border-radius: 50%; accent-color: var(--accent); color: var(--accent); }
+.myen .kind > span { display: flex; flex-direction: column; min-width: 0; }
+.myen .face.back { flex-direction: column; gap: 10px; }
+.myen .face .forms { font: 500 .6em var(--body); color: var(--muted); }
 .myen .qadd { display: grid; grid-template-columns: 1fr 1.3fr auto; gap: 8px; padding: 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
 .myen .qhint { justify-content: space-between; margin: 6px 0 12px; }
 .myen #tq { margin-bottom: 10px; }
@@ -144,18 +157,29 @@
   .myen .modes { grid-template-columns: 1fr 1fr; }
   .myen .term { grid-template-columns: 1fr auto; gap: 2px 10px; padding: 10px 12px; }
   .myen .term.thead, .myen .term .num { display: none; }
-  .myen .term .t, .myen .term .et { grid-column: 1; grid-row: 1; }
-  .myen .term .d, .myen .term .ed { grid-column: 1; grid-row: 2; }
+  .myen .term .t, .myen .term input[data-k="term"] { grid-column: 1; grid-row: 1; }
+  .myen .term .d, .myen .term input[data-k="def"] { grid-column: 1; grid-row: 2; }
   .myen .term .d { color: var(--muted); }
   .myen .term .lvl { grid-column: 1; grid-row: 3; margin-top: 4px; }
   .myen .term .tact { grid-column: 2; grid-row: 1 / 4; }
   .myen .term .tact.wide { grid-column: 1 / 3; grid-row: 3; justify-content: flex-start; margin-top: 6px; }
-  .myen .term.busy .ed { margin-top: 6px; }
-  .myen .qadd { grid-template-columns: 1fr; }
+  .myen .qadd, .myen .qadd.verbs { grid-template-columns: 1fr; }
+  .myen .term.verbs { grid-template-columns: 1fr 1fr 1fr auto; }
+  .myen .term.verbs .t, .myen .term.verbs input { grid-column: auto; grid-row: 1; }
+  .myen .term.verbs .d, .myen .term.verbs input[data-k="def"] { grid-column: 1 / 4; grid-row: 2; }
+  .myen .term.verbs .lvl { grid-column: 1 / 4; }
+  .myen .term.verbs .tact { grid-column: 4; }
+  .myen .term.verbs .tact.wide { grid-column: 1 / 5; }
+  .myen .term.busy input[data-k="def"] { margin-top: 6px; }
+  .myen .kinds { grid-template-columns: 1fr; }
+  .myen #rows.verbs .erow { grid-template-columns: 1fr 1fr 1fr auto; }
+  .myen #rows.verbs .erow::before { display: none; }
+  .myen #rows.verbs .erow input[data-k="def"] { grid-column: 1 / 4; grid-row: 2; }
+  .myen #rows.verbs .erow .btn { grid-column: 4; grid-row: 1 / 3; }
   .myen .opts { grid-template-columns: 1fr; }
   .myen .erow { grid-template-columns: 22px 1fr auto; }
   .myen .erow::before { grid-row: 1 / 3; }
-  .myen .erow .d { grid-column: 2; grid-row: 2; }
+  .myen .erow input[data-k="def"] { grid-column: 2; grid-row: 2; }
   .myen .erow .btn { grid-row: 1 / 3; grid-column: 3; }
   .myen .board { grid-template-columns: repeat(3, 1fr); }
   .myen .tile { min-height: 84px; font-size: .9rem; }

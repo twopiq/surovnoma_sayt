@@ -25,7 +25,7 @@ window.EnglishPdf = (() => {
   // Atama ustunining ulushini shunday tanlaymizki, eng ko'p atama "qisqa" (yarim qatorga sig'adigan) bo'lsin.
   function chooseSplit(items, inner) {
     let best = { count: -1 };
-    for (let share = 0.3; share <= 0.6001; share += 0.05) {
+    for (let share = 0.3; share <= 0.7001; share += 0.05) {
       const termW = inner * share - PAD * 2, defW = inner * (1 - share) - PAD * 2;
       const count = items.filter(it => it.tw <= termW && it.dw <= defW).length;
       if (count > best.count) best = { count, share };
@@ -46,7 +46,8 @@ window.EnglishPdf = (() => {
   }
 
   async function make(source) {
-    const set = { title: fix(source.title), desc: fix(source.desc || ''), cards: source.cards.map(c => ({ term: fix(c.term), def: fix(c.def) })) };
+    const verbs = source.kind === 'verbs', termLabel = verbs ? "FE'L: V1 – V2 – V3" : 'ATAMA', defLabel = verbs ? 'TARJIMA' : "TA'RIF"; // fe'lning uch shakli bitta ustunda
+    const set = { title: fix(source.title), desc: fix(source.desc || ''), cards: source.cards.map(c => ({ term: fix(verbs ? `${c.term} – ${c.v2} – ${c.v3}` : c.term), def: fix(c.def) })) };
     const [regular, bold] = await loadFonts();
     const doc = new window.jspdf.jsPDF({ unit: 'pt', format: 'a4' });
     doc.addFileToVFS('PlexR.ttf', regular); doc.addFont('PlexR.ttf', 'Plex', 'normal');
@@ -69,7 +70,7 @@ window.EnglishPdf = (() => {
     function tableHead() {
       doc.setFillColor(...BAND).rect(PAGE.margin, y, W, HEAD, 'F');
       doc.setFont('Plex', 'bold').setFontSize(8).setTextColor(...MUTED);
-      const cols = (x, tW) => { doc.text('№', x + PAD, y + 13); doc.text('ATAMA', x + NUM + PAD, y + 13); doc.text("TA'RIF", x + NUM + tW + PAD, y + 13); };
+      const cols = (x, tW) => { doc.text('№', x + PAD, y + 13); doc.text(termLabel, x + NUM + PAD, y + 13); doc.text(defLabel, x + NUM + tW + PAD, y + 13); };
       if (twoColumns) { cols(PAGE.margin, termW); cols(PAGE.margin + half + GUTTER, termW); } else cols(PAGE.margin, fullTermW);
       y += HEAD;
       stroke(); doc.line(PAGE.margin, y, PAGE.margin + W, y);
@@ -87,7 +88,7 @@ window.EnglishPdf = (() => {
     doc.text(title, PAGE.margin, y + 16, { lineHeightFactor: 1.2 }); y += title.length * 21.6 + 4;
     doc.setFont('Plex', 'normal').setFontSize(10).setTextColor(...MUTED);
     if (set.desc) { const d = doc.splitTextToSize(set.desc, W); doc.text(d, PAGE.margin, y + 10, { lineHeightFactor: 1.3 }); y += d.length * 13 + 2; }
-    doc.text(`${set.cards.length} ta atama`, PAGE.margin, y + 10); y += 24;
+    doc.text(`${set.cards.length} ta ${verbs ? "fe'l" : 'atama'}`, PAGE.margin, y + 10); y += 24;
     tableHead();
 
     for (const r of rows) {

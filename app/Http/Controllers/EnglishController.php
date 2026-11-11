@@ -6,6 +6,7 @@ use App\Models\EnglishSet;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
@@ -25,7 +26,9 @@ class EnglishController extends Controller
 
     public function store(Request $request): JsonResponse
     {
-        $set = new EnglishSet($this->validated($request));
+        $kind = $request->validate(['kind' => ['nullable', Rule::in([EnglishSet::KIND_WORDS, EnglishSet::KIND_VERBS])]])['kind'] ?? EnglishSet::KIND_WORDS;
+
+        $set = new EnglishSet(['kind' => $kind] + $this->validated($request, $kind));
         $set->user()->associate($request->user());
         $set->save();
 
@@ -35,7 +38,8 @@ class EnglishController extends Controller
     public function update(Request $request, int $set): JsonResponse
     {
         $model = $this->query($request)->findOrFail($set);
-        $model->update($this->validated($request));
+        // To'plam turi yaratilgandan keyin o'zgarmaydi.
+        $model->update($this->validated($request, $model->kind));
 
         return response()->json($model->toClient());
     }
@@ -53,8 +57,10 @@ class EnglishController extends Controller
         return EnglishSet::query()->whereBelongsTo($request->user());
     }
 
-    private function validated(Request $request): array
+    private function validated(Request $request, string $kind): array
     {
+        $verbs = $kind === EnglishSet::KIND_VERBS;
+
         $data = $request->validate([
             'title' => ['required', 'string', 'max:200'],
             'desc' => ['nullable', 'string', 'max:500'],
@@ -63,6 +69,8 @@ class EnglishController extends Controller
             'cards.*.id' => ['nullable', 'string', 'max:40', 'regex:/^[\w-]+$/'],
             'cards.*.term' => ['nullable', 'string', 'max:1000'],
             'cards.*.def' => ['nullable', 'string', 'max:1000'],
+            'cards.*.v2' => ['nullable', 'string', 'max:200'],
+            'cards.*.v3' => ['nullable', 'string', 'max:200'],
             'cards.*.lvl' => ['nullable', 'integer', 'between:0,2'],
         ]);
 
@@ -70,14 +78,18 @@ class EnglishController extends Controller
             ->map(fn (array $card): array => [
                 'id' => $card['id'] ?? Str::random(8),
                 'term' => trim((string) ($card['term'] ?? '')),
+                ...($verbs ? ['v2' => trim((string) ($card['v2'] ?? '')), 'v3' => trim((string) ($card['v3'] ?? ''))] : []),
                 'def' => trim((string) ($card['def'] ?? '')),
                 'lvl' => (int) ($card['lvl'] ?? 0),
             ])
-            ->filter(fn (array $card): bool => $card['term'] !== '' && $card['def'] !== '')
+            // Chala to'ldirilgan qatorlar tashlab yuboriladi (fe'lda uchala shakl ham shart).
+            ->filter(fn (array $card): bool => ! in_array('', array_diff_key($card, ['lvl' => 0]), true))
             ->values();
 
         if ($cards->count() < 2) {
-            throw ValidationException::withMessages(['cards' => __("Kamida 2 ta atama va ta'rifini to'ldiring.")]);
+            throw ValidationException::withMessages(['cards' => $verbs
+                ? __("Kamida 2 ta fe'lni uchala shakli va tarjimasi bilan to'ldiring.")
+                : __("Kamida 2 ta atama va ta'rifini to'ldiring.")]);
         }
 
         return [
