@@ -61,6 +61,9 @@
 
 /* set page */
 .myen .modes { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-block: 22px; }
+.myen .modes.five { grid-template-columns: repeat(5, 1fr); }
+.myen .pairf { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.myen .field { display: flex; flex-direction: column; gap: 5px; font-size: .85rem; font-weight: 600; color: var(--muted); }
 .myen .mode { display: flex; flex-direction: column; gap: 3px; text-align: left; font: inherit; color: var(--ink); cursor: pointer; background: var(--surface); border: 1.5px solid var(--line); border-radius: 14px; padding: 14px; }
 .myen .mode:hover { border-color: var(--accent); background: var(--accent-soft); }
 .myen .mode b { font: 600 1.05rem var(--display); }
@@ -154,7 +157,8 @@
 
 @media (max-width: 640px) {
   .myen h1 { font-size: 1.55rem; }
-  .myen .modes { grid-template-columns: 1fr 1fr; }
+  .myen .modes, .myen .modes.five { grid-template-columns: 1fr 1fr; }
+  .myen .pairf { grid-template-columns: 1fr; }
   .myen .term { grid-template-columns: 1fr auto; gap: 2px 10px; padding: 10px 12px; }
   .myen .term.thead, .myen .term .num { display: none; }
   .myen .term .t, .myen .term input[data-k="term"] { grid-column: 1; grid-row: 1; }

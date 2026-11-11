@@ -153,9 +153,10 @@ function setView(id) {
   show(`<button class="btn quiet" data-act="home">← Kutubxona</button>
     <div class="head" style="margin-top:8px"><div style="min-width:0"><h1>${esc(s.title)}</h1>${s.desc ? `<p class="muted" style="margin-top:6px">${esc(s.desc)}</p>` : ''}</div>
       <div class="rowf" id="tools"><button class="btn" data-act="pdf">PDF saqlash</button><button class="btn" data-act="edit">Tahrirlash</button><button class="btn danger" data-act="del">O'chirish</button></div></div>
-    <div class="modes">
+    <div class="modes${verbs ? ' five' : ''}">
       <button class="mode" data-act="m" data-m="cards"><b>Kartochkalar</b><span class="small muted">Aylantirib ko'rib chiqing</span></button>
       <button class="mode" data-act="m" data-m="learn"><b>O'rganish</b><span class="small muted">Bosqichma-bosqich yodlang</span></button>
+      ${verbs ? `<button class="mode" data-act="m" data-m="forms"><b>Shakllar</b><span class="small muted">V2 va V3 ni yozib mashq qiling</span></button>` : ''}
       <button class="mode" data-act="m" data-m="test"><b>Test</b><span class="small muted">Bilimingizni tekshiring</span></button>
       <button class="mode" data-act="m" data-m="match"><b>Juftlash</b><span class="small muted">Vaqtga qarshi o'yin</span></button>
     </div>
@@ -175,7 +176,7 @@ function setView(id) {
       },
       edit: () => nav(editor, id),
       bulk: () => nav(editor, id, true),
-      m: b => nav({ cards, learn, test, match }[b.dataset.m], id),
+      m: b => nav({ cards, learn, forms, test, match }[b.dataset.m], id),
       del: () => { $('#tools').innerHTML = `<span class="small">To'plam butunlay o'chirilsinmi?</span><button class="btn danger" data-act="delYes">Ha, o'chirish</button><button class="btn" data-act="delNo">Yo'q</button>`; },
       delYes: async b => {
         b.disabled = true;
@@ -439,18 +440,75 @@ function learn(id) {
   round();
 }
 
+/* ---------- Forms: given V1 and the translation, type V2 and V3; missed verbs come back until all are right ---------- */
+function forms(id) {
+  const s = get(id);
+  const total = s.cards.length;
+  let queue = shuffle(s.cards), cur, firstTry = 0, missed = new Set();
+  const head = () => { const done = total - queue.length; return shead(id, Math.round(done / total * 100), `${done} / ${total}`); };
+  const verb = () => `<div><div class="label">V2 va V3 shakllarini yozing</div><div class="prompt" style="margin-bottom:4px">${esc(cur.term)}</div><p class="muted">${esc(cur.def)}</p></div>`;
+  function ask() {
+    cur = queue[0];
+    show(`${head()}<form class="panel stack" id="ff">${verb()}
+      <div class="pairf">
+        <label class="field">V2 — o'tgan zamon<input id="f-v2" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
+        <label class="field">V3 — o'tgan zamon sifatdoshi<input id="f-v3" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
+      </div>
+      <div class="rowf end"><button type="button" class="btn quiet" data-act="skip">Bilmayman</button><button class="btn primary">Tekshirish</button></div></form>`,
+      { skip: () => check('', '') });
+    $('#ff').onsubmit = e => {
+      e.preventDefault();
+      const a = $('#f-v2').value.trim(), b = $('#f-v3').value.trim();
+      if (!a) return $('#f-v2').focus();
+      if (!b) return $('#f-v3').focus();   // Enter in V2 moves on to V3
+      check(a, b);
+    };
+    $('#f-v2').focus();
+  }
+  function check(a, b) {
+    const okA = isRight(a, cur.v2), okB = isRight(b, cur.v3);
+    const line = (name, given, right, ok) => ok
+      ? `<div class="note ok">${name}: ${esc(right)}</div>`
+      : `<div class="note bad"><div class="small">${name} — ${given ? 'siz yozdingiz: ' + esc(given) : 'javob berilmagan'}</div><div><b>To'g'ri javob:</b> ${esc(right)}</div></div>`;
+    queue.shift();
+    if (okA && okB) {
+      if (!missed.has(cur.id)) firstTry++;
+      show(`${head()}<div class="panel stack">${verb()}${line('V2', a, cur.v2, true)}${line('V3', b, cur.v3, true)}</div>`);
+      timers.push(setTimeout(next, 900));
+    } else {
+      missed.add(cur.id);
+      queue.splice(Math.min(3, queue.length), 0, cur);   // comes back a few verbs later
+      show(`${head()}<div class="panel stack">${verb()}${line('V2', a, cur.v2, okA)}${line('V3', b, cur.v3, okB)}
+        <div class="rowf end"><button class="btn primary" data-act="cont">Davom etish</button></div></div>`,
+        { cont: next }, e => { if (e.key === 'Enter') next(); });
+    }
+  }
+  function next() { queue.length ? ask() : done(); }
+  function done() {
+    const hard = s.cards.filter(c => missed.has(c.id));
+    show(`${shead(id, 100, `${total} / ${total}`)}<div class="panel stack"><h1>Mashq tugadi</h1>
+      <p>${total} ta fe'ldan <b>${firstTry}</b> tasini birinchi urinishda to'g'ri yozdingiz.</p>
+      ${hard.length ? `<div><div class="label" style="margin-bottom:6px">Qiynalgan fe'llaringiz</div>${hard.map(c => `<div><b>${esc(c.term)}</b> – ${esc(c.v2)} – ${esc(c.v3)}</div>`).join('')}</div>` : ''}
+      <div class="rowf"><button class="btn primary" data-act="again">Yana mashq qilish</button><button class="btn" data-act="open" data-id="${id}">To'plamga qaytish</button></div></div>`,
+      { again: () => nav(forms, id) });
+  }
+  ask();
+}
+
 /* ---------- Test: a mix of multiple choice, true/false and typed answers ---------- */
 function test(id) {
   const s = get(id);
   const qs = shuffle(s.cards).slice(0, 20).map((card, n) => {
     const opts = options(s, card);
-    let type = ['mc', 'tf', 'write'][n % 3];
-    if (opts.length < 2 && type !== 'write') type = 'write';
+    const kinds = isVerbs(s) ? ['mc', 'forms', 'tf', 'write'] : ['mc', 'tf', 'write'];   // verb sets also ask for V2 and V3
+    let type = kinds[n % kinds.length];
+    if (opts.length < 2 && (type === 'mc' || type === 'tf')) type = 'write';
     if (type === 'tf') { const truth = Math.random() < .5; return { type, card, truth, shown: truth ? card.def : opts.find(o => o !== card.def) }; }
     return { type, card, opts };
   });
   const body = (q, n) => q.type === 'mc' ? q.opts.map((o, j) => `<label class="choice"><input type="radio" name="q${n}" value="${j}">${esc(o)}</label>`).join('')
     : q.type === 'tf' ? `<p>Ta'rifi: <b>${esc(q.shown)}</b></p><label class="choice"><input type="radio" name="q${n}" value="1">To'g'ri</label><label class="choice"><input type="radio" name="q${n}" value="0">Noto'g'ri</label>`
+    : q.type === 'forms' ? `<p class="small muted">${esc(q.card.def)} — V2 va V3 shakllarini yozing</p><div class="pairf"><input name="q${n}a" id="t-${n}a" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="V2" aria-label="V2"><input name="q${n}b" id="t-${n}b" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="V3" aria-label="V3"></div>`
     : `<input name="q${n}" id="t-${n}" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Ta'rifini yozing" aria-label="Javob">`;
   show(`${shead(id, 0, `${qs.length} savol`)}<form id="tf" class="stack"><h1>Test</h1>
     ${qs.map((q, n) => `<div class="q" id="q${n}"><div class="label">${n + 1}-savol</div><div class="p">${esc(q.card.term)}</div>${body(q, n)}</div>`).join('')}
@@ -460,14 +518,19 @@ function test(id) {
     const f = new FormData(e.target); let score = 0;
     const out = qs.map((q, n) => {
       const v = f.get('q' + n);
-      let good, given;
+      let good, given, right = q.card.def;
       if (q.type === 'mc') { given = v == null ? '' : q.opts[+v]; good = given === q.card.def; }
       else if (q.type === 'tf') { given = v == null ? '' : v === '1' ? "To'g'ri" : "Noto'g'ri"; good = v != null && (v === '1') === q.truth; }
+      else if (q.type === 'forms') {
+        const a = (f.get(`q${n}a`) || '').trim(), b = (f.get(`q${n}b`) || '').trim();
+        given = [a, b].filter(Boolean).join(', '); right = `${q.card.v2}, ${q.card.v3}`;
+        good = isRight(a, q.card.v2) && isRight(b, q.card.v3);
+      }
       else { given = (v || '').trim(); good = isRight(given, q.card.def); }
       if (good) score++;
       return `<div class="q ${good ? 'ok' : 'bad'}"><div class="label">${n + 1}-savol · ${good ? "to'g'ri" : 'xato'}</div><div class="p">${esc(q.card.term)}</div>
         ${q.type === 'tf' ? `<p class="small muted">Ko'rsatilgan ta'rif: ${esc(q.shown)}</p>` : ''}
-        ${good ? `<div class="note ok">${esc(q.card.def)}</div>` : `<div class="note bad"><div class="small">Sizning javobingiz: ${given ? esc(given) : 'javob berilmagan'}</div><div><b>To'g'ri javob:</b> ${esc(q.card.def)}</div></div>`}</div>`;
+        ${good ? `<div class="note ok">${esc(right)}</div>` : `<div class="note bad"><div class="small">Sizning javobingiz: ${given ? esc(given) : 'javob berilmagan'}</div><div><b>To'g'ri javob:</b> ${esc(right)}</div></div>`}</div>`;
     });
     const pct = Math.round(score / qs.length * 100);
     show(`${shead(id, pct, pct + '%')}<div class="stack"><div class="panel stack"><div class="big">${pct}%</div>
