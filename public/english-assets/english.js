@@ -73,6 +73,14 @@ function home() {
   if (q) q.oninput = () => { $('#list').innerHTML = cards(S.sets.filter(s => s.title.toLowerCase().includes(q.value.trim().toLowerCase()))); };
 }
 
+/* ---------- PDF: the generator and its library are loaded on first use ---------- */
+const ASSETS = document.currentScript.src.replace(/[^/]*$/, '');
+let pdfReady;
+function loadPdf() {
+  const script = src => new Promise((ok, fail) => { const el = document.createElement('script'); el.src = ASSETS + src; el.onload = ok; el.onerror = fail; document.head.append(el); });
+  return pdfReady ||= script('vendor/jspdf.umd.min.js').then(() => script('english-pdf.js')).catch(e => { pdfReady = null; throw e; });
+}
+
 /* ---------- Set page ---------- */
 const LVL = ['Yangi', "O'rganilmoqda", "O'zlashtirildi"];
 const ICON = {
@@ -88,7 +96,7 @@ function setView(id) {
 
   show(`<button class="btn quiet" data-act="home">← Kutubxona</button>
     <div class="head" style="margin-top:8px"><div style="min-width:0"><h1>${esc(s.title)}</h1>${s.desc ? `<p class="muted" style="margin-top:6px">${esc(s.desc)}</p>` : ''}</div>
-      <div class="rowf" id="tools"><button class="btn" data-act="edit">Tahrirlash</button><button class="btn danger" data-act="del">O'chirish</button></div></div>
+      <div class="rowf" id="tools"><button class="btn" data-act="pdf">PDF saqlash</button><button class="btn" data-act="edit">Tahrirlash</button><button class="btn danger" data-act="del">O'chirish</button></div></div>
     <div class="modes">
       <button class="mode" data-act="m" data-m="cards"><b>Kartochkalar</b><span class="small muted">Aylantirib ko'rib chiqing</span></button>
       <button class="mode" data-act="m" data-m="learn"><b>O'rganish</b><span class="small muted">Bosqichma-bosqich yodlang</span></button>
@@ -105,6 +113,12 @@ function setView(id) {
     <input id="tq" type="search" placeholder="Atamalar ichidan qidirish" aria-label="Atamalar ichidan qidirish" hidden>
     <div id="tbox"></div>`,
     {
+      pdf: async b => {
+        b.disabled = true; b.textContent = 'Tayyorlanmoqda…';
+        try { await loadPdf(); await window.EnglishPdf.save(s); }
+        catch (e) { toast("PDF tayyorlanmadi. Internetni tekshirib, qayta urinib ko'ring."); }
+        b.disabled = false; b.textContent = 'PDF saqlash';
+      },
       edit: () => nav(editor, id),
       bulk: () => nav(editor, id, true),
       m: b => nav({ cards, learn, test, match }[b.dataset.m], id),
