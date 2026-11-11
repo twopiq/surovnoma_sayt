@@ -12,6 +12,7 @@ use App\Http\Controllers\Admin\UserApprovalController;
 use App\Http\Controllers\AppHomeController;
 use App\Http\Controllers\AppDashboardController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\EnglishController;
 use App\Http\Controllers\ExecutorTicketController;
 use App\Http\Controllers\GuestTicketController;
 use App\Http\Controllers\HomeController;
@@ -88,6 +89,15 @@ Route::middleware(['auth', 'approved'])->group(function () {
         Route::post('/clear-all', [NotificationController::class, 'destroyAll'])->name('clear-all');
         Route::delete('/{notification}', [NotificationController::class, 'destroy'])->name('destroy');
         Route::get('/{notification}', [NotificationController::class, 'show'])->name('show');
+    });
+
+    // "Ingliz tili" kartochkalari — faqat ruxsat berilgan akkaunt (can_access_english) uchun
+    Route::prefix('english')->name('english.')->middleware('english')->group(function () {
+        Route::get('/', [EnglishController::class, 'index'])->name('index');
+        Route::get('/sets', [EnglishController::class, 'sets'])->name('sets.index');
+        Route::post('/sets', [EnglishController::class, 'store'])->name('sets.store');
+        Route::put('/sets/{set}', [EnglishController::class, 'update'])->whereNumber('set')->name('sets.update');
+        Route::delete('/sets/{set}', [EnglishController::class, 'destroy'])->whereNumber('set')->name('sets.destroy');
     });
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

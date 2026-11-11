@@ -62,6 +62,7 @@ class User extends Authenticatable implements HasLocalePreference
             'telegram_notifications_enabled' => 'boolean',
             'is_active' => 'boolean',
             'can_access_app_dashboard' => 'boolean',
+            'can_access_english' => 'boolean',
             'availability_status' => AvailabilityStatus::class,
             'password' => 'hashed',
         ];
@@ -134,6 +135,12 @@ class User extends Authenticatable implements HasLocalePreference
         }
 
         return false;
+    }
+
+    /** "Ingliz tili" bo'limi: ruxsat faqat `php artisan english:access` orqali beriladi. */
+    public function canAccessEnglish(): bool
+    {
+        return (bool) $this->can_access_english;
     }
 
     public function currentExecutorWorkloadUnits(?int $exceptTicketId = null): int
