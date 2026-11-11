@@ -15,6 +15,13 @@
   max-width: 860px; color: var(--ink); font: 16px/1.5 var(--body);
 }
 
+/* alohida sahifa qobig'i: yuqori panel (nom + asosiy saytga qaytish) */
+.myen.myen-page { margin: 0 auto; padding: 0 16px 72px; }
+.myen .top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding-block: 16px; margin-bottom: 20px; border-bottom: 1px solid var(--line); }
+.myen .brand { display: flex; align-items: center; gap: 9px; font: 600 1.3rem var(--display); color: var(--ink); text-decoration: none; }
+.myen .brand i { width: 26px; height: 19px; border-radius: 4px; background: var(--surface); border: 1.5px solid var(--ink); border-top: 5px solid var(--rule); }
+.myen a.btn { text-decoration: none; display: inline-flex; align-items: center; }
+
 .myen * { box-sizing: border-box; }
 .myen h1, .myen h2 { font-family: var(--display); text-wrap: balance; margin: 0; line-height: 1.15; }
 .myen h1 { font-size: 1.9rem; font-weight: 800; }
@@ -57,17 +64,34 @@
 .myen .mode { display: flex; flex-direction: column; gap: 3px; text-align: left; font: inherit; color: var(--ink); cursor: pointer; background: var(--surface); border: 1.5px solid var(--line); border-radius: 14px; padding: 14px; }
 .myen .mode:hover { border-color: var(--accent); background: var(--accent-soft); }
 .myen .mode b { font: 600 1.05rem var(--display); }
-.myen .terms { display: flex; flex-direction: column; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; }
-.myen .term { display: grid; grid-template-columns: 1fr 1.3fr auto; gap: 14px; align-items: center; padding: 12px 16px; border-top: 1px solid var(--line); }
+.myen .terms { display: flex; flex-direction: column; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+.myen .term { display: grid; grid-template-columns: 26px 1fr 1.3fr 112px 68px; gap: 12px; align-items: center; padding: 9px 14px; border-top: 1px solid var(--line); }
 .myen .term:first-child { border-top: 0; }
+.myen .term:not(.thead):hover { background: var(--bg); }
+.myen .term.thead { padding-block: 8px; background: var(--sunk); font-size: .72rem; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); }
 .myen .term > div { min-width: 0; overflow-wrap: anywhere; }
 .myen .term .t { font-weight: 600; }
+.myen .term .num { font-size: .8rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.myen .term .lvl { justify-self: start; }
+.myen .term input { padding: 7px 10px; }
+.myen .tact { display: flex; gap: 2px; justify-content: flex-end; align-items: center; }
+.myen .tact.wide { grid-column: 4 / 6; gap: 6px; }
+.myen .ib { display: grid; place-items: center; width: 32px; height: 32px; border: 0; border-radius: 6px; background: none; color: var(--muted); cursor: pointer; }
+.myen .ib:hover { background: var(--sunk); color: var(--ink); }
+.myen .btn.sm { padding: 6px 10px; font-size: .85rem; }
+.myen .term.fresh { animation: fresh 1.6s ease-out; }
+@keyframes fresh { from { background: var(--accent-soft); } to { background: transparent; } }
+.myen .qadd { display: grid; grid-template-columns: 1fr 1.3fr auto; gap: 8px; padding: 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
+.myen .qhint { justify-content: space-between; margin: 6px 0 12px; }
+.myen #tq { margin-bottom: 10px; }
 .myen .lvl { font-size: .72rem; font-weight: 600; padding: 3px 9px; border-radius: 99px; background: var(--sunk); color: var(--muted); white-space: nowrap; }
 .myen .lvl.l1 { background: var(--mid-soft); color: var(--mid); }
 .myen .lvl.l2 { background: var(--ok-soft); color: var(--ok); }
 
 /* editor */
-.myen .erow { display: grid; grid-template-columns: 1fr 1fr auto; gap: 8px; align-items: center; }
+.myen #rows { counter-reset: r; }
+.myen .erow { display: grid; grid-template-columns: 26px 1fr 1fr auto; gap: 8px; align-items: center; }
+.myen .erow::before { counter-increment: r; content: counter(r); font-size: .8rem; color: var(--muted); text-align: center; font-variant-numeric: tabular-nums; }
 .myen .err { color: var(--bad); font-weight: 600; }
 
 /* study */
@@ -118,13 +142,21 @@
 @media (max-width: 640px) {
   .myen h1 { font-size: 1.55rem; }
   .myen .modes { grid-template-columns: 1fr 1fr; }
-  .myen .term { grid-template-columns: 1fr auto; gap: 2px 12px; }
-  .myen .term .d { grid-column: 1; grid-row: 2; color: var(--muted); }
-  .myen .term .lvl { grid-row: 1 / 3; grid-column: 2; }
+  .myen .term { grid-template-columns: 1fr auto; gap: 2px 10px; padding: 10px 12px; }
+  .myen .term.thead, .myen .term .num { display: none; }
+  .myen .term .t, .myen .term .et { grid-column: 1; grid-row: 1; }
+  .myen .term .d, .myen .term .ed { grid-column: 1; grid-row: 2; }
+  .myen .term .d { color: var(--muted); }
+  .myen .term .lvl { grid-column: 1; grid-row: 3; margin-top: 4px; }
+  .myen .term .tact { grid-column: 2; grid-row: 1 / 4; }
+  .myen .term .tact.wide { grid-column: 1 / 3; grid-row: 3; justify-content: flex-start; margin-top: 6px; }
+  .myen .term.busy .ed { margin-top: 6px; }
+  .myen .qadd { grid-template-columns: 1fr; }
   .myen .opts { grid-template-columns: 1fr; }
-  .myen .erow { grid-template-columns: 1fr auto; }
-  .myen .erow .d { grid-column: 1; grid-row: 2; }
-  .myen .erow .btn { grid-row: 1 / 3; grid-column: 2; }
+  .myen .erow { grid-template-columns: 22px 1fr auto; }
+  .myen .erow::before { grid-row: 1 / 3; }
+  .myen .erow .d { grid-column: 2; grid-row: 2; }
+  .myen .erow .btn { grid-row: 1 / 3; grid-column: 3; }
   .myen .board { grid-template-columns: repeat(3, 1fr); }
   .myen .tile { min-height: 84px; font-size: .9rem; }
   .myen .controls { grid-template-columns: 1fr 1fr; }

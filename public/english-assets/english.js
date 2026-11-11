@@ -75,9 +75,17 @@ function home() {
 
 /* ---------- Set page ---------- */
 const LVL = ['Yangi', "O'rganilmoqda", "O'zlashtirildi"];
+const ICON = {
+  edit: '<svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13.5 3.5l3 3L7 16H4v-3z"/><path d="M11.5 5.5l3 3"/></svg>',
+  trash: '<svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h12M8 6V4h4v2M6 6l.7 10h6.6L14 6"/></svg>',
+};
 function setView(id) {
   const s = get(id); if (!s) return home();
-  const m = mastered(s);
+  // q: search text; editing / removing: id of the row in that state; fresh: id of the row just added
+  let q = '', editing = null, removing = null, fresh = null;
+  const rowId = b => b.closest('.term').dataset.id;
+  const card = cid => s.cards.find(c => c.id === cid);
+
   show(`<button class="btn quiet" data-act="home">← Kutubxona</button>
     <div class="head" style="margin-top:8px"><div style="min-width:0"><h1>${esc(s.title)}</h1>${s.desc ? `<p class="muted" style="margin-top:6px">${esc(s.desc)}</p>` : ''}</div>
       <div class="rowf" id="tools"><button class="btn" data-act="edit">Tahrirlash</button><button class="btn danger" data-act="del">O'chirish</button></div></div>
@@ -87,10 +95,18 @@ function setView(id) {
       <button class="mode" data-act="m" data-m="test"><b>Test</b><span class="small muted">Bilimingizni tekshiring</span></button>
       <button class="mode" data-act="m" data-m="match"><b>Juftlash</b><span class="small muted">Vaqtga qarshi o'yin</span></button>
     </div>
-    <div class="rowf" style="justify-content:space-between;margin-bottom:10px"><h2>Atamalar (${s.cards.length})</h2><span class="small muted">${m} / ${s.cards.length} o'zlashtirildi</span></div>
-    <div class="terms">${s.cards.map(c => `<div class="term"><div class="t">${esc(c.term)}</div><div class="d">${esc(c.def)}</div><span class="lvl l${c.lvl || 0}">${LVL[c.lvl || 0]}</span></div>`).join('')}</div>`,
+    <div class="rowf" style="justify-content:space-between;margin-bottom:10px"><h2 id="tcount"></h2><span class="small muted" id="tdone"></span></div>
+    <form class="qadd" id="qa">
+      <input id="qa-t" placeholder="Yangi so'z" aria-label="Yangi so'z" autocomplete="off" autocapitalize="off" spellcheck="false">
+      <input id="qa-d" placeholder="Tarjimasi yoki ta'rifi" aria-label="Tarjimasi yoki ta'rifi" autocomplete="off">
+      <button class="btn primary">Qo'shish</button>
+    </form>
+    <div class="rowf qhint"><span class="small muted">Yozing va Enter bosing — so'z darhol ro'yxatga tushadi.</span><button class="btn quiet" data-act="bulk">Tayyor ro'yxatdan qo'shish</button></div>
+    <input id="tq" type="search" placeholder="Atamalar ichidan qidirish" aria-label="Atamalar ichidan qidirish" hidden>
+    <div id="tbox"></div>`,
     {
       edit: () => nav(editor, id),
+      bulk: () => nav(editor, id, true),
       m: b => nav({ cards, learn, test, match }[b.dataset.m], id),
       del: () => { $('#tools').innerHTML = `<span class="small">To'plam butunlay o'chirilsinmi?</span><button class="btn danger" data-act="delYes">Ha, o'chirish</button><button class="btn" data-act="delNo">Yo'q</button>`; },
       delYes: async b => {
@@ -98,11 +114,72 @@ function setView(id) {
         try { await api('DELETE', SETS + '/' + id); S.sets = S.sets.filter(x => x.id !== id); go('#/'); }
         catch (e) { toast(e.message); nav(setView, id); }
       },
+      delNo: () => nav(setView, id),
+      editRow: b => { editing = rowId(b); removing = null; draw(); const el = $('#tbox .et'); el.focus(); el.select(); },
+      rmRow: b => {
+        if (s.cards.length <= 2) return toast("To'plamda kamida 2 ta atama qolishi kerak.");
+        removing = rowId(b); editing = null; draw();
+      },
+      rmYes: b => { s.cards = s.cards.filter(c => c.id !== rowId(b)); removing = null; save(s); draw(); },
+      cancelRow: () => { editing = removing = null; draw(); },
+      saveRow,
     });
+
+  function saveRow() {
+    const c = card(editing), term = $('#tbox .et').value.trim(), def = $('#tbox .ed').value.trim();
+    if (!term || !def) return toast("Atama ham, ta'rifi ham to'ldirilishi kerak.");
+    if (c.term !== term || c.def !== def) { c.term = term; c.def = def; save(s); }
+    editing = null; draw();
+  }
+  function row({ c, n }) {
+    const num = `<span class="num">${n}</span>`;
+    if (editing === c.id) return `<div class="term busy" data-id="${c.id}">${num}<input class="et" aria-label="Atama" value="${esc(c.term)}"><input class="ed" aria-label="Ta'rif" value="${esc(c.def)}">
+      <div class="tact wide"><button class="btn sm primary" data-act="saveRow">Saqlash</button><button class="btn sm" data-act="cancelRow">Bekor</button></div></div>`;
+    if (removing === c.id) return `<div class="term busy" data-id="${c.id}">${num}<div class="t">${esc(c.term)}</div><div class="d">${esc(c.def)}</div>
+      <div class="tact wide"><span class="small">O'chirilsinmi?</span><button class="btn sm danger" data-act="rmYes">Ha</button><button class="btn sm" data-act="cancelRow">Yo'q</button></div></div>`;
+    return `<div class="term${fresh === c.id ? ' fresh' : ''}" data-id="${c.id}">${num}<div class="t">${esc(c.term)}</div><div class="d">${esc(c.def)}</div><span class="lvl l${c.lvl || 0}">${LVL[c.lvl || 0]}</span>
+      <div class="tact"><button class="ib" data-act="editRow" aria-label="Tahrirlash" title="Tahrirlash">${ICON.edit}</button><button class="ib" data-act="rmRow" aria-label="O'chirish" title="O'chirish">${ICON.trash}</button></div></div>`;
+  }
+  function draw() {
+    $('#tcount').textContent = `Atamalar (${s.cards.length})`;
+    $('#tdone').textContent = `${mastered(s)} / ${s.cards.length} o'zlashtirildi`;
+    $('#tq').hidden = s.cards.length <= 8 && !q;
+    const list = s.cards.map((c, i) => ({ c, n: i + 1 })).filter(({ c }) => !q || norm(c.term).includes(q) || norm(c.def).includes(q));
+    $('#tbox').innerHTML = list.length
+      ? `<div class="terms"><div class="term thead"><span>#</span><span>Atama</span><span>Ta'rif</span><span>Holat</span><span></span></div>${list.map(row).join('')}</div>`
+      : `<p class="empty muted">Qidiruv bo'yicha hech narsa topilmadi.</p>`;
+  }
+
+  // Quick add: Enter in the first field moves on, Enter in the second adds the word and returns to the first.
+  $('#qa').onsubmit = e => {
+    e.preventDefault();
+    const t = $('#qa-t'), d = $('#qa-d');
+    let term = t.value.trim(), def = d.value.trim();
+    if (term && !def) { // "apple - olma" typed or pasted into the first field
+      const sep = ['\t', ' - ', ' – ', ' — ', ' = '].find(x => t.value.includes(x));
+      if (sep) { const i = t.value.indexOf(sep); term = t.value.slice(0, i).trim(); def = t.value.slice(i + sep.length).trim(); }
+    }
+    if (!term) return t.focus();
+    if (!def) return d.focus();
+    if (s.cards.some(c => norm(c.term) === norm(term) && norm(c.def) === norm(def))) { toast("Bu so'z ro'yxatda allaqachon bor."); return t.select(); }
+    const c = { id: uid(), term, def, lvl: 0 };
+    s.cards.unshift(c); save(s);
+    t.value = d.value = ''; q = $('#tq').value = ''; editing = removing = null;
+    fresh = c.id; draw(); fresh = null;
+    t.focus();
+  };
+  $('#tq').oninput = e => { q = norm(e.target.value); editing = removing = null; draw(); };
+  $('#tbox').onkeydown = e => {
+    if (!e.target.matches('.et, .ed')) return;
+    if (e.key === 'Enter') { e.preventDefault(); saveRow(); }
+    else if (e.key === 'Escape') { editing = null; draw(); }
+  };
+  $('#tbox').ondblclick = e => { const r = e.target.closest('.term[data-id]'); if (r && !r.classList.contains('busy')) { editing = r.dataset.id; removing = null; draw(); $('#tbox .et').focus(); } };
+  draw();
 }
 
 /* ---------- Editor ---------- */
-function editor(id) {
+function editor(id, openPaste) {
   const s = id ? get(id) : null;
   const row = (c = {}) => `<div class="erow" data-id="${c.id || ''}"><input class="t" placeholder="Atama" aria-label="Atama" value="${esc(c.term)}"><input class="d" placeholder="Ta'rif" aria-label="Ta'rif" value="${esc(c.def)}"><button type="button" class="btn quiet" data-act="rm" aria-label="Qatorni o'chirish">✕</button></div>`;
   show(`<form id="ef" class="stack">
@@ -112,11 +189,12 @@ function editor(id) {
       <input id="f-title" placeholder="To'plam nomi, masalan: Ingliz tili, 5-dars" aria-label="To'plam nomi" value="${esc(s?.title)}">
       <input id="f-desc" placeholder="Qisqa izoh (ixtiyoriy)" aria-label="Izoh" value="${esc(s?.desc)}">
       <div class="rowf" style="justify-content:space-between;margin-top:6px"><h2>Atamalar</h2><button type="button" class="btn quiet" data-act="paste">Tayyor ro'yxatdan qo'shish</button></div>
-      <div class="panel stack" id="pastebox" hidden>
+      <div class="panel stack" id="pastebox"${openPaste ? '' : ' hidden'}>
         <p class="small muted">Har bir qatorga bitta juftlik yozing: <b>atama - ta'rif</b>. Ajratuvchi sifatida tire, tab, tenglik yoki vergul ishlatish mumkin.</p>
         <textarea id="f-paste" aria-label="Ro'yxat" placeholder="apple - olma&#10;book - kitob"></textarea>
         <div class="rowf end"><button type="button" class="btn primary" data-act="addPaste">Ro'yxatga qo'shish</button></div>
       </div>
+      <p class="small muted">Enter — keyingi maydonga o'tadi, oxirgi qatorda yangi qator ochadi.</p>
       <div class="stack" id="rows" style="gap:8px">${(s ? s.cards : [{}, {}, {}]).map(row).join('')}</div>
       <div><button type="button" class="btn" data-act="add">+ Qator qo'shish</button></div>
     </form>`,
@@ -156,7 +234,15 @@ function editor(id) {
       go('#/set/' + id);
     } catch (err) { btn.disabled = false; fail(err.message); }
   };
-  if (!s) $('#f-title').focus();
+  // Enter walks through the fields instead of submitting the whole form by accident.
+  $('#rows').onkeydown = e => {
+    if (e.key !== 'Enter') return;
+    e.preventDefault();
+    const r = e.target.closest('.erow');
+    if (e.target.classList.contains('t')) return r.querySelector('.d').focus();
+    r.nextElementSibling ? r.nextElementSibling.querySelector('.t').focus() : acts.add();
+  };
+  if (openPaste) $('#f-paste').focus(); else if (!s) $('#f-title').focus();
 }
 
 /* ---------- shared study pieces ---------- */
