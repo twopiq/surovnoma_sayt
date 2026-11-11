@@ -23,6 +23,13 @@
         'badge' => $unreadNotificationsCount,
     ];
 
+    $englishItems = ($user?->canAccessEnglish() ?? false) ? [[
+        'label' => 'Ingliz tili',
+        'href' => route('english.index'),
+        'active' => request()->routeIs('english.*'),
+        'icon' => 'book',
+    ]] : [];
+
     if ($isAdmin) {
         // Dizayn tizimi: "Admin menyusi" — A varianti (guruhlangan yon menyu, ichki tablarsiz)
         $pendingUsersCount = \App\Models\User::query()->whereNull('approved_at')->where('is_active', true)->count();
@@ -44,6 +51,7 @@
             ['label' => 'Tizim holati', 'href' => route('admin.system.health'), 'active' => request()->routeIs('admin.system.health'), 'icon' => 'pulse'],
             ['label' => 'Loglar', 'href' => route('admin.system.logs'), 'active' => request()->routeIs('admin.system.logs*'), 'icon' => 'logs'],
             ['group' => ''],
+            ...$englishItems,
             $notificationsItem,
         ];
     } else {
@@ -66,6 +74,7 @@
                 'active' => request()->routeIs('app.dashboard'),
                 'icon' => $isManagerWithDashboard ? 'home' : 'dashboard',
             ]] : []),
+            ...$englishItems,
             $notificationsItem,
         ];
     }
@@ -84,6 +93,7 @@
         'logs' => '<rect x="4" y="3" width="12" height="14" rx="1.5"/><path d="M7 7h6M7 10h6M7 13h4"/>',
         'database' => '<ellipse cx="10" cy="5" rx="6" ry="2.5"/><path d="M4 5v10c0 1.4 2.7 2.5 6 2.5s6-1.1 6-2.5V5M4 10c0 1.4 2.7 2.5 6 2.5s6-1.1 6-2.5"/>',
         'calendar' => '<rect x="3.5" y="4.5" width="13" height="12" rx="1.5"/><path d="M3.5 8h13M7 3v3M13 3v3"/>',
+        'book' => '<path d="M10 5.5C8.5 4.3 6.3 4 3.5 4v11c2.8 0 5 .3 6.5 1.5 1.5-1.2 3.7-1.5 6.5-1.5V4c-2.8 0-5 .3-6.5 1.5zM10 5.5v11"/>',
         'notifications' => '<path d="M5 14V9.5a5 5 0 0 1 10 0V14l1.3 1.8H3.7zM8.3 17.5a2 2 0 0 0 3.4 0"/>',
     ];
 @endphp
