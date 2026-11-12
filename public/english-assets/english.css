@@ -67,36 +67,12 @@
 .myen .mode { display: flex; flex-direction: column; gap: 3px; text-align: left; font: inherit; color: var(--ink); cursor: pointer; background: var(--surface); border: 1.5px solid var(--line); border-radius: 14px; padding: 14px; }
 .myen .mode:hover { border-color: var(--accent); background: var(--accent-soft); }
 .myen .mode b { font: 600 1.05rem var(--display); }
-.myen .terms { display: flex; flex-direction: column; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
-.myen .term { display: grid; grid-template-columns: 44px 1fr 1.3fr 112px 134px; gap: 12px; align-items: center; padding: 9px 14px; border-top: 1px solid var(--line); }
-.myen .term:first-child { border-top: 0; }
-.myen .term:not(.thead):hover { background: var(--bg); }
-.myen .term.thead { padding-block: 8px; background: var(--sunk); font-size: .72rem; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); }
-.myen .term > div { min-width: 0; overflow-wrap: anywhere; }
-.myen .term .t { font-weight: 600; }
-.myen .term .num { font-size: .8rem; color: var(--muted); font-variant-numeric: tabular-nums; }
-.myen .term .lvl { justify-self: start; }
-.myen .term input { padding: 7px 10px; }
-.myen .tact { display: flex; gap: 2px; justify-content: flex-end; align-items: center; }
-.myen .tact.wide { grid-column: 4 / 6; gap: 6px; }
 .myen .ib { display: grid; place-items: center; width: 32px; height: 32px; border: 0; border-radius: 6px; background: none; color: var(--muted); cursor: pointer; }
 .myen .ib:disabled { opacity: .3; cursor: default; }
 .myen .ib:disabled:hover { background: none; color: var(--muted); }
-.myen .term .num { display: flex; align-items: center; gap: 4px; }
-.myen .grip { display: inline-grid; place-items: center; width: 18px; height: 24px; margin-left: -6px; border-radius: 4px; color: var(--muted); cursor: grab; touch-action: none; }
-.myen .grip:hover { background: var(--sunk); color: var(--ink); }
-.myen .term.dragging { opacity: .4; }
-.myen .term.drop-before { box-shadow: inset 0 2px 0 var(--accent); }
-.myen .term.drop-after { box-shadow: inset 0 -2px 0 var(--accent); }
 .myen .ib:hover { background: var(--sunk); color: var(--ink); }
 .myen .btn.sm { padding: 6px 10px; font-size: .85rem; }
-.myen .term.fresh { animation: fresh 1.6s ease-out; }
 @keyframes fresh { from { background: var(--accent-soft); } to { background: transparent; } }
-.myen .term.verbs { grid-template-columns: 44px 1fr 1fr 1fr 1.4fr 112px 134px; }
-.myen .term.verbs .tact.wide { grid-column: 6 / 8; }
-.myen .qadd.verbs { grid-template-columns: 1fr 1fr 1fr 1.4fr auto; }
-.myen #rows { display: flex; flex-direction: column; }
-.myen #rows.verbs .erow { grid-template-columns: 26px 1fr 1fr 1fr 1.4fr auto; }
 .myen .kinds { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; border: 0; padding: 0; margin: 0; min-width: 0; }
 .myen .kinds legend { padding: 0; margin-bottom: 6px; }
 .myen .kind { display: flex; align-items: center; gap: 10px; padding: 12px 14px; background: var(--surface); border: 1.5px solid var(--line); border-radius: 10px; cursor: pointer; }
@@ -105,7 +81,30 @@
 .myen .kind > span { display: flex; flex-direction: column; min-width: 0; }
 .myen .face.back { flex-direction: column; gap: 10px; }
 .myen .face .forms { font: 500 .6em var(--body); color: var(--muted); }
-.myen .qadd { display: grid; grid-template-columns: 1fr 1.3fr auto; gap: 8px; padding: 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
+/* term blocks: every term is its own block that can be picked up and dragged */
+.myen .terms { display: flex; flex-direction: column; gap: 6px; }
+.myen .term { display: grid; grid-template-columns: 44px 1fr 112px 134px; gap: 12px; align-items: center; padding: 9px 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; }
+.myen .term.movable { cursor: grab; user-select: none; -webkit-user-select: none; }
+.myen .term.movable:hover { border-color: var(--muted); }
+.myen .term.thead { padding-block: 0; background: none; border-color: transparent; font-size: .72rem; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); }
+.myen .term .num { display: flex; align-items: center; gap: 4px; font-size: .8rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.myen .term .lvl { justify-self: start; }
+.myen .term.fresh { animation: fresh 1.6s ease-out; }
+.myen .inner { display: grid; gap: 2px 12px; align-items: center; min-width: 0; }
+.myen .inner.words { grid-template-columns: 1fr 1.3fr; }
+.myen .inner.verbs { grid-template-columns: repeat(3, 1fr); }
+.myen .inner > div { min-width: 0; overflow-wrap: anywhere; }
+.myen .inner .t { font-weight: 600; }
+.myen .inner.verbs .d { font-size: .9rem; color: var(--muted); }
+.myen .inner input { padding: 7px 10px; }
+.myen .term.busy .inner, .myen .qadd .inner, .myen .erow .inner { gap: 6px 8px; }
+.myen .tact { display: flex; gap: 2px; justify-content: flex-end; align-items: center; }
+.myen .tact.wide { grid-column: 3 / 5; gap: 6px; }
+.myen .grip { display: inline-grid; place-items: center; width: 20px; height: 26px; margin-left: -6px; border-radius: 4px; color: var(--muted); cursor: grab; touch-action: none; }
+.myen .grip:hover { background: var(--sunk); color: var(--ink); }
+.myen .dragging { position: relative; z-index: 5; cursor: grabbing; border-color: var(--accent); box-shadow: 0 10px 26px rgb(0 0 0 / .2); animation: none; }
+.myen .sorting, .myen .sorting * { cursor: grabbing; user-select: none; -webkit-user-select: none; }
+.myen .qadd { display: grid; grid-template-columns: 1fr auto; gap: 8px; padding: 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
 .myen .qhint { justify-content: space-between; margin: 6px 0 12px; }
 .myen #tq { margin-bottom: 10px; }
 .myen .lvl { font-size: .72rem; font-weight: 600; padding: 3px 9px; border-radius: 99px; background: var(--sunk); color: var(--muted); white-space: nowrap; }
@@ -113,9 +112,12 @@
 .myen .lvl.l2 { background: var(--ok-soft); color: var(--ok); }
 
 /* editor */
-.myen #rows { counter-reset: r; }
-.myen .erow { display: grid; grid-template-columns: 26px 1fr 1fr auto; gap: 8px; align-items: center; }
-.myen .erow::before { counter-increment: r; content: counter(r); font-size: .8rem; color: var(--muted); text-align: center; font-variant-numeric: tabular-nums; }
+.myen #rows { display: flex; flex-direction: column; gap: 8px; counter-reset: r; }
+.myen .erow { display: grid; grid-template-columns: 34px 1fr auto; gap: 8px; align-items: center; padding: 10px 6px 10px 8px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; cursor: grab; }
+.myen .erow:hover { border-color: var(--muted); }
+.myen .erow .hnd { display: flex; flex-direction: column; align-items: center; font-size: .8rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.myen .erow .hnd::after { counter-increment: r; content: counter(r); }
+.myen .erow .grip { margin: 0; }
 .myen .err { color: var(--bad); font-weight: 600; }
 
 /* study */
@@ -167,34 +169,8 @@
   .myen h1 { font-size: 1.55rem; }
   .myen .modes, .myen .modes.five { grid-template-columns: 1fr 1fr; }
   .myen .pairf { grid-template-columns: 1fr; }
-  .myen .term { grid-template-columns: 1fr auto; gap: 2px 10px; padding: 10px 12px; }
-  .myen .term.thead, .myen .term .num { display: none; }
-  .myen .term .t, .myen .term input[data-k="term"] { grid-column: 1; grid-row: 1; }
-  .myen .term .d, .myen .term input[data-k="def"] { grid-column: 1; grid-row: 2; }
-  .myen .term .d { color: var(--muted); }
-  .myen .term .lvl { grid-column: 1; grid-row: 3; margin-top: 4px; }
-  .myen .term .tact { grid-column: 2; grid-row: 1 / 4; display: grid; grid-template-columns: auto auto; }
-  .myen .term .tact.wide { display: flex; }
-  .myen .grip { display: none; }
-  .myen .term .tact.wide { grid-column: 1 / 3; grid-row: 3; justify-content: flex-start; margin-top: 6px; }
-  .myen .qadd, .myen .qadd.verbs { grid-template-columns: 1fr; }
-  .myen .term.verbs { grid-template-columns: 1fr 1fr 1fr auto; }
-  .myen .term.verbs .t, .myen .term.verbs input { grid-column: auto; grid-row: 1; }
-  .myen .term.verbs .d, .myen .term.verbs input[data-k="def"] { grid-column: 1 / 4; grid-row: 2; }
-  .myen .term.verbs .lvl { grid-column: 1 / 4; }
-  .myen .term.verbs .tact { grid-column: 4; }
-  .myen .term.verbs .tact.wide { grid-column: 1 / 5; }
-  .myen .term.busy input[data-k="def"] { margin-top: 6px; }
   .myen .kinds { grid-template-columns: 1fr; }
-  .myen #rows.verbs .erow { grid-template-columns: 1fr 1fr 1fr auto; }
-  .myen #rows.verbs .erow::before { display: none; }
-  .myen #rows.verbs .erow input[data-k="def"] { grid-column: 1 / 4; grid-row: 2; }
-  .myen #rows.verbs .erow .btn { grid-column: 4; grid-row: 1 / 3; }
   .myen .opts { grid-template-columns: 1fr; }
-  .myen .erow { grid-template-columns: 22px 1fr auto; }
-  .myen .erow::before { grid-row: 1 / 3; }
-  .myen .erow input[data-k="def"] { grid-column: 2; grid-row: 2; }
-  .myen .erow .btn { grid-row: 1 / 3; grid-column: 3; }
   .myen .board { grid-template-columns: repeat(3, 1fr); }
   .myen .tile { min-height: 84px; font-size: .9rem; }
   .myen .controls { grid-template-columns: 1fr 1fr; }
@@ -211,3 +187,18 @@
 .myen input:focus, .myen textarea:focus { border-color: var(--accent); --tw-ring-color: var(--accent); }
 .myen .choice input { border-radius: 50%; padding: 0; }
 .myen .opt { justify-content: flex-start; }
+
+@media (max-width: 640px) {
+  .myen .term { grid-template-columns: auto 1fr auto; gap: 6px 10px; padding: 10px 12px; }
+  .myen .term.thead { display: none; }
+  .myen .term .inner { grid-column: 1 / 3; grid-row: 1; }
+  .myen .term .num { grid-column: 1; grid-row: 2; }
+  .myen .term .lvl { grid-column: 2; grid-row: 2; }
+  .myen .term .tact { grid-column: 3; grid-row: 1 / 3; display: grid; grid-template-columns: auto auto; }
+  .myen .term.busy .num { display: none; }
+  .myen .term .tact.wide { grid-column: 1 / 4; grid-row: 2; display: flex; justify-content: flex-start; }
+  .myen .inner.words { grid-template-columns: 1fr; }
+  .myen .inner.words .d { color: var(--muted); }
+  .myen .qadd { grid-template-columns: 1fr; }
+  .myen .erow { grid-template-columns: 26px 1fr auto; padding-left: 4px; }
+}

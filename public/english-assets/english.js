@@ -58,32 +58,233 @@ document.addEventListener('keydown', e => { if (/INPUT|TEXTAREA/.test(e.target.t
 
 /* ---------- Set kinds: plain words, or verbs with their three forms ---------- */
 const isVerbs = s => s.kind === 'verbs';
-// [card key, short label, placeholder]
+const kindOf = kind => kind === 'verbs' ? 'verbs' : 'words';
+// [card key, label, example shown as a placeholder]. Verb fields come in two rows of three: English forms, then their Uzbek translations.
 const FIELDS = {
   words: [['term', 'Atama', "Yangi so'z"], ['def', "Ta'rif", "Tarjimasi yoki ta'rifi"]],
-  verbs: [['term', 'V1', 'V1: go'], ['v2', 'V2', 'V2: went'], ['v3', 'V3', 'V3: gone'], ['def', 'Tarjima', 'Tarjimasi']],
+  verbs: [['term', 'V1', 'V1: go'], ['v2', 'V2', 'V2: went'], ['v3', 'V3', 'V3: gone'],
+          ['def', 'V1 tarjimasi', 'bormoq'], ['d2', 'V2 tarjimasi', 'bordi'], ['d3', 'V3 tarjimasi', 'borgan']],
 };
-const fieldsOf = kind => FIELDS[kind === 'verbs' ? 'verbs' : 'words'];
-const complete = (c, kind) => fieldsOf(kind).every(([k]) => c[k]);
-const sameCard = (a, b, kind) => fieldsOf(kind).every(([k]) => norm(a[k]) === norm(b[k]));
+const REQUIRED = { words: ['term', 'def'], verbs: ['term', 'v2', 'v3', 'def'] };   // d2 and d3 are filled automatically and may stay empty
+const fieldsOf = kind => FIELDS[kindOf(kind)];
+const complete = (c, kind) => REQUIRED[kindOf(kind)].every(k => c[k]);
+const sameCard = (a, b, kind) => REQUIRED[kindOf(kind)].every(k => norm(a[k]) === norm(b[k]));
 
-// The common irregular verbs: "V1 V2 V3". Anything else is treated as regular (+ed).
-const IRREGULAR = Object.fromEntries(`be was/were been|bear bore born|beat beat beaten|become became become|begin began begun|bend bent bent|bet bet bet|bind bound bound|bite bit bitten|bleed bled bled|blow blew blown|break broke broken|breed bred bred|bring brought brought|build built built|burn burnt burnt|buy bought bought|catch caught caught|choose chose chosen|come came come|cost cost cost|creep crept crept|cut cut cut|deal dealt dealt|dig dug dug|do did done|draw drew drawn|dream dreamt dreamt|drink drank drunk|drive drove driven|eat ate eaten|fall fell fallen|feed fed fed|feel felt felt|fight fought fought|find found found|flee fled fled|fly flew flown|forbid forbade forbidden|forget forgot forgotten|forgive forgave forgiven|freeze froze frozen|get got got|give gave given|go went gone|grow grew grown|hang hung hung|have had had|hear heard heard|hide hid hidden|hit hit hit|hold held held|hurt hurt hurt|keep kept kept|kneel knelt knelt|know knew known|lay laid laid|lead led led|leave left left|lend lent lent|let let let|lie lay lain|light lit lit|lose lost lost|make made made|mean meant meant|meet met met|pay paid paid|put put put|quit quit quit|read read read|ride rode ridden|ring rang rung|rise rose risen|run ran run|say said said|see saw seen|seek sought sought|sell sold sold|send sent sent|set set set|shake shook shaken|shine shone shone|shoot shot shot|show showed shown|shrink shrank shrunk|shut shut shut|sing sang sung|sink sank sunk|sit sat sat|sleep slept slept|slide slid slid|speak spoke spoken|spend spent spent|split split split|spread spread spread|spring sprang sprung|stand stood stood|steal stole stolen|stick stuck stuck|sting stung stung|strike struck struck|swear swore sworn|sweep swept swept|swim swam swum|swing swung swung|take took taken|teach taught taught|tear tore torn|tell told told|think thought thought|throw threw thrown|understand understood understood|wake woke woken|wear wore worn|weep wept wept|win won won|wind wound wound|write wrote written`
-  .split('|').map(v => { const [a, b, c] = v.split(' '); return [a, [b, c]]; }));
-// Suggested V2 and V3 for a base form; phrasal verbs ("get up") conjugate the first word.
+// Irregular verbs: "V1 V2 V3=o'zbekcha tarjimasi". Anything not listed is treated as regular (+ed) and has no ready translation.
+const VERBS = Object.fromEntries(`arise arose arisen=paydo bo'lmoq
+awake awoke awoken=uyg'onmoq
+be was/were been=bo'lmoq
+bear bore born=chidamoq
+beat beat beaten=urmoq
+become became become=aylanmoq
+begin began begun=boshlamoq
+bend bent bent=egmoq
+bet bet bet=garov o'ynamoq
+bid bid bid=narx taklif qilmoq
+bind bound bound=bog'lamoq
+bite bit bitten=tishlamoq
+bleed bled bled=qonamoq
+blow blew blown=puflamoq
+break broke broken=sindirmoq
+breed bred bred=ko'paytirmoq
+bring brought brought=olib kelmoq
+broadcast broadcast broadcast=efirga uzatmoq
+build built built=qurmoq
+burn burnt burnt=yonmoq
+burst burst burst=yorilmoq
+buy bought bought=sotib olmoq
+cast cast cast=uloqtirmoq
+catch caught caught=ushlamoq
+choose chose chosen=tanlamoq
+cling clung clung=yopishmoq
+come came come=kelmoq
+cost cost cost=turmoq
+creep crept crept=o'rmalamoq
+cut cut cut=kesmoq
+deal dealt dealt=muomala qilmoq
+dig dug dug=qazimoq
+do did done=qilmoq
+draw drew drawn=chizmoq
+dream dreamt dreamt=tush ko'rmoq
+drink drank drunk=ichmoq
+drive drove driven=haydamoq
+eat ate eaten=yemoq
+fall fell fallen=yiqilmoq
+feed fed fed=ovqatlantirmoq
+feel felt felt=his qilmoq
+fight fought fought=jang qilmoq
+find found found=topmoq
+flee fled fled=qochmoq
+fling flung flung=uloqtirmoq
+fly flew flown=uchmoq
+forbid forbade forbidden=taqiqlamoq
+forecast forecast forecast=bashorat qilmoq
+foresee foresaw foreseen=oldindan ko'rmoq
+forget forgot forgotten=unutmoq
+forgive forgave forgiven=kechirmoq
+freeze froze frozen=muzlamoq
+get got got=olmoq
+give gave given=bermoq
+go went gone=bormoq
+grind ground ground=maydalamoq
+grow grew grown=o'smoq
+hang hung hung=osmoq
+have had had=ega bo'lmoq
+hear heard heard=eshitmoq
+hide hid hidden=yashirmoq
+hit hit hit=urmoq
+hold held held=ushlab turmoq
+hurt hurt hurt=og'ritmoq
+keep kept kept=saqlamoq
+kneel knelt knelt=tiz cho'kmoq
+knit knit knit=to'qimoq
+know knew known=bilmoq
+lay laid laid=qo'ymoq
+lead led led=yetaklamoq
+lean leant leant=suyanmoq
+leap leapt leapt=sakramoq
+learn learnt learnt=o'rganmoq
+leave left left=tark etmoq
+lend lent lent=qarzga bermoq
+let let let=ruxsat bermoq
+lie lay lain=yotmoq
+light lit lit=yoqmoq
+lose lost lost=yo'qotmoq
+make made made=yasamoq
+mean meant meant=anglatmoq
+meet met met=uchrashmoq
+mistake mistook mistaken=adashmoq
+mow mowed mown=o'rmoq
+overcome overcame overcome=yengmoq
+pay paid paid=to'lamoq
+prove proved proven=isbotlamoq
+put put put=qo'ymoq
+quit quit quit=tashlamoq
+read read read=o'qimoq
+ride rode ridden=minmoq
+ring rang rung=qo'ng'iroq qilmoq
+rise rose risen=ko'tarilmoq
+run ran run=yugurmoq
+saw sawed sawn=arralamoq
+say said said=aytmoq
+see saw seen=ko'rmoq
+seek sought sought=izlamoq
+sell sold sold=sotmoq
+send sent sent=yubormoq
+set set set=o'rnatmoq
+sew sewed sewn=tikmoq
+shake shook shaken=silkitmoq
+shed shed shed=to'kmoq
+shine shone shone=porlamoq
+shoot shot shot=otmoq
+show showed shown=ko'rsatmoq
+shrink shrank shrunk=kichraymoq
+shut shut shut=yopmoq
+sing sang sung=kuylamoq
+sink sank sunk=cho'kmoq
+sit sat sat=o'tirmoq
+slay slew slain=o'ldirmoq
+sleep slept slept=uxlamoq
+slide slid slid=sirpanmoq
+sling slung slung=otmoq
+slit slit slit=tilmoq
+smell smelt smelt=hidlamoq
+sow sowed sown=ekmoq
+speak spoke spoken=gapirmoq
+speed sped sped=tezlashmoq
+spell spelt spelt=harflab aytmoq
+spend spent spent=sarflamoq
+spill spilt spilt=to'kmoq
+spin spun spun=aylantirmoq
+spit spat spat=tupurmoq
+split split split=ajratmoq
+spoil spoilt spoilt=buzmoq
+spread spread spread=yoymoq
+spring sprang sprung=sakramoq
+stand stood stood=turmoq
+steal stole stolen=o'g'irlamoq
+stick stuck stuck=yopishtirmoq
+sting stung stung=chaqmoq
+stink stank stunk=sasimoq
+stride strode stridden=odimlamoq
+strike struck struck=zarba bermoq
+string strung strung=tizmoq
+strive strove striven=intilmoq
+swear swore sworn=qasam ichmoq
+sweep swept swept=supurmoq
+swell swelled swollen=shishmoq
+swim swam swum=suzmoq
+swing swung swung=tebranmoq
+take took taken=olmoq
+teach taught taught=o'qitmoq
+tear tore torn=yirtmoq
+tell told told=aytib bermoq
+think thought thought=o'ylamoq
+throw threw thrown=uloqtirmoq
+thrust thrust thrust=tiqmoq
+tread trod trodden=bosmoq
+understand understood understood=tushunmoq
+undo undid undone=bekor qilmoq
+upset upset upset=xafa qilmoq
+wake woke woken=uyg'onmoq
+wear wore worn=kiymoq
+weave wove woven=to'qimoq
+weep wept wept=yig'lamoq
+wet wet wet=ho'llamoq
+win won won=yutmoq
+wind wound wound=o'ramoq
+withdraw withdrew withdrawn=qaytarib olmoq
+wring wrung wrung=siqmoq
+write wrote written=yozmoq`.split('\n').map(line => { const [forms, uz] = line.split('='), [v1, v2, v3] = forms.split(' '); return [v1, { v2, v3, def: uz }]; }));
+
+// V2 and V3 for a base form, plus the Uzbek translation when the verb is in the list. Phrasal verbs ("get up") conjugate the first word.
 function verbForms(v1) {
-  const [head, ...rest] = v1.trim().toLowerCase().split(/\s+/);
+  const [head, ...rest] = String(v1).trim().toLowerCase().split(/\s+/);
   if (!/^[a-z]+$/.test(head || '')) return null;
-  let forms = IRREGULAR[head];
-  if (!forms) {
-    const ed = head.endsWith('e') ? head + 'd'
-      : /[^aeiou]y$/.test(head) ? head.slice(0, -1) + 'ied'
-      : /^[^aeiou]*[aeiou][^aeiouwxy]$/.test(head) ? head + head.slice(-1) + 'ed'   // stop → stopped
-      : head + 'ed';
-    forms = [ed, ed];
-  }
   const tail = rest.length ? ' ' + rest.join(' ') : '';
-  return forms.map(f => f + tail);
+  const known = VERBS[head];
+  if (known) return { v2: known.v2 + tail, v3: known.v3 + tail, def: tail ? '' : known.def };
+  const ed = (head.endsWith('e') ? head + 'd'
+    : /[^aeiou]y$/.test(head) ? head.slice(0, -1) + 'ied'
+    : /^[^aeiou]*[aeiou][^aeiouwxy]$/.test(head) ? head + head.slice(-1) + 'ed'   // stop → stopped
+    : head + 'ed') + tail;
+  return { v2: ed, v3: ed, def: '' };
+}
+// Uzbek past forms from an infinitive: "sotib olmoq" → ["sotib oldi", "sotib olgan"]. Works on each of several translations; null when none ends in -moq.
+function uzForms(def) {
+  const parts = String(def || '').split(/(\s*[,;\/]\s*)/);   // keeps the separators
+  let any = false;
+  const make = suffix => parts.map(part => {
+    const m = /^(.*?)moq$/i.exec(part.trim());
+    if (!m || !m[1]) return part;
+    any = true;
+    const stem = m[1];
+    return stem + (suffix === 'di' ? 'di' : /k$/i.test(stem) ? 'kan' : /q$/i.test(stem) ? 'qan' : 'gan');   // ekmoq → ekkan, chiqmoq → chiqqan
+  }).join('');
+  const past = make('di'), participle = make('gan');
+  return any ? [past, participle] : null;
+}
+// Fills in whatever a verb card is missing and can be worked out: English forms, the listed translation, Uzbek forms.
+function deriveVerb(c) {
+  if (c.term && !c.v2 && !c.v3) { const f = verbForms(c.term); if (f) { c.v2 = f.v2; c.v3 = f.v3; if (!c.def) c.def = f.def; } }
+  if (c.def && (!c.d2 || !c.d3)) { const u = uzForms(c.def); if (u) { c.d2 = c.d2 || u[0]; c.d3 = c.d3 || u[1]; } }
+  return c;
+}
+// The same for a row of inputs. A field is overwritten only while it is empty or still holds an earlier suggestion.
+// `from` is the field just edited ('term' or 'def'). Returns true when the translation itself came from the list.
+function fillVerbRow(box, from) {
+  const inp = k => box.querySelector('[data-k="' + k + '"]');
+  if (!inp('v2')) return false;
+  const put = (k, value) => {
+    const i = inp(k);
+    if (!value || (i.value.trim() && i.value !== i.dataset.auto)) return false;
+    const changed = i.value !== value; i.value = value; i.dataset.auto = value; return changed;
+  };
+  let gotDef = false;
+  if (from === 'term') { const f = verbForms(inp('term').value); if (f) { put('v2', f.v2); put('v3', f.v3); gotDef = put('def', f.def); } }
+  const u = uzForms(inp('def').value);
+  if (u) { put('d2', u[0]); put('d3', u[1]); }
+  return gotDef;
 }
 // One pasted or typed line → a card, or null. Words: "apple - olma". Verbs: "go - went - gone - bormoq" (also "go went gone - bormoq").
 function parseLine(line, kind) {
@@ -96,18 +297,56 @@ function parseLine(line, kind) {
   for (const re of [/\t+/, /\s+[-–—]\s+/, /\s*[;,]\s*/]) {
     let parts = line.split(re).map(x => x.trim()).filter(Boolean);
     if (parts.length === 2) { const f = parts[0].split(/[\s,\/]+/); if (f.length === 3) parts = [...f, parts[1]]; }
-    if (parts.length >= 4) return { term: parts[0], v2: parts[1], v3: parts[2], def: parts.slice(3).join(', ') };
+    if (parts.length === 6) return { term: parts[0], v2: parts[1], v3: parts[2], def: parts[3], d2: parts[4], d3: parts[5] };
+    if (parts.length >= 4) return deriveVerb({ term: parts[0], v2: parts[1], v3: parts[2], def: parts.slice(3).join(', ') });
   }
   return null;
 }
 const fieldInput = ([k, label, hint], value, usePlaceholder) =>
-  `<input data-k="${k}" placeholder="${esc(usePlaceholder ? hint : label)}" aria-label="${esc(label)}" value="${esc(value)}" autocomplete="off"${k === 'def' ? '' : ' autocapitalize="off" spellcheck="false"'}>`;
-// In a verb row, leaving V1 fills empty V2 and V3 with a suggestion.
-function suggestForms(rowEl) {
-  const get = k => rowEl.querySelector(`[data-k="${k}"]`);
-  if (!get('v2') || !get('term').value.trim() || get('v2').value.trim() || get('v3').value.trim()) return;
-  const f = verbForms(get('term').value);
-  if (f) { get('v2').value = f[0]; get('v3').value = f[1]; }
+  `<input data-k="${k}" placeholder="${esc(usePlaceholder ? hint : label)}" aria-label="${esc(label)}" value="${esc(value)}" autocomplete="off"${/^d/.test(k) ? '' : ' autocapitalize="off" spellcheck="false"'}>`;
+// The fields of one card laid out in its grid: two columns for a word, three (in two rows) for a verb.
+const innerGrid = (kind, html) => `<div class="inner ${kindOf(kind)}">${html}</div>`;
+
+// Drag-to-reorder for a vertical list of blocks. With a mouse a block is picked up anywhere that is not a control;
+// by touch only by its grip, so the page can still be scrolled. `root` stays in place while the list inside it is redrawn.
+function sortable(root, itemSel, onDrop, allowed = () => true) {
+  root.addEventListener('pointerdown', e => {
+    const item = e.target.closest(itemSel);
+    if (!item || e.button > 0 || !allowed(item)) return;
+    if (e.pointerType === 'mouse' ? e.target.closest('input, textarea, button, a, label') : !e.target.closest('.grip')) return;
+    const list = item.parentElement, items = () => [...list.children].filter(x => x.matches(itemSel));
+    const from = items().indexOf(item);
+    let startY = e.pageY, active = false;
+    const mid = el => { const r = el.getBoundingClientRect(); return r.top + r.height / 2; };
+    const swap = action => { const before = item.offsetTop; action(); startY += item.offsetTop - before; };   // keep the block under the pointer
+    function move(ev) {
+      if (!active) {
+        if (Math.abs(ev.pageY - startY) < 6) return;
+        active = true; item.classList.add('dragging'); list.classList.add('sorting');
+      }
+      ev.preventDefault();
+      item.style.transform = `translateY(${ev.pageY - startY}px)`;
+      for (let guard = 0; guard < 200; guard++) {
+        const next = item.nextElementSibling, prev = item.previousElementSibling;
+        if (next?.matches(itemSel) && mid(item) > mid(next)) swap(() => list.insertBefore(next, item));
+        else if (prev?.matches(itemSel) && mid(item) < mid(prev)) swap(() => list.insertBefore(item, prev));
+        else break;
+        item.style.transform = `translateY(${ev.pageY - startY}px)`;
+      }
+      if (ev.clientY < 70) window.scrollBy(0, -14); else if (ev.clientY > window.innerHeight - 70) window.scrollBy(0, 14);
+    }
+    function end() {
+      window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', end); window.removeEventListener('pointercancel', end);
+      if (!active) return;
+      item.style.transform = ''; item.classList.remove('dragging'); list.classList.remove('sorting');
+      // the click that ends a drag must not also press something
+      const stop = ev => { ev.stopPropagation(); ev.preventDefault(); };
+      window.addEventListener('click', stop, { capture: true, once: true }); setTimeout(() => window.removeEventListener('click', stop, true), 0);
+      const to = items().indexOf(item);
+      if (to !== from) onDrop(from, to);
+    }
+    window.addEventListener('pointermove', move, { passive: false }); window.addEventListener('pointerup', end); window.addEventListener('pointercancel', end);
+  });
 }
 
 /* ---------- Library ---------- */
@@ -146,12 +385,13 @@ const ICON = {
 };
 function setView(id) {
   const s = get(id); if (!s) return home();
-  const verbs = isVerbs(s), fields = fieldsOf(s.kind);
-  // q: search text; editing / removing: id of the row in that state; fresh: id of the row just added
+  const verbs = isVerbs(s), kind = kindOf(s.kind), fields = fieldsOf(kind);
+  // q: search text; editing / removing: id of the row in that state; fresh: id of the row just added or moved
   let q = '', editing = null, removing = null, fresh = null;
   const rowId = b => b.closest('.term').dataset.id;
   const card = cid => s.cards.find(c => c.id === cid);
-  const cells = c => fields.map(([k]) => `<div class="${k === 'def' ? 'd' : 't'}">${esc(c[k])}</div>`).join('');
+  const cells = c => innerGrid(kind, fields.map(([k]) => `<div class="${/^d/.test(k) ? 'd' : 't'}">${esc(c[k])}</div>`).join(''));
+  const inputs = (c, hints) => innerGrid(kind, fields.map(f => fieldInput(f, c[f[0]], hints)).join(''));
 
   show(`<button class="btn quiet" data-act="home">← Kutubxona</button>
     <div class="head" style="margin-top:8px"><div style="min-width:0"><h1>${esc(s.title)}</h1>${s.desc ? `<p class="muted" style="margin-top:6px">${esc(s.desc)}</p>` : ''}</div>
@@ -164,10 +404,10 @@ function setView(id) {
       <button class="mode" data-act="m" data-m="match"><b>Juftlash</b><span class="small muted">Vaqtga qarshi o'yin</span></button>
     </div>
     <div class="rowf" style="justify-content:space-between;margin-bottom:10px"><h2 id="tcount"></h2><span class="small muted" id="tdone"></span></div>
-    <form class="qadd${verbs ? ' verbs' : ''}" id="qa">${fields.map(f => fieldInput(f, '', true)).join('')}<button class="btn primary">Qo'shish</button></form>
+    <form class="qadd" id="qa">${inputs({}, true)}<button class="btn primary">Qo'shish</button></form>
     <div class="rowf qhint"><span class="small muted">${verbs
-      ? "Fe'lni yozib Enter bosing — V2 va V3 o'zi to'ldiriladi (noto'g'ri bo'lsa tuzating), tarjimasini yozib yana Enter."
-      : "Yozing va Enter bosing — so'z darhol ro'yxatga tushadi."} Tartibni strelkalar yoki sudrash bilan o'zgartirasiz.</span><button class="btn quiet" data-act="bulk">Tayyor ro'yxatdan qo'shish</button></div>
+      ? "Fe'lni yozib Enter bosing — qolgan shakllari va tarjimasi o'zi to'ladi. Tekshirib, yana Enter bosing."
+      : "Yozing va Enter bosing — so'z darhol ro'yxatga tushadi."} Tartibni o'zgartirish uchun qatorni ushlab suring.</span><button class="btn quiet" data-act="bulk">Tayyor ro'yxatdan qo'shish</button></div>
     <input id="tq" type="search" placeholder="${verbs ? "Fe'llar" : 'Atamalar'} ichidan qidirish" aria-label="Qidirish" hidden>
     <div id="tbox"></div>`,
     {
@@ -199,7 +439,7 @@ function setView(id) {
       saveRow,
     });
 
-  // Reordering: arrows move a row one step; dragging the grip drops it anywhere. Off while a search is filtering the list.
+  // Reordering: drag a block, or use its arrows. Off while a search is filtering the list.
   function place(cid, index) {
     const from = s.cards.findIndex(c => c.id === cid);
     if (from < 0 || index === from) return false;
@@ -221,100 +461,85 @@ function setView(id) {
   function saveRow() {
     const c = card(editing), next = {};
     $$('#tbox .term.busy input').forEach(i => next[i.dataset.k] = i.value.trim());
-    if (!complete(next, s.kind)) return toast("Hamma maydon to'ldirilishi kerak.");
-    if (fields.some(([k]) => c[k] !== next[k])) { Object.assign(c, next); save(s); }
+    if (!complete(next, kind)) return toast(verbs ? "Uchala shakl va tarjima to'ldirilishi kerak." : "Hamma maydon to'ldirilishi kerak.");
+    if (fields.some(([k]) => (c[k] || '') !== next[k])) { Object.assign(c, next); save(s); }
     editing = null; draw();
   }
   function row({ c, n }) {
-    const num = `<span class="num">${n}</span>`, cls = `term${verbs ? ' verbs' : ''}`;
-    if (editing === c.id) return `<div class="${cls} busy" data-id="${c.id}">${num}${fields.map(f => fieldInput(f, c[f[0]])).join('')}
+    const plain = `<span class="num">${n}</span>`;
+    if (editing === c.id) return `<div class="term busy" data-id="${c.id}">${plain}${inputs(c)}
       <div class="tact wide"><button class="btn sm primary" data-act="saveRow">Saqlash</button><button class="btn sm" data-act="cancelRow">Bekor</button></div></div>`;
-    if (removing === c.id) return `<div class="${cls} busy" data-id="${c.id}">${num}${cells(c)}
+    if (removing === c.id) return `<div class="term busy" data-id="${c.id}">${plain}${cells(c)}
       <div class="tact wide"><span class="small">O'chirilsinmi?</span><button class="btn sm danger" data-act="rmYes">Ha</button><button class="btn sm" data-act="cancelRow">Yo'q</button></div></div>`;
     const move = q ? '' : `<button class="ib" data-act="up" aria-label="Tepaga ko'chirish" title="Tepaga ko'chirish"${n === 1 ? ' disabled' : ''}>${ICON.up}</button><button class="ib" data-act="down" aria-label="Pastga ko'chirish" title="Pastga ko'chirish"${n === s.cards.length ? ' disabled' : ''}>${ICON.down}</button>`;
-    const grip = q ? num : `<span class="num"><span class="grip" title="Sudrab ko'chirish">${ICON.grip}</span>${n}</span>`;
-    return `<div class="${cls}${fresh === c.id ? ' fresh' : ''}" data-id="${c.id}">${grip}${cells(c)}<span class="lvl l${c.lvl || 0}">${LVL[c.lvl || 0]}</span>
+    const num = q ? plain : `<span class="num"><span class="grip" title="Sudrab ko'chirish">${ICON.grip}</span>${n}</span>`;
+    return `<div class="term${q ? '' : ' movable'}${fresh === c.id ? ' fresh' : ''}" data-id="${c.id}">${num}${cells(c)}<span class="lvl l${c.lvl || 0}">${LVL[c.lvl || 0]}</span>
       <div class="tact">${move}<button class="ib" data-act="editRow" aria-label="Tahrirlash" title="Tahrirlash">${ICON.edit}</button><button class="ib" data-act="rmRow" aria-label="O'chirish" title="O'chirish">${ICON.trash}</button></div></div>`;
   }
   function draw() {
     $('#tcount').textContent = `${verbs ? "Fe'llar" : 'Atamalar'} (${s.cards.length})`;
     $('#tdone').textContent = `${mastered(s)} / ${s.cards.length} o'zlashtirildi`;
     $('#tq').hidden = s.cards.length <= 8 && !q;
-    const list = s.cards.map((c, i) => ({ c, n: i + 1 })).filter(({ c }) => !q || fields.some(([k]) => norm(c[k]).includes(q)));
+    const list = s.cards.map((c, i) => ({ c, n: i + 1 })).filter(({ c }) => !q || fields.some(([k]) => norm(c[k] || '').includes(q)));
+    const head = innerGrid(kind, (verbs ? ['V1', 'V2', 'V3'] : ['Atama', "Ta'rif"]).map(x => `<span>${x}</span>`).join(''));
     $('#tbox').innerHTML = list.length
-      ? `<div class="terms"><div class="term thead${verbs ? ' verbs' : ''}"><span>#</span>${fields.map(([, label]) => `<span>${label}</span>`).join('')}<span>Holat</span><span></span></div>${list.map(row).join('')}</div>`
+      ? `<div class="terms"><div class="term thead"><span>#</span>${head}<span>Holat</span><span></span></div>${list.map(row).join('')}</div>`
       : `<p class="empty muted">Qidiruv bo'yicha hech narsa topilmadi.</p>`;
   }
 
-  // Quick add: Enter moves to the next empty field; when every field is filled it adds the card and returns to the first field.
-  $('#qa').onsubmit = e => {
+  // Quick add: Enter moves to the next empty field; when everything needed is filled it adds the card and returns to the first field.
+  const form = $('#qa');
+  form.onsubmit = e => {
     e.preventDefault();
-    const inputs = $$('#qa input'), first = inputs[0];
-    let c = {}; inputs.forEach(i => c[i.dataset.k] = i.value.trim());
-    if (c.term && inputs.slice(1).every(i => !i.value.trim())) { // a whole line typed or pasted into the first field
-      const parsed = parseLine(first.value, s.kind);
-      if (parsed) c = parsed;
+    const all = $$('input', form), first = all[0], of = k => all.find(i => i.dataset.k === k);
+    if (first.value.trim() && all.slice(1).every(i => !i.value.trim())) {   // a whole line typed or pasted into the first field
+      const parsed = parseLine(first.value, kind);
+      if (parsed) all.forEach(i => i.value = parsed[i.dataset.k] || '');
     }
-    if (verbs && c.term && !c.v2 && !c.v3) { const f = verbForms(c.term); if (f) [c.v2, c.v3] = f; }
-    inputs.forEach(i => i.value = c[i.dataset.k] || '');
-    const empty = inputs.find(i => !i.value);
-    if (empty) return empty.focus();
-    if (s.cards.some(x => sameCard(x, c, s.kind))) { toast(`Bu ${verbs ? "fe'l" : "so'z"} ro'yxatda allaqachon bor.`); return first.select(); }
+    // A translation taken from the verb list is shown for one look before the card is added.
+    if (verbs && fillVerbRow(form, 'term') && form.dataset.seen !== first.value) { form.dataset.seen = first.value; of('def').focus(); return of('def').select(); }
+    const missing = all.find(i => REQUIRED[kind].includes(i.dataset.k) && !i.value.trim());
+    if (missing) return missing.focus();
+    const c = {}; all.forEach(i => c[i.dataset.k] = i.value.trim());
+    if (s.cards.some(x => sameCard(x, c, kind))) { toast(`Bu ${verbs ? "fe'l" : "so'z"} ro'yxatda allaqachon bor.`); return first.select(); }
     const made = { id: uid(), ...c, lvl: 0 };
     s.cards.unshift(made); save(s);
-    inputs.forEach(i => i.value = ''); q = $('#tq').value = ''; editing = removing = null;
+    all.forEach(i => { i.value = ''; delete i.dataset.auto; }); delete form.dataset.seen;
+    q = $('#tq').value = ''; editing = removing = null;
     fresh = made.id; draw(); fresh = null;
     first.focus();
   };
+  if (verbs) form.addEventListener('focusout', e => { const k = e.target.dataset?.k; if (k === 'term' || k === 'def') fillVerbRow(form, k); });
+
+  const box = $('#tbox');
   $('#tq').oninput = e => { q = norm(e.target.value); editing = removing = null; draw(); };
-  $('#tbox').onkeydown = e => {
+  box.onkeydown = e => {
     if (e.target.tagName !== 'INPUT') return;
     if (e.key === 'Enter') { e.preventDefault(); saveRow(); }
     else if (e.key === 'Escape') { editing = null; draw(); }
   };
-  // Drag and drop: a row becomes draggable only while its grip is held, so text in the table can still be selected.
-  let dragId = null, drop = null;
-  const box = $('#tbox'), clearMarks = () => $$('.drop-before, .drop-after', box).forEach(r => r.classList.remove('drop-before', 'drop-after'));
-  box.onpointerdown = e => { const g = e.target.closest('.grip'); if (g) g.closest('.term').draggable = true; };
-  box.onpointerup = () => $$('.term[draggable]', box).forEach(r => r.removeAttribute('draggable'));
-  box.ondragstart = e => {
-    const r = e.target.closest?.('.term[data-id]'); if (!r) return;
-    dragId = r.dataset.id; drop = null; e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', dragId);
-    setTimeout(() => r.classList.add('dragging'));
-  };
-  box.ondragover = e => {
-    const r = dragId && e.target.closest('.term[data-id]'); if (!r) return;
-    e.preventDefault(); clearMarks();
-    const rect = r.getBoundingClientRect(), before = e.clientY < rect.top + rect.height / 2;
-    r.classList.add(before ? 'drop-before' : 'drop-after'); drop = { id: r.dataset.id, before };
-  };
-  box.ondrop = e => {
-    if (!dragId || !drop) return;
-    e.preventDefault();
-    const cid = dragId, rest = s.cards.filter(c => c.id !== cid);
-    const index = rest.findIndex(c => c.id === drop.id) + (drop.before ? 0 : 1);
-    dragId = null;
-    if (!place(cid, index)) draw();
-  };
-  box.ondragend = () => { if (dragId) { dragId = null; draw(); } };
-  $('#tbox').ondblclick = e => { const r = e.target.closest('.term[data-id]'); if (r && !r.classList.contains('busy')) startEdit(r.dataset.id); };
+  if (verbs) box.addEventListener('focusout', e => { const k = e.target.dataset?.k; if (k === 'term' || k === 'def') fillVerbRow(e.target.closest('.term'), k); });
+  box.ondblclick = e => { const r = e.target.closest('.term[data-id]'); if (r && !r.classList.contains('busy') && !e.target.closest('button')) startEdit(r.dataset.id); };
+  sortable(box, '.term.movable', (from, to) => { if (!place(s.cards[from].id, to)) draw(); });
   draw();
 }
 
 /* ---------- Editor ---------- */
 function editor(id, openPaste) {
   const s = id ? get(id) : null;
-  let kind = s ? (s.kind || 'words') : 'words';   // chosen once, when the set is created
-  const row = (c = {}) => `<div class="erow" data-id="${c.id || ''}">${fieldsOf(kind).map(f => fieldInput(f, c[f[0]])).join('')}<button type="button" class="btn quiet" data-act="rm" aria-label="Qatorni o'chirish">✕</button></div>`;
+  let kind = s ? kindOf(s.kind) : 'words';   // chosen once, when the set is created
+  // Each card is its own block: pick it up by the grip or by any empty part of the block to move it.
+  const row = (c = {}) => `<div class="erow" data-id="${c.id || ''}"><span class="hnd"><span class="grip" title="Sudrab ko'chirish">${ICON.grip}</span></span>${innerGrid(kind, fieldsOf(kind).map(f => fieldInput(f, c[f[0]])).join(''))}<button type="button" class="btn quiet" data-act="rm" aria-label="Qatorni o'chirish">✕</button></div>`;
   const read = () => $$('.erow').map(r => { const c = { id: r.dataset.id }; $$('input', r).forEach(i => c[i.dataset.k] = i.value.trim()); return c; });
   const blank = c => fieldsOf(kind).every(([k]) => !c[k]);
   const pasteHelp = () => kind === 'verbs'
-    ? ["Har bir qatorga bitta fe'l yozing: <b>go - went - gone - bormoq</b>. Ajratuvchi sifatida tire, tab yoki vergul ishlatish mumkin.", 'go - went - gone - bormoq\nwork - worked - worked - ishlamoq']
+    ? ["Har bir qatorga bitta fe'l yozing: <b>go - went - gone - bormoq</b>. Tarjimaning qolgan ikki shakli o'zi qo'yiladi. Ajratuvchi sifatida tire, tab yoki vergul ishlatish mumkin.", 'go - went - gone - bormoq\nwork - worked - worked - ishlamoq']
     : ["Har bir qatorga bitta juftlik yozing: <b>atama - ta'rif</b>. Ajratuvchi sifatida tire, tab, tenglik yoki vergul ishlatish mumkin.", 'apple - olma\nbook - kitob'];
-  const rowsHelp = () => "Enter — keyingi maydonga o'tadi, oxirgi qatorda yangi qator ochadi." + (kind === 'verbs' ? " V1 ni yozsangiz, V2 va V3 o'zi to'ldiriladi — noto'g'ri bo'lsa tuzating." : '');
+  const rowsHelp = () => (kind === 'verbs'
+    ? "V1 ni yozib Enter bosing — qolgan shakllari va tarjimasi o'zi to'ladi (noto'g'ri bo'lsa tuzating). "
+    : "Enter keyingi maydonga o'tadi, oxirgi qatorda yangi qator ochadi. ") + "Tartibni o'zgartirish uchun blokni ushlab suring.";
   // Everything that depends on the set kind is redrawn here, keeping what was already typed.
   function drawRows(list) {
-    $('#rows').className = 'stack' + (kind === 'verbs' ? ' verbs' : '');
     $('#rows').innerHTML = list.map(row).join('');
     $('#rows-title').textContent = kind === 'verbs' ? "Fe'llar" : 'Atamalar';
     $('#rows-help').textContent = rowsHelp();
@@ -329,7 +554,7 @@ function editor(id, openPaste) {
       <input id="f-desc" placeholder="Qisqa izoh (ixtiyoriy)" aria-label="Izoh" value="${esc(s?.desc)}">
       ${s ? '' : `<fieldset class="kinds"><legend class="label">To'plam turi</legend>
         <label class="kind"><input type="radio" name="kind" id="k-words" value="words" checked><span><b>So'zlar</b><span class="small muted">Atama va tarjimasi</span></span></label>
-        <label class="kind"><input type="radio" name="kind" id="k-verbs" value="verbs"><span><b>Fe'llar</b><span class="small muted">Uch shakli bilan: go – went – gone</span></span></label>
+        <label class="kind"><input type="radio" name="kind" id="k-verbs" value="verbs"><span><b>Fe'llar</b><span class="small muted">Uch shakli va tarjimasi: go – went – gone</span></span></label>
       </fieldset>`}
       <div class="rowf" style="justify-content:space-between;margin-top:6px"><h2 id="rows-title"></h2><button type="button" class="btn quiet" data-act="paste">Tayyor ro'yxatdan qo'shish</button></div>
       <div class="panel stack" id="pastebox"${openPaste ? '' : ' hidden'}>
@@ -338,7 +563,7 @@ function editor(id, openPaste) {
         <div class="rowf end"><button type="button" class="btn primary" data-act="addPaste">Ro'yxatga qo'shish</button></div>
       </div>
       <p class="small muted" id="rows-help"></p>
-      <div id="rows" style="gap:8px"></div>
+      <div id="rows"></div>
       <div><button type="button" class="btn" data-act="add">+ Qator qo'shish</button></div>
     </form>`,
     {
@@ -359,7 +584,7 @@ function editor(id, openPaste) {
   $$('input[name="kind"]').forEach(r => r.onchange = () => {
     const typed = read().filter(c => !blank(c));
     kind = r.value;
-    drawRows(typed.length ? typed : [{}, {}, {}]);
+    drawRows(typed.length ? typed.map(c => kind === 'verbs' ? deriveVerb(c) : c) : [{}, {}, {}]);
   });
 
   function fail(msg) { const e = $('#err'); e.textContent = msg; e.hidden = false; e.scrollIntoView({ block: 'center' }); }
@@ -367,9 +592,9 @@ function editor(id, openPaste) {
     e.preventDefault();
     const title = $('#f-title').value.trim();
     const old = new Map((s ? s.cards : []).map(c => [c.id, c]));
-    // A card whose text did not change keeps its learning progress.
+    // A card whose text did not change keeps its learning progress. The order on screen is the order that is saved.
     const list = read().filter(c => complete(c, kind))
-      .map(c => { const o = old.get(c.id); return o && fieldsOf(kind).every(([k]) => o[k] === c[k]) ? o : { ...c, id: uid(), lvl: 0 }; });
+      .map(c => { const o = old.get(c.id); return o && fieldsOf(kind).every(([k]) => (o[k] || '') === c[k]) ? o : { ...c, id: uid(), lvl: 0 }; });
     if (!title) return fail("To'plamga nom bering.");
     if (list.length < 2) return fail(kind === 'verbs' ? "Kamida 2 ta fe'lni uchala shakli va tarjimasi bilan to'ldiring." : "Kamida 2 ta atama va ta'rifini to'ldiring.");
     const desc = $('#f-desc').value.trim();
@@ -382,15 +607,16 @@ function editor(id, openPaste) {
   };
   // Enter walks through the fields instead of submitting the whole form by accident.
   $('#rows').onkeydown = e => {
-    if (e.key !== 'Enter') return;
+    if (e.key !== 'Enter' || e.target.tagName !== 'INPUT') return;
     e.preventDefault();
     const r = e.target.closest('.erow'), inputs = $$('input', r), i = inputs.indexOf(e.target);
-    if (e.target.dataset.k === 'term') suggestForms(r);
-    const next = inputs.slice(i + 1).find(x => !x.value.trim()) || inputs[i + 1];
+    fillVerbRow(r, e.target.dataset.k);
+    const next = inputs.slice(i + 1).find(x => !x.value.trim()) || (kind === 'verbs' ? null : inputs[i + 1]);
     if (next) return next.focus();
     r.nextElementSibling ? r.nextElementSibling.querySelector('input').focus() : acts.add();
   };
-  $('#rows').addEventListener('focusout', e => { if (e.target.dataset?.k === 'term') suggestForms(e.target.closest('.erow')); });
+  $('#rows').addEventListener('focusout', e => { const k = e.target.dataset?.k; if (k === 'term' || k === 'def') fillVerbRow(e.target.closest('.erow'), k); });
+  sortable($('#rows'), '.erow', () => {});
   if (openPaste) $('#f-paste').focus(); else if (!s) $('#f-title').focus();
 }
 
@@ -409,7 +635,7 @@ function cards(id, only) {
     if (i >= order.length) return end();
     const c = order[i];
     show(`${shead(id, Math.round(i / order.length * 100), `${i + 1} / ${order.length}`)}
-      <button class="flip" id="flip" aria-label="Kartochkani aylantirish"><span class="flip-in"><span class="face" data-side="Atama">${esc(c.term)}</span><span class="face back" data-side="${isVerbs(s) ? "V2 · V3 va tarjima" : "Ta'rif"}">${isVerbs(s) ? `<span class="forms">${esc(c.v2)} · ${esc(c.v3)}</span>` : ''}${esc(c.def)}</span></span></button>
+      <button class="flip" id="flip" aria-label="Kartochkani aylantirish"><span class="flip-in"><span class="face" data-side="Atama">${esc(c.term)}</span><span class="face back" data-side="${isVerbs(s) ? "V2 · V3 va tarjima" : "Ta'rif"}">${isVerbs(s) ? `<span class="forms">${esc(c.v2)} · ${esc(c.v3)}</span>${esc(c.def)}${c.d2 ? `<span class="forms">${esc(c.d2)} · ${esc(c.d3)}</span>` : ''}` : esc(c.def)}</span></span></button>
       <p class="hint small muted">Aylantirish uchun kartochkani bosing</p>
       <div class="controls"><button class="btn back" data-act="back" ${i ? '' : 'disabled'}>← Orqaga</button><button class="btn no" data-act="no">Hali bilmayman</button><button class="btn yes" data-act="yes">Bilaman</button></div>`,
       { back, no: () => step(no), yes: () => step(yes) },
@@ -517,9 +743,10 @@ function forms(id) {
   }
   function check(a, b) {
     const okA = isRight(a, cur.v2), okB = isRight(b, cur.v3);
+    const uz = { V2: cur.d2, V3: cur.d3 };
     const line = (name, given, right, ok) => ok
-      ? `<div class="note ok">${name}: ${esc(right)}</div>`
-      : `<div class="note bad"><div class="small">${name} — ${given ? 'siz yozdingiz: ' + esc(given) : 'javob berilmagan'}</div><div><b>To'g'ri javob:</b> ${esc(right)}</div></div>`;
+      ? `<div class="note ok">${name}: ${esc(right)}${uz[name] ? ` — ${esc(uz[name])}` : ''}</div>`
+      : `<div class="note bad"><div class="small">${name} — ${given ? 'siz yozdingiz: ' + esc(given) : 'javob berilmagan'}</div><div><b>To'g'ri javob:</b> ${esc(right)}${uz[name] ? ` — ${esc(uz[name])}` : ''}</div></div>`;
     queue.shift();
     if (okA && okB) {
       if (!missed.has(cur.id)) firstTry++;
@@ -633,7 +860,7 @@ addEventListener('hashchange', route);
 
 (async () => {
   show(`<p class="muted">Yuklanmoqda…</p>`);
-  try { S.sets = await api('GET', SETS); route(); }
+  try { S.sets = await api('GET', SETS); S.sets.forEach(s => isVerbs(s) && s.cards.forEach(deriveVerb)); route(); }
   catch (e) { show(`<div class="panel stack"><h1>Bo'lim ochilmadi</h1><p class="muted">${esc(e.message)}</p><div><button class="btn primary" data-act="retry">Qayta urinish</button></div></div>`, { retry: () => location.reload() }); }
 })();
 })();

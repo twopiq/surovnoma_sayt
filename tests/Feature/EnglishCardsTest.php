@@ -91,7 +91,7 @@ class EnglishCardsTest extends TestCase
     {
         $this->actingAs($this->owner());
         $verbs = [
-            ['term' => 'go', 'v2' => 'went', 'v3' => 'gone', 'def' => 'bormoq'],
+            ['term' => 'go', 'v2' => 'went', 'v3' => 'gone', 'def' => 'bormoq', 'd2' => 'bordi', 'd3' => 'borgan'],
             ['term' => 'work', 'v2' => 'worked', 'v3' => 'worked', 'def' => 'ishlamoq'],
             ['term' => 'see', 'v2' => 'saw', 'v3' => '', 'def' => "ko'rmoq"], // chala qator tashlab yuboriladi
         ];
@@ -102,7 +102,9 @@ class EnglishCardsTest extends TestCase
 
         $id = $this->postJson(route('english.sets.store'), ['title' => "Fe'llar", 'kind' => 'verbs', 'cards' => $verbs])
             ->assertOk()->assertJsonPath('kind', 'verbs')->assertJsonCount(2, 'cards')
-            ->assertJsonPath('cards.0.v2', 'went')->assertJsonPath('cards.0.v3', 'gone')->json('id');
+            ->assertJsonPath('cards.0.v2', 'went')->assertJsonPath('cards.0.v3', 'gone')
+            // tarjimaning uch shakli saqlanadi; berilmagan bo'lsa bo'sh qoladi va karta tashlab yuborilmaydi
+            ->assertJsonPath('cards.0.d2', 'bordi')->assertJsonPath('cards.0.d3', 'borgan')->assertJsonPath('cards.1.d2', '')->json('id');
 
         // Turi keyin o'zgarmaydi, shakllar yangilanishda saqlanadi.
         $this->putJson(route('english.sets.update', $id), ['title' => "Fe'llar", 'kind' => 'words', 'cards' => array_slice($verbs, 0, 2)])

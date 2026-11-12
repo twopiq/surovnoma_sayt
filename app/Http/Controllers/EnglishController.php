@@ -71,6 +71,8 @@ class EnglishController extends Controller
             'cards.*.def' => ['nullable', 'string', 'max:1000'],
             'cards.*.v2' => ['nullable', 'string', 'max:200'],
             'cards.*.v3' => ['nullable', 'string', 'max:200'],
+            'cards.*.d2' => ['nullable', 'string', 'max:200'],
+            'cards.*.d3' => ['nullable', 'string', 'max:200'],
             'cards.*.lvl' => ['nullable', 'integer', 'between:0,2'],
         ]);
 
@@ -80,10 +82,12 @@ class EnglishController extends Controller
                 'term' => trim((string) ($card['term'] ?? '')),
                 ...($verbs ? ['v2' => trim((string) ($card['v2'] ?? '')), 'v3' => trim((string) ($card['v3'] ?? ''))] : []),
                 'def' => trim((string) ($card['def'] ?? '')),
+                // Tarjimaning V2/V3 shakllari (bordi, borgan) — brauzerda o'zi to'ldiriladi, bo'sh qolishi mumkin.
+                ...($verbs ? ['d2' => trim((string) ($card['d2'] ?? '')), 'd3' => trim((string) ($card['d3'] ?? ''))] : []),
                 'lvl' => (int) ($card['lvl'] ?? 0),
             ])
-            // Chala to'ldirilgan qatorlar tashlab yuboriladi (fe'lda uchala shakl ham shart).
-            ->filter(fn (array $card): bool => ! in_array('', array_diff_key($card, ['lvl' => 0]), true))
+            // Chala to'ldirilgan qatorlar tashlab yuboriladi (fe'lda uchala inglizcha shakl va tarjima shart).
+            ->filter(fn (array $card): bool => ! in_array('', array_diff_key($card, ['lvl' => 0, 'd2' => '', 'd3' => '']), true))
             ->values();
 
         if ($cards->count() < 2) {
