@@ -358,10 +358,10 @@ function home() {
       <span class="bar"><i style="width:${Math.round(mastered(s) / s.cards.length * 100)}%"></i></span>
     </button>`).join('')}</div>` : `<p class="empty muted">Hech narsa topilmadi.</p>`;
   show(`<div class="head"><div><h1>Kutubxona</h1><p class="muted">${S.sets.length} ta to'plam</p></div>
-      <button class="btn primary" data-act="new">+ Yangi to'plam</button></div>
+      <button class="btn primary" data-act="new" data-key="N">+ Yangi to'plam</button></div>
     ${S.sets.length > 4 ? `<p style="margin-bottom:14px"><input id="q" type="search" placeholder="To'plamlarni qidirish" aria-label="Qidirish"></p>` : ''}
     <div id="list">${S.sets.length ? cards(S.sets) : `<div class="panel empty"><h2>Hali to'plam yo'q</h2><p class="muted" style="margin:8px 0 16px">Birinchi to'plamingizni yarating va yodlashni boshlang.</p><button class="btn primary" data-act="new">To'plam yaratish</button></div>`}</div>`,
-    { new: () => nav(editor) });
+    { new: () => nav(editor) }, e => { if (e.key.toLowerCase() === 'n' && !e.ctrlKey && !e.metaKey && !e.altKey) { e.preventDefault(); nav(editor); } });
   const q = $('#q');
   if (q) q.oninput = () => { $('#list').innerHTML = cards(S.sets.filter(s => s.title.toLowerCase().includes(q.value.trim().toLowerCase()))); };
 }
@@ -392,19 +392,20 @@ function setView(id) {
   const card = cid => s.cards.find(c => c.id === cid);
   const cells = c => innerGrid(kind, fields.map(([k]) => `<div class="${/^d/.test(k) ? 'd' : 't'}">${esc(c[k])}</div>`).join(''));
   const inputs = (c, hints) => innerGrid(kind, fields.map(f => fieldInput(f, c[f[0]], hints)).join(''));
+  const run = { cards, learn, forms, test, match };
+  // [mode, name, description]; the position is also its number key
+  const modes = [['cards', 'Kartochkalar', "Aylantirib ko'rib chiqing"], ['learn', "O'rganish", 'Bosqichma-bosqich yodlang'],
+    ...(verbs ? [['forms', 'Shakllar', 'V2, V3 yoki ikkalasini yozing']] : []),
+    ['test', 'Test', 'Bilimingizni tekshiring'], ['match', 'Juftlash', "Vaqtga qarshi o'yin"]];
 
   show(`<button class="btn quiet" data-act="home">← Kutubxona</button>
     <div class="head" style="margin-top:8px"><div style="min-width:0"><h1>${esc(s.title)}</h1>${s.desc ? `<p class="muted" style="margin-top:6px">${esc(s.desc)}</p>` : ''}</div>
-      <div class="rowf" id="tools"><button class="btn" data-act="pdf">PDF saqlash</button><button class="btn" data-act="edit">Tahrirlash</button><button class="btn danger" data-act="del">O'chirish</button></div></div>
-    <div class="modes${verbs ? ' five' : ''}">
-      <button class="mode" data-act="m" data-m="cards"><b>Kartochkalar</b><span class="small muted">Aylantirib ko'rib chiqing</span></button>
-      <button class="mode" data-act="m" data-m="learn"><b>O'rganish</b><span class="small muted">Bosqichma-bosqich yodlang</span></button>
-      ${verbs ? `<button class="mode" data-act="m" data-m="forms"><b>Shakllar</b><span class="small muted">V2 va V3 ni yozib mashq qiling</span></button>` : ''}
-      <button class="mode" data-act="m" data-m="test"><b>Test</b><span class="small muted">Bilimingizni tekshiring</span></button>
-      <button class="mode" data-act="m" data-m="match"><b>Juftlash</b><span class="small muted">Vaqtga qarshi o'yin</span></button>
+      <div class="rowf" id="tools"><button class="btn" data-act="pdf">PDF saqlash</button><button class="btn" data-act="edit" data-key="E">Tahrirlash</button><button class="btn danger" data-act="del">O'chirish</button></div></div>
+    <div class="modes${verbs ? ' five' : ''}">${modes.map(([m, name, about], i) => `
+      <button class="mode" data-act="m" data-m="${m}" data-key="${i + 1}"><b>${name}</b><span class="small muted">${about}</span></button>`).join('')}
     </div>
     <div class="rowf" style="justify-content:space-between;margin-bottom:10px"><h2 id="tcount"></h2><span class="small muted" id="tdone"></span></div>
-    <form class="qadd" id="qa">${inputs({}, true)}<button class="btn primary">Qo'shish</button></form>
+    <form class="qadd" id="qa">${inputs({}, true)}<button class="btn primary" data-key="Enter">Qo'shish</button></form>
     <div class="rowf qhint"><span class="small muted">${verbs
       ? "Fe'lni yozib Enter bosing — qolgan shakllari va tarjimasi o'zi to'ladi. Tekshirib, yana Enter bosing."
       : "Yozing va Enter bosing — so'z darhol ro'yxatga tushadi."} Tartibni o'zgartirish uchun qatorni ushlab suring.</span><button class="btn quiet" data-act="bulk">Tayyor ro'yxatdan qo'shish</button></div>
@@ -419,7 +420,7 @@ function setView(id) {
       },
       edit: () => nav(editor, id),
       bulk: () => nav(editor, id, true),
-      m: b => nav({ cards, learn, forms, test, match }[b.dataset.m], id),
+      m: b => nav(run[b.dataset.m], id),
       del: () => { $('#tools').innerHTML = `<span class="small">To'plam butunlay o'chirilsinmi?</span><button class="btn danger" data-act="delYes">Ha, o'chirish</button><button class="btn" data-act="delNo">Yo'q</button>`; },
       delYes: async b => {
         b.disabled = true;
@@ -437,6 +438,11 @@ function setView(id) {
       rmYes: b => { s.cards = s.cards.filter(c => c.id !== rowId(b)); removing = null; save(s); draw(); },
       cancelRow: () => { editing = removing = null; draw(); },
       saveRow,
+    },
+    e => {
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      const mode = modes[+e.key - 1];
+      if (mode) nav(run[mode[0]], id); else if (e.key.toLowerCase() === 'e') { e.preventDefault(); nav(editor, id); }
     });
 
   // Reordering: drag a block, or use its arrows. Off while a search is filtering the list.
@@ -468,7 +474,7 @@ function setView(id) {
   function row({ c, n }) {
     const plain = `<span class="num">${n}</span>`;
     if (editing === c.id) return `<div class="term busy" data-id="${c.id}">${plain}${inputs(c)}
-      <div class="tact wide"><button class="btn sm primary" data-act="saveRow">Saqlash</button><button class="btn sm" data-act="cancelRow">Bekor</button></div></div>`;
+      <div class="tact wide"><button class="btn sm primary" data-act="saveRow" data-key="Enter">Saqlash</button><button class="btn sm" data-act="cancelRow" data-key="Esc">Bekor</button></div></div>`;
     if (removing === c.id) return `<div class="term busy" data-id="${c.id}">${plain}${cells(c)}
       <div class="tact wide"><span class="small">O'chirilsinmi?</span><button class="btn sm danger" data-act="rmYes">Ha</button><button class="btn sm" data-act="cancelRow">Yo'q</button></div></div>`;
     const move = q ? '' : `<button class="ib" data-act="up" aria-label="Tepaga ko'chirish" title="Tepaga ko'chirish"${n === 1 ? ' disabled' : ''}>${ICON.up}</button><button class="ib" data-act="down" aria-label="Pastga ko'chirish" title="Pastga ko'chirish"${n === s.cards.length ? ' disabled' : ''}>${ICON.down}</button>`;
@@ -548,7 +554,7 @@ function editor(id, openPaste) {
 
   show(`<form id="ef" class="stack">
       <div class="head" style="margin:0"><h1>${s ? "To'plamni tahrirlash" : "Yangi to'plam"}</h1>
-        <div class="rowf"><button type="button" class="btn" data-act="cancel">Bekor qilish</button><button class="btn primary">Saqlash</button></div></div>
+        <div class="rowf"><button type="button" class="btn" data-act="cancel">Bekor qilish</button><button class="btn primary" data-key="Ctrl + Enter">Saqlash</button></div></div>
       <p class="err" id="err" hidden></p>
       <input id="f-title" placeholder="To'plam nomi, masalan: Ingliz tili, 5-dars" aria-label="To'plam nomi" value="${esc(s?.title)}">
       <input id="f-desc" placeholder="Qisqa izoh (ixtiyoriy)" aria-label="Izoh" value="${esc(s?.desc)}">
@@ -564,7 +570,7 @@ function editor(id, openPaste) {
       </div>
       <p class="small muted" id="rows-help"></p>
       <div id="rows"></div>
-      <div><button type="button" class="btn" data-act="add">+ Qator qo'shish</button></div>
+      <div><button type="button" class="btn" data-act="add" data-key="oxirgi maydonda Enter">+ Qator qo'shish</button></div>
     </form>`,
     {
       cancel: () => nav(s ? setView : home, id),
@@ -607,7 +613,7 @@ function editor(id, openPaste) {
   };
   // Enter walks through the fields instead of submitting the whole form by accident.
   $('#rows').onkeydown = e => {
-    if (e.key !== 'Enter' || e.target.tagName !== 'INPUT') return;
+    if (e.key !== 'Enter' || e.target.tagName !== 'INPUT' || e.ctrlKey || e.metaKey) return;
     e.preventDefault();
     const r = e.target.closest('.erow'), inputs = $$('input', r), i = inputs.indexOf(e.target);
     fillVerbRow(r, e.target.dataset.k);
@@ -617,6 +623,7 @@ function editor(id, openPaste) {
   };
   $('#rows').addEventListener('focusout', e => { const k = e.target.dataset?.k; if (k === 'term' || k === 'def') fillVerbRow(e.target.closest('.erow'), k); });
   sortable($('#rows'), '.erow', () => {});
+  $('#ef').onkeydown = e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); $('#ef').requestSubmit(); } };   // Ctrl+Enter saves from anywhere in the form
   if (openPaste) $('#f-paste').focus(); else if (!s) $('#f-title').focus();
 }
 
@@ -636,10 +643,10 @@ function cards(id, only) {
     const c = order[i];
     show(`${shead(id, Math.round(i / order.length * 100), `${i + 1} / ${order.length}`)}
       <button class="flip" id="flip" aria-label="Kartochkani aylantirish"><span class="flip-in"><span class="face" data-side="Atama">${esc(c.term)}</span><span class="face back" data-side="${isVerbs(s) ? "V2 · V3 va tarjima" : "Ta'rif"}">${isVerbs(s) ? `<span class="forms">${esc(c.v2)} · ${esc(c.v3)}</span>${esc(c.def)}${c.d2 ? `<span class="forms">${esc(c.d2)} · ${esc(c.d3)}</span>` : ''}` : esc(c.def)}</span></span></button>
-      <p class="hint small muted">Aylantirish uchun kartochkani bosing</p>
-      <div class="controls"><button class="btn back" data-act="back" ${i ? '' : 'disabled'}>← Orqaga</button><button class="btn no" data-act="no">Hali bilmayman</button><button class="btn yes" data-act="yes">Bilaman</button></div>`,
+      <p class="hint small muted">Aylantirish uchun kartochkani bosing yoki Probel tugmasini bosing</p>
+      <div class="controls"><button class="btn back" data-act="back" data-key="←" ${i ? '' : 'disabled'}>← Orqaga</button><button class="btn no" data-act="no" data-key="↓">Hali bilmayman</button><button class="btn yes" data-act="yes" data-key="→">Bilaman</button></div>`,
       { back, no: () => step(no), yes: () => step(yes) },
-      e => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); flip(); } else if (e.key === 'ArrowRight') step(yes); else if (e.key === 'ArrowLeft') back(); });
+      e => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); flip(); } else if (e.key === 'ArrowRight') step(yes); else if (e.key === 'ArrowDown') { e.preventDefault(); step(no); } else if (e.key === 'ArrowLeft') back(); });
     $('#flip').onclick = flip;
   }
   const flip = () => $('#flip')?.classList.toggle('on');
@@ -670,16 +677,17 @@ function learn(id) {
         keyFn = null; acts.pick = null;
         $$('.opt').forEach((b, j) => { b.disabled = true; if (opts[j] === cur.def) b.classList.add('right'); else if (j === n) b.classList.add('wrong'); });
         if (opts[n] === cur.def) { apply(true); timers.push(setTimeout(next, 650)); }
-        else { $('#box').insertAdjacentHTML('beforeend', `<div class="rowf end"><button class="btn primary" data-act="cont">Davom etish</button></div>`); acts.cont = () => { apply(false); next(); }; keyFn = e => { if (e.key === 'Enter') acts.cont(); }; }
+        else { $('#box').insertAdjacentHTML('beforeend', `<div class="rowf end"><button class="btn primary" data-act="cont" data-key="Enter">Davom etish</button></div>`); acts.cont = () => { apply(false); next(); }; keyFn = e => { if (e.key === 'Enter') acts.cont(); }; }
       };
       show(`${head()}<div class="panel stack" id="box"><div><div class="label">To'g'ri ta'rifni tanlang</div><div class="prompt">${esc(cur.term)}</div>
-        <div class="opts">${opts.map((o, j) => `<button class="btn opt" data-act="pick" data-i="${j}"><b>${j + 1}</b>${esc(o)}</button>`).join('')}</div></div></div>`,
+        <div class="opts">${opts.map((o, j) => `<button class="btn opt" data-act="pick" data-i="${j}" data-key="${j + 1}"><b>${j + 1}</b>${esc(o)}</button>`).join('')}</div></div></div>`,
         { pick: b => pick(+b.dataset.i) }, e => { const n = +e.key - 1; if (n >= 0 && n < opts.length) pick(n); });
     } else {
       show(`${head()}<form class="panel stack" id="wf"><div><div class="label">Ta'rifini yozing</div><div class="prompt" style="margin-bottom:0">${esc(cur.term)}</div></div>
         <input id="ans" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Javobingiz" aria-label="Javob">
-        <div class="rowf end"><button type="button" class="btn quiet" data-act="skip">Bilmayman</button><button class="btn primary">Tekshirish</button></div></form>`,
+        <div class="rowf end"><button type="button" class="btn quiet" data-act="skip" data-key="Esc">Bilmayman</button><button class="btn primary" data-key="Enter">Tekshirish</button></div></form>`,
         { skip: () => wrong('') });
+      $('#ans').onkeydown = e => { if (e.key === 'Escape') wrong(''); };
       $('#wf').onsubmit = e => { e.preventDefault(); const v = $('#ans').value; if (!v.trim()) return; isRight(v, cur.def) ? right() : wrong(v); };
       $('#ans').focus();
     }
@@ -691,7 +699,7 @@ function learn(id) {
   function wrong(v) {
     show(`${head()}<div class="panel stack"><div class="prompt" style="margin:0">${esc(cur.term)}</div>
       <div class="note bad">${v ? `<div class="small">Siz yozdingiz: ${esc(v)}</div>` : ''}<div><b>To'g'ri javob:</b> ${esc(cur.def)}</div></div>
-      <div class="rowf end">${v ? `<button class="btn quiet" data-act="over">Men to'g'ri yozgan edim</button>` : ''}<button class="btn primary" data-act="cont">Davom etish</button></div></div>`,
+      <div class="rowf end">${v ? `<button class="btn quiet" data-act="over">Men to'g'ri yozgan edim</button>` : ''}<button class="btn primary" data-act="cont" data-key="Enter">Davom etish</button></div></div>`,
       { cont: () => { apply(false); next(); }, over: () => { apply(true); next(); } }, e => { if (e.key === 'Enter') { apply(false); next(); } });
   }
   function apply(good) {
@@ -704,7 +712,7 @@ function learn(id) {
   function roundEnd() {
     show(`${head()}<div class="panel stack"><h1>Davra tugadi</h1>
       <p><b>${ok}</b> ta to'g'ri, <b>${bad}</b> ta xato. O'zlashtirildi: <b>${mastered(s)} / ${s.cards.length}</b>.</p>
-      <div class="rowf"><button class="btn primary" data-act="go">Keyingi davra</button><button class="btn" data-act="open" data-id="${id}">To'plamga qaytish</button></div></div>`,
+      <div class="rowf"><button class="btn primary" data-act="go" data-key="Enter">Keyingi davra</button><button class="btn" data-act="open" data-id="${id}">To'plamga qaytish</button></div></div>`,
       { go: round }, e => { if (e.key === 'Enter') round(); });
   }
   function done() {
@@ -716,47 +724,60 @@ function learn(id) {
   round();
 }
 
-/* ---------- Forms: given V1 and the translation, type V2 and V3; missed verbs come back until all are right ---------- */
-function forms(id) {
+/* ---------- Forms: given V1 and the translation, type V2, V3 or both; missed verbs come back until all are right ---------- */
+function forms(id, which) {
   const s = get(id);
+  if (!which) {   // first choose what to practise
+    const kinds = [['both', 'V2 va V3', 'Ikkala shaklni ham yozasiz'], ['v2', 'Faqat V2', "O'tgan zamon: went"], ['v3', 'Faqat V3', "O'tgan zamon sifatdoshi: gone"]];
+    return show(`<button class="btn quiet" data-act="open" data-id="${id}">← To'plam</button>
+      <div class="panel stack" style="margin-top:10px"><div><h1>Shakllar mashqi</h1><p class="muted" style="margin-top:6px">Nimani mashq qilasiz?</p></div>
+      <div class="modes three" style="margin:0">${kinds.map(([w, name, about], i) => `<button class="mode" data-act="pick" data-w="${w}" data-key="${i + 1}"><b>${name}</b><span class="small muted">${about}</span></button>`).join('')}</div></div>`,
+      { pick: b => nav(forms, id, b.dataset.w) },
+      e => { const k = kinds[+e.key - 1]; if (k) nav(forms, id, k[0]); });
+  }
+  const ask2 = which !== 'v3', ask3 = which !== 'v2';
+  const what = ask2 && ask3 ? 'V2 va V3 shakllarini' : ask2 ? 'V2 shaklini' : 'V3 shaklini';
   const total = s.cards.length;
   let queue = shuffle(s.cards), cur, firstTry = 0, missed = new Set();
   const head = () => { const done = total - queue.length; return shead(id, Math.round(done / total * 100), `${done} / ${total}`); };
-  const verb = () => `<div><div class="label">V2 va V3 shakllarini yozing</div><div class="prompt" style="margin-bottom:4px">${esc(cur.term)}</div><p class="muted">${esc(cur.def)}</p></div>`;
+  const verb = () => `<div><div class="label">${what} yozing</div><div class="prompt" style="margin-bottom:4px">${esc(cur.term)}</div><p class="muted">${esc(cur.def)}</p></div>`;
   function ask() {
     cur = queue[0];
     show(`${head()}<form class="panel stack" id="ff">${verb()}
-      <div class="pairf">
-        <label class="field">V2 — o'tgan zamon<input id="f-v2" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
-        <label class="field">V3 — o'tgan zamon sifatdoshi<input id="f-v3" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
+      <div class="pairf${ask2 && ask3 ? '' : ' one'}">
+        ${ask2 ? `<label class="field">V2 — o'tgan zamon<input id="f-v2" autocomplete="off" autocapitalize="off" spellcheck="false"></label>` : ''}
+        ${ask3 ? `<label class="field">V3 — o'tgan zamon sifatdoshi<input id="f-v3" autocomplete="off" autocapitalize="off" spellcheck="false"></label>` : ''}
       </div>
-      <div class="rowf end"><button type="button" class="btn quiet" data-act="skip">Bilmayman</button><button class="btn primary">Tekshirish</button></div></form>`,
+      <div class="rowf end"><button type="button" class="btn quiet" data-act="skip" data-key="Esc">Bilmayman</button><button class="btn primary" data-key="Enter">Tekshirish</button></div></form>`,
       { skip: () => check('', '') });
+    const value = sel => $(sel)?.value.trim() || '';
     $('#ff').onsubmit = e => {
       e.preventDefault();
-      const a = $('#f-v2').value.trim(), b = $('#f-v3').value.trim();
-      if (!a) return $('#f-v2').focus();
-      if (!b) return $('#f-v3').focus();   // Enter in V2 moves on to V3
+      const a = value('#f-v2'), b = value('#f-v3');
+      if (ask2 && !a) return $('#f-v2').focus();
+      if (ask3 && !b) return $('#f-v3').focus();   // Enter in V2 moves on to V3
       check(a, b);
     };
-    $('#f-v2').focus();
+    $('#ff').onkeydown = e => { if (e.key === 'Escape') check('', ''); };
+    $('#ff input').focus();
   }
   function check(a, b) {
-    const okA = isRight(a, cur.v2), okB = isRight(b, cur.v3);
+    const okA = !ask2 || isRight(a, cur.v2), okB = !ask3 || isRight(b, cur.v3);
     const uz = { V2: cur.d2, V3: cur.d3 };
     const line = (name, given, right, ok) => ok
       ? `<div class="note ok">${name}: ${esc(right)}${uz[name] ? ` — ${esc(uz[name])}` : ''}</div>`
       : `<div class="note bad"><div class="small">${name} — ${given ? 'siz yozdingiz: ' + esc(given) : 'javob berilmagan'}</div><div><b>To'g'ri javob:</b> ${esc(right)}${uz[name] ? ` — ${esc(uz[name])}` : ''}</div></div>`;
+    const lines = (ask2 ? line('V2', a, cur.v2, okA) : '') + (ask3 ? line('V3', b, cur.v3, okB) : '');
     queue.shift();
     if (okA && okB) {
       if (!missed.has(cur.id)) firstTry++;
-      show(`${head()}<div class="panel stack">${verb()}${line('V2', a, cur.v2, true)}${line('V3', b, cur.v3, true)}</div>`);
+      show(`${head()}<div class="panel stack">${verb()}${lines}</div>`);
       timers.push(setTimeout(next, 900));
     } else {
       missed.add(cur.id);
       queue.splice(Math.min(3, queue.length), 0, cur);   // comes back a few verbs later
-      show(`${head()}<div class="panel stack">${verb()}${line('V2', a, cur.v2, okA)}${line('V3', b, cur.v3, okB)}
-        <div class="rowf end"><button class="btn primary" data-act="cont">Davom etish</button></div></div>`,
+      show(`${head()}<div class="panel stack">${verb()}${lines}
+        <div class="rowf end"><button class="btn primary" data-act="cont" data-key="Enter">Davom etish</button></div></div>`,
         { cont: next }, e => { if (e.key === 'Enter') next(); });
     }
   }
@@ -766,8 +787,8 @@ function forms(id) {
     show(`${shead(id, 100, `${total} / ${total}`)}<div class="panel stack"><h1>Mashq tugadi</h1>
       <p>${total} ta fe'ldan <b>${firstTry}</b> tasini birinchi urinishda to'g'ri yozdingiz.</p>
       ${hard.length ? `<div><div class="label" style="margin-bottom:6px">Qiynalgan fe'llaringiz</div>${hard.map(c => `<div><b>${esc(c.term)}</b> – ${esc(c.v2)} – ${esc(c.v3)}</div>`).join('')}</div>` : ''}
-      <div class="rowf"><button class="btn primary" data-act="again">Yana mashq qilish</button><button class="btn" data-act="open" data-id="${id}">To'plamga qaytish</button></div></div>`,
-      { again: () => nav(forms, id) });
+      <div class="rowf"><button class="btn primary" data-act="again" data-key="Enter">Yana mashq qilish</button><button class="btn" data-act="other">Boshqa turini tanlash</button><button class="btn" data-act="open" data-id="${id}">To'plamga qaytish</button></div></div>`,
+      { again: () => nav(forms, id, which), other: () => nav(forms, id) }, e => { if (e.key === 'Enter') nav(forms, id, which); });
   }
   ask();
 }
