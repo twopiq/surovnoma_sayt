@@ -139,6 +139,9 @@ function loadPdf() {
 const LVL = ['Yangi', "O'rganilmoqda", "O'zlashtirildi"];
 const ICON = {
   edit: '<svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13.5 3.5l3 3L7 16H4v-3z"/><path d="M11.5 5.5l3 3"/></svg>',
+  up: '<svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5-5 5 5"/></svg>',
+  down: '<svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 8l5 5 5-5"/></svg>',
+  grip: '<svg viewBox="0 0 20 20" width="14" height="14" fill="currentColor" aria-hidden="true"><circle cx="7" cy="5" r="1.4"/><circle cx="13" cy="5" r="1.4"/><circle cx="7" cy="10" r="1.4"/><circle cx="13" cy="10" r="1.4"/><circle cx="7" cy="15" r="1.4"/><circle cx="13" cy="15" r="1.4"/></svg>',
   trash: '<svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h12M8 6V4h4v2M6 6l.7 10h6.6L14 6"/></svg>',
 };
 function setView(id) {
@@ -164,7 +167,7 @@ function setView(id) {
     <form class="qadd${verbs ? ' verbs' : ''}" id="qa">${fields.map(f => fieldInput(f, '', true)).join('')}<button class="btn primary">Qo'shish</button></form>
     <div class="rowf qhint"><span class="small muted">${verbs
       ? "Fe'lni yozib Enter bosing — V2 va V3 o'zi to'ldiriladi (noto'g'ri bo'lsa tuzating), tarjimasini yozib yana Enter."
-      : "Yozing va Enter bosing — so'z darhol ro'yxatga tushadi."}</span><button class="btn quiet" data-act="bulk">Tayyor ro'yxatdan qo'shish</button></div>
+      : "Yozing va Enter bosing — so'z darhol ro'yxatga tushadi."} Tartibni strelkalar yoki sudrash bilan o'zgartirasiz.</span><button class="btn quiet" data-act="bulk">Tayyor ro'yxatdan qo'shish</button></div>
     <input id="tq" type="search" placeholder="${verbs ? "Fe'llar" : 'Atamalar'} ichidan qidirish" aria-label="Qidirish" hidden>
     <div id="tbox"></div>`,
     {
@@ -185,6 +188,8 @@ function setView(id) {
       },
       delNo: () => nav(setView, id),
       editRow: b => startEdit(rowId(b)),
+      up: b => moveBy(rowId(b), -1, 'up'),
+      down: b => moveBy(rowId(b), 1, 'down'),
       rmRow: b => {
         if (s.cards.length <= 2) return toast(`To'plamda kamida 2 ta ${verbs ? "fe'l" : 'atama'} qolishi kerak.`);
         removing = rowId(b); editing = null; draw();
@@ -194,6 +199,24 @@ function setView(id) {
       saveRow,
     });
 
+  // Reordering: arrows move a row one step; dragging the grip drops it anywhere. Off while a search is filtering the list.
+  function place(cid, index) {
+    const from = s.cards.findIndex(c => c.id === cid);
+    if (from < 0 || index === from) return false;
+    const [moved] = s.cards.splice(from, 1);
+    s.cards.splice(index, 0, moved); save(s);
+    editing = removing = null; fresh = cid; draw(); fresh = null;
+    return true;
+  }
+  function moveBy(cid, step, act) {
+    const from = s.cards.findIndex(c => c.id === cid), to = from + step;
+    if (to < 0 || to >= s.cards.length) return;
+    place(cid, to);
+    // keep focus on the same button so it can be pressed repeatedly; at the edge fall back to the opposite arrow
+    const btn = name => document.querySelector('#tbox .term[data-id="' + cid + '"] [data-act="' + name + '"]');
+    const again = btn(act);
+    (again && !again.disabled ? again : btn(act === 'up' ? 'down' : 'up'))?.focus();
+  }
   function startEdit(cid) { editing = cid; removing = null; draw(); const el = $('#tbox input'); el.focus(); el.select(); }
   function saveRow() {
     const c = card(editing), next = {};
@@ -208,8 +231,10 @@ function setView(id) {
       <div class="tact wide"><button class="btn sm primary" data-act="saveRow">Saqlash</button><button class="btn sm" data-act="cancelRow">Bekor</button></div></div>`;
     if (removing === c.id) return `<div class="${cls} busy" data-id="${c.id}">${num}${cells(c)}
       <div class="tact wide"><span class="small">O'chirilsinmi?</span><button class="btn sm danger" data-act="rmYes">Ha</button><button class="btn sm" data-act="cancelRow">Yo'q</button></div></div>`;
-    return `<div class="${cls}${fresh === c.id ? ' fresh' : ''}" data-id="${c.id}">${num}${cells(c)}<span class="lvl l${c.lvl || 0}">${LVL[c.lvl || 0]}</span>
-      <div class="tact"><button class="ib" data-act="editRow" aria-label="Tahrirlash" title="Tahrirlash">${ICON.edit}</button><button class="ib" data-act="rmRow" aria-label="O'chirish" title="O'chirish">${ICON.trash}</button></div></div>`;
+    const move = q ? '' : `<button class="ib" data-act="up" aria-label="Tepaga ko'chirish" title="Tepaga ko'chirish"${n === 1 ? ' disabled' : ''}>${ICON.up}</button><button class="ib" data-act="down" aria-label="Pastga ko'chirish" title="Pastga ko'chirish"${n === s.cards.length ? ' disabled' : ''}>${ICON.down}</button>`;
+    const grip = q ? num : `<span class="num"><span class="grip" title="Sudrab ko'chirish">${ICON.grip}</span>${n}</span>`;
+    return `<div class="${cls}${fresh === c.id ? ' fresh' : ''}" data-id="${c.id}">${grip}${cells(c)}<span class="lvl l${c.lvl || 0}">${LVL[c.lvl || 0]}</span>
+      <div class="tact">${move}<button class="ib" data-act="editRow" aria-label="Tahrirlash" title="Tahrirlash">${ICON.edit}</button><button class="ib" data-act="rmRow" aria-label="O'chirish" title="O'chirish">${ICON.trash}</button></div></div>`;
   }
   function draw() {
     $('#tcount').textContent = `${verbs ? "Fe'llar" : 'Atamalar'} (${s.cards.length})`;
@@ -247,6 +272,31 @@ function setView(id) {
     if (e.key === 'Enter') { e.preventDefault(); saveRow(); }
     else if (e.key === 'Escape') { editing = null; draw(); }
   };
+  // Drag and drop: a row becomes draggable only while its grip is held, so text in the table can still be selected.
+  let dragId = null, drop = null;
+  const box = $('#tbox'), clearMarks = () => $$('.drop-before, .drop-after', box).forEach(r => r.classList.remove('drop-before', 'drop-after'));
+  box.onpointerdown = e => { const g = e.target.closest('.grip'); if (g) g.closest('.term').draggable = true; };
+  box.onpointerup = () => $$('.term[draggable]', box).forEach(r => r.removeAttribute('draggable'));
+  box.ondragstart = e => {
+    const r = e.target.closest?.('.term[data-id]'); if (!r) return;
+    dragId = r.dataset.id; drop = null; e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', dragId);
+    setTimeout(() => r.classList.add('dragging'));
+  };
+  box.ondragover = e => {
+    const r = dragId && e.target.closest('.term[data-id]'); if (!r) return;
+    e.preventDefault(); clearMarks();
+    const rect = r.getBoundingClientRect(), before = e.clientY < rect.top + rect.height / 2;
+    r.classList.add(before ? 'drop-before' : 'drop-after'); drop = { id: r.dataset.id, before };
+  };
+  box.ondrop = e => {
+    if (!dragId || !drop) return;
+    e.preventDefault();
+    const cid = dragId, rest = s.cards.filter(c => c.id !== cid);
+    const index = rest.findIndex(c => c.id === drop.id) + (drop.before ? 0 : 1);
+    dragId = null;
+    if (!place(cid, index)) draw();
+  };
+  box.ondragend = () => { if (dragId) { dragId = null; draw(); } };
   $('#tbox').ondblclick = e => { const r = e.target.closest('.term[data-id]'); if (r && !r.classList.contains('busy')) startEdit(r.dataset.id); };
   draw();
 }
