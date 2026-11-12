@@ -47,7 +47,7 @@ window.EnglishPdf = (() => {
 
   async function make(source) {
     const verbs = source.kind === 'verbs', termLabel = verbs ? "FE'L: V1 – V2 – V3" : 'ATAMA', defLabel = verbs ? 'TARJIMA' : "TA'RIF"; // fe'lning uch shakli bitta ustunda
-    const set = { title: fix(source.title), desc: fix(source.desc || ''), cards: source.cards.map(c => ({ term: fix(verbs ? `${c.term} – ${c.v2} – ${c.v3}` : c.term), def: fix(c.def) })) };
+    const set = { title: fix(source.title), desc: fix(source.desc || ''), cards: source.cards.map(c => ({ term: fix(verbs ? `${c.term} – ${c.v2} – ${c.v3}` : c.term), def: fix(verbs && c.d2 && c.d3 ? `${c.def} – ${c.d2} – ${c.d3}` : c.def) })) };
     const [regular, bold] = await loadFonts();
     const doc = new window.jspdf.jsPDF({ unit: 'pt', format: 'a4' });
     doc.addFileToVFS('PlexR.ttf', regular); doc.addFont('PlexR.ttf', 'Plex', 'normal');
