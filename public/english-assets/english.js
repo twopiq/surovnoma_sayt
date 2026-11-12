@@ -56,11 +56,65 @@ function nav(fn, ...args) { timers.forEach(t => { clearTimeout(t); clearInterval
 app.addEventListener('click', e => { const b = e.target.closest('[data-act]'); if (b && acts[b.dataset.act]) acts[b.dataset.act](b, e); });
 document.addEventListener('keydown', e => { if (/INPUT|TEXTAREA/.test(e.target.tagName)) return; if (keyFn) keyFn(e); });
 
+/* ---------- Set kinds: plain words, or verbs with their three forms ---------- */
+const isVerbs = s => s.kind === 'verbs';
+// [card key, short label, placeholder]
+const FIELDS = {
+  words: [['term', 'Atama', "Yangi so'z"], ['def', "Ta'rif", "Tarjimasi yoki ta'rifi"]],
+  verbs: [['term', 'V1', 'V1: go'], ['v2', 'V2', 'V2: went'], ['v3', 'V3', 'V3: gone'], ['def', 'Tarjima', 'Tarjimasi']],
+};
+const fieldsOf = kind => FIELDS[kind === 'verbs' ? 'verbs' : 'words'];
+const complete = (c, kind) => fieldsOf(kind).every(([k]) => c[k]);
+const sameCard = (a, b, kind) => fieldsOf(kind).every(([k]) => norm(a[k]) === norm(b[k]));
+
+// The common irregular verbs: "V1 V2 V3". Anything else is treated as regular (+ed).
+const IRREGULAR = Object.fromEntries(`be was/were been|bear bore born|beat beat beaten|become became become|begin began begun|bend bent bent|bet bet bet|bind bound bound|bite bit bitten|bleed bled bled|blow blew blown|break broke broken|breed bred bred|bring brought brought|build built built|burn burnt burnt|buy bought bought|catch caught caught|choose chose chosen|come came come|cost cost cost|creep crept crept|cut cut cut|deal dealt dealt|dig dug dug|do did done|draw drew drawn|dream dreamt dreamt|drink drank drunk|drive drove driven|eat ate eaten|fall fell fallen|feed fed fed|feel felt felt|fight fought fought|find found found|flee fled fled|fly flew flown|forbid forbade forbidden|forget forgot forgotten|forgive forgave forgiven|freeze froze frozen|get got got|give gave given|go went gone|grow grew grown|hang hung hung|have had had|hear heard heard|hide hid hidden|hit hit hit|hold held held|hurt hurt hurt|keep kept kept|kneel knelt knelt|know knew known|lay laid laid|lead led led|leave left left|lend lent lent|let let let|lie lay lain|light lit lit|lose lost lost|make made made|mean meant meant|meet met met|pay paid paid|put put put|quit quit quit|read read read|ride rode ridden|ring rang rung|rise rose risen|run ran run|say said said|see saw seen|seek sought sought|sell sold sold|send sent sent|set set set|shake shook shaken|shine shone shone|shoot shot shot|show showed shown|shrink shrank shrunk|shut shut shut|sing sang sung|sink sank sunk|sit sat sat|sleep slept slept|slide slid slid|speak spoke spoken|spend spent spent|split split split|spread spread spread|spring sprang sprung|stand stood stood|steal stole stolen|stick stuck stuck|sting stung stung|strike struck struck|swear swore sworn|sweep swept swept|swim swam swum|swing swung swung|take took taken|teach taught taught|tear tore torn|tell told told|think thought thought|throw threw thrown|understand understood understood|wake woke woken|wear wore worn|weep wept wept|win won won|wind wound wound|write wrote written`
+  .split('|').map(v => { const [a, b, c] = v.split(' '); return [a, [b, c]]; }));
+// Suggested V2 and V3 for a base form; phrasal verbs ("get up") conjugate the first word.
+function verbForms(v1) {
+  const [head, ...rest] = v1.trim().toLowerCase().split(/\s+/);
+  if (!/^[a-z]+$/.test(head || '')) return null;
+  let forms = IRREGULAR[head];
+  if (!forms) {
+    const ed = head.endsWith('e') ? head + 'd'
+      : /[^aeiou]y$/.test(head) ? head.slice(0, -1) + 'ied'
+      : /^[^aeiou]*[aeiou][^aeiouwxy]$/.test(head) ? head + head.slice(-1) + 'ed'   // stop → stopped
+      : head + 'ed';
+    forms = [ed, ed];
+  }
+  const tail = rest.length ? ' ' + rest.join(' ') : '';
+  return forms.map(f => f + tail);
+}
+// One pasted or typed line → a card, or null. Words: "apple - olma". Verbs: "go - went - gone - bormoq" (also "go went gone - bormoq").
+function parseLine(line, kind) {
+  if (kind !== 'verbs') {
+    const sep = ['\t', ' - ', ' – ', ' — ', '=', ';', ':', ',', '-'].find(x => line.includes(x));
+    if (!sep) return null;
+    const i = line.indexOf(sep), term = line.slice(0, i).trim(), def = line.slice(i + sep.length).trim();
+    return term && def ? { term, def } : null;
+  }
+  for (const re of [/\t+/, /\s+[-–—]\s+/, /\s*[;,]\s*/]) {
+    let parts = line.split(re).map(x => x.trim()).filter(Boolean);
+    if (parts.length === 2) { const f = parts[0].split(/[\s,\/]+/); if (f.length === 3) parts = [...f, parts[1]]; }
+    if (parts.length >= 4) return { term: parts[0], v2: parts[1], v3: parts[2], def: parts.slice(3).join(', ') };
+  }
+  return null;
+}
+const fieldInput = ([k, label, hint], value, usePlaceholder) =>
+  `<input data-k="${k}" placeholder="${esc(usePlaceholder ? hint : label)}" aria-label="${esc(label)}" value="${esc(value)}" autocomplete="off"${k === 'def' ? '' : ' autocapitalize="off" spellcheck="false"'}>`;
+// In a verb row, leaving V1 fills empty V2 and V3 with a suggestion.
+function suggestForms(rowEl) {
+  const get = k => rowEl.querySelector(`[data-k="${k}"]`);
+  if (!get('v2') || !get('term').value.trim() || get('v2').value.trim() || get('v3').value.trim()) return;
+  const f = verbForms(get('term').value);
+  if (f) { get('v2').value = f[0]; get('v3').value = f[1]; }
+}
+
 /* ---------- Library ---------- */
 function home() {
   const cards = list => list.length ? `<div class="grid">${list.map(s => `
     <button class="set" data-act="open" data-id="${s.id}">
-      <b>${esc(s.title)}</b><span class="grow"></span>
+      <b>${esc(s.title)}</b>${isVerbs(s) ? `<span class="lvl l1" style="align-self:flex-start">Fe'llar</span>` : ''}<span class="grow"></span>
       <span class="small muted">${s.cards.length} ta atama · ${mastered(s)} tasi o'zlashtirilgan</span>
       <span class="bar"><i style="width:${Math.round(mastered(s) / s.cards.length * 100)}%"></i></span>
     </button>`).join('')}</div>` : `<p class="empty muted">Hech narsa topilmadi.</p>`;
@@ -89,28 +143,29 @@ const ICON = {
 };
 function setView(id) {
   const s = get(id); if (!s) return home();
+  const verbs = isVerbs(s), fields = fieldsOf(s.kind);
   // q: search text; editing / removing: id of the row in that state; fresh: id of the row just added
   let q = '', editing = null, removing = null, fresh = null;
   const rowId = b => b.closest('.term').dataset.id;
   const card = cid => s.cards.find(c => c.id === cid);
+  const cells = c => fields.map(([k]) => `<div class="${k === 'def' ? 'd' : 't'}">${esc(c[k])}</div>`).join('');
 
   show(`<button class="btn quiet" data-act="home">← Kutubxona</button>
     <div class="head" style="margin-top:8px"><div style="min-width:0"><h1>${esc(s.title)}</h1>${s.desc ? `<p class="muted" style="margin-top:6px">${esc(s.desc)}</p>` : ''}</div>
       <div class="rowf" id="tools"><button class="btn" data-act="pdf">PDF saqlash</button><button class="btn" data-act="edit">Tahrirlash</button><button class="btn danger" data-act="del">O'chirish</button></div></div>
-    <div class="modes">
+    <div class="modes${verbs ? ' five' : ''}">
       <button class="mode" data-act="m" data-m="cards"><b>Kartochkalar</b><span class="small muted">Aylantirib ko'rib chiqing</span></button>
       <button class="mode" data-act="m" data-m="learn"><b>O'rganish</b><span class="small muted">Bosqichma-bosqich yodlang</span></button>
+      ${verbs ? `<button class="mode" data-act="m" data-m="forms"><b>Shakllar</b><span class="small muted">V2 va V3 ni yozib mashq qiling</span></button>` : ''}
       <button class="mode" data-act="m" data-m="test"><b>Test</b><span class="small muted">Bilimingizni tekshiring</span></button>
       <button class="mode" data-act="m" data-m="match"><b>Juftlash</b><span class="small muted">Vaqtga qarshi o'yin</span></button>
     </div>
     <div class="rowf" style="justify-content:space-between;margin-bottom:10px"><h2 id="tcount"></h2><span class="small muted" id="tdone"></span></div>
-    <form class="qadd" id="qa">
-      <input id="qa-t" placeholder="Yangi so'z" aria-label="Yangi so'z" autocomplete="off" autocapitalize="off" spellcheck="false">
-      <input id="qa-d" placeholder="Tarjimasi yoki ta'rifi" aria-label="Tarjimasi yoki ta'rifi" autocomplete="off">
-      <button class="btn primary">Qo'shish</button>
-    </form>
-    <div class="rowf qhint"><span class="small muted">Yozing va Enter bosing — so'z darhol ro'yxatga tushadi.</span><button class="btn quiet" data-act="bulk">Tayyor ro'yxatdan qo'shish</button></div>
-    <input id="tq" type="search" placeholder="Atamalar ichidan qidirish" aria-label="Atamalar ichidan qidirish" hidden>
+    <form class="qadd${verbs ? ' verbs' : ''}" id="qa">${fields.map(f => fieldInput(f, '', true)).join('')}<button class="btn primary">Qo'shish</button></form>
+    <div class="rowf qhint"><span class="small muted">${verbs
+      ? "Fe'lni yozib Enter bosing — V2 va V3 o'zi to'ldiriladi (noto'g'ri bo'lsa tuzating), tarjimasini yozib yana Enter."
+      : "Yozing va Enter bosing — so'z darhol ro'yxatga tushadi."}</span><button class="btn quiet" data-act="bulk">Tayyor ro'yxatdan qo'shish</button></div>
+    <input id="tq" type="search" placeholder="${verbs ? "Fe'llar" : 'Atamalar'} ichidan qidirish" aria-label="Qidirish" hidden>
     <div id="tbox"></div>`,
     {
       pdf: async b => {
@@ -121,7 +176,7 @@ function setView(id) {
       },
       edit: () => nav(editor, id),
       bulk: () => nav(editor, id, true),
-      m: b => nav({ cards, learn, test, match }[b.dataset.m], id),
+      m: b => nav({ cards, learn, forms, test, match }[b.dataset.m], id),
       del: () => { $('#tools').innerHTML = `<span class="small">To'plam butunlay o'chirilsinmi?</span><button class="btn danger" data-act="delYes">Ha, o'chirish</button><button class="btn" data-act="delNo">Yo'q</button>`; },
       delYes: async b => {
         b.disabled = true;
@@ -129,9 +184,9 @@ function setView(id) {
         catch (e) { toast(e.message); nav(setView, id); }
       },
       delNo: () => nav(setView, id),
-      editRow: b => { editing = rowId(b); removing = null; draw(); const el = $('#tbox .et'); el.focus(); el.select(); },
+      editRow: b => startEdit(rowId(b)),
       rmRow: b => {
-        if (s.cards.length <= 2) return toast("To'plamda kamida 2 ta atama qolishi kerak.");
+        if (s.cards.length <= 2) return toast(`To'plamda kamida 2 ta ${verbs ? "fe'l" : 'atama'} qolishi kerak.`);
         removing = rowId(b); editing = null; draw();
       },
       rmYes: b => { s.cards = s.cards.filter(c => c.id !== rowId(b)); removing = null; save(s); draw(); },
@@ -139,112 +194,139 @@ function setView(id) {
       saveRow,
     });
 
+  function startEdit(cid) { editing = cid; removing = null; draw(); const el = $('#tbox input'); el.focus(); el.select(); }
   function saveRow() {
-    const c = card(editing), term = $('#tbox .et').value.trim(), def = $('#tbox .ed').value.trim();
-    if (!term || !def) return toast("Atama ham, ta'rifi ham to'ldirilishi kerak.");
-    if (c.term !== term || c.def !== def) { c.term = term; c.def = def; save(s); }
+    const c = card(editing), next = {};
+    $$('#tbox .term.busy input').forEach(i => next[i.dataset.k] = i.value.trim());
+    if (!complete(next, s.kind)) return toast("Hamma maydon to'ldirilishi kerak.");
+    if (fields.some(([k]) => c[k] !== next[k])) { Object.assign(c, next); save(s); }
     editing = null; draw();
   }
   function row({ c, n }) {
-    const num = `<span class="num">${n}</span>`;
-    if (editing === c.id) return `<div class="term busy" data-id="${c.id}">${num}<input class="et" aria-label="Atama" value="${esc(c.term)}"><input class="ed" aria-label="Ta'rif" value="${esc(c.def)}">
+    const num = `<span class="num">${n}</span>`, cls = `term${verbs ? ' verbs' : ''}`;
+    if (editing === c.id) return `<div class="${cls} busy" data-id="${c.id}">${num}${fields.map(f => fieldInput(f, c[f[0]])).join('')}
       <div class="tact wide"><button class="btn sm primary" data-act="saveRow">Saqlash</button><button class="btn sm" data-act="cancelRow">Bekor</button></div></div>`;
-    if (removing === c.id) return `<div class="term busy" data-id="${c.id}">${num}<div class="t">${esc(c.term)}</div><div class="d">${esc(c.def)}</div>
+    if (removing === c.id) return `<div class="${cls} busy" data-id="${c.id}">${num}${cells(c)}
       <div class="tact wide"><span class="small">O'chirilsinmi?</span><button class="btn sm danger" data-act="rmYes">Ha</button><button class="btn sm" data-act="cancelRow">Yo'q</button></div></div>`;
-    return `<div class="term${fresh === c.id ? ' fresh' : ''}" data-id="${c.id}">${num}<div class="t">${esc(c.term)}</div><div class="d">${esc(c.def)}</div><span class="lvl l${c.lvl || 0}">${LVL[c.lvl || 0]}</span>
+    return `<div class="${cls}${fresh === c.id ? ' fresh' : ''}" data-id="${c.id}">${num}${cells(c)}<span class="lvl l${c.lvl || 0}">${LVL[c.lvl || 0]}</span>
       <div class="tact"><button class="ib" data-act="editRow" aria-label="Tahrirlash" title="Tahrirlash">${ICON.edit}</button><button class="ib" data-act="rmRow" aria-label="O'chirish" title="O'chirish">${ICON.trash}</button></div></div>`;
   }
   function draw() {
-    $('#tcount').textContent = `Atamalar (${s.cards.length})`;
+    $('#tcount').textContent = `${verbs ? "Fe'llar" : 'Atamalar'} (${s.cards.length})`;
     $('#tdone').textContent = `${mastered(s)} / ${s.cards.length} o'zlashtirildi`;
     $('#tq').hidden = s.cards.length <= 8 && !q;
-    const list = s.cards.map((c, i) => ({ c, n: i + 1 })).filter(({ c }) => !q || norm(c.term).includes(q) || norm(c.def).includes(q));
+    const list = s.cards.map((c, i) => ({ c, n: i + 1 })).filter(({ c }) => !q || fields.some(([k]) => norm(c[k]).includes(q)));
     $('#tbox').innerHTML = list.length
-      ? `<div class="terms"><div class="term thead"><span>#</span><span>Atama</span><span>Ta'rif</span><span>Holat</span><span></span></div>${list.map(row).join('')}</div>`
+      ? `<div class="terms"><div class="term thead${verbs ? ' verbs' : ''}"><span>#</span>${fields.map(([, label]) => `<span>${label}</span>`).join('')}<span>Holat</span><span></span></div>${list.map(row).join('')}</div>`
       : `<p class="empty muted">Qidiruv bo'yicha hech narsa topilmadi.</p>`;
   }
 
-  // Quick add: Enter in the first field moves on, Enter in the second adds the word and returns to the first.
+  // Quick add: Enter moves to the next empty field; when every field is filled it adds the card and returns to the first field.
   $('#qa').onsubmit = e => {
     e.preventDefault();
-    const t = $('#qa-t'), d = $('#qa-d');
-    let term = t.value.trim(), def = d.value.trim();
-    if (term && !def) { // "apple - olma" typed or pasted into the first field
-      const sep = ['\t', ' - ', ' – ', ' — ', ' = '].find(x => t.value.includes(x));
-      if (sep) { const i = t.value.indexOf(sep); term = t.value.slice(0, i).trim(); def = t.value.slice(i + sep.length).trim(); }
+    const inputs = $$('#qa input'), first = inputs[0];
+    let c = {}; inputs.forEach(i => c[i.dataset.k] = i.value.trim());
+    if (c.term && inputs.slice(1).every(i => !i.value.trim())) { // a whole line typed or pasted into the first field
+      const parsed = parseLine(first.value, s.kind);
+      if (parsed) c = parsed;
     }
-    if (!term) return t.focus();
-    if (!def) return d.focus();
-    if (s.cards.some(c => norm(c.term) === norm(term) && norm(c.def) === norm(def))) { toast("Bu so'z ro'yxatda allaqachon bor."); return t.select(); }
-    const c = { id: uid(), term, def, lvl: 0 };
-    s.cards.unshift(c); save(s);
-    t.value = d.value = ''; q = $('#tq').value = ''; editing = removing = null;
-    fresh = c.id; draw(); fresh = null;
-    t.focus();
+    if (verbs && c.term && !c.v2 && !c.v3) { const f = verbForms(c.term); if (f) [c.v2, c.v3] = f; }
+    inputs.forEach(i => i.value = c[i.dataset.k] || '');
+    const empty = inputs.find(i => !i.value);
+    if (empty) return empty.focus();
+    if (s.cards.some(x => sameCard(x, c, s.kind))) { toast(`Bu ${verbs ? "fe'l" : "so'z"} ro'yxatda allaqachon bor.`); return first.select(); }
+    const made = { id: uid(), ...c, lvl: 0 };
+    s.cards.unshift(made); save(s);
+    inputs.forEach(i => i.value = ''); q = $('#tq').value = ''; editing = removing = null;
+    fresh = made.id; draw(); fresh = null;
+    first.focus();
   };
   $('#tq').oninput = e => { q = norm(e.target.value); editing = removing = null; draw(); };
   $('#tbox').onkeydown = e => {
-    if (!e.target.matches('.et, .ed')) return;
+    if (e.target.tagName !== 'INPUT') return;
     if (e.key === 'Enter') { e.preventDefault(); saveRow(); }
     else if (e.key === 'Escape') { editing = null; draw(); }
   };
-  $('#tbox').ondblclick = e => { const r = e.target.closest('.term[data-id]'); if (r && !r.classList.contains('busy')) { editing = r.dataset.id; removing = null; draw(); $('#tbox .et').focus(); } };
+  $('#tbox').ondblclick = e => { const r = e.target.closest('.term[data-id]'); if (r && !r.classList.contains('busy')) startEdit(r.dataset.id); };
   draw();
 }
 
 /* ---------- Editor ---------- */
 function editor(id, openPaste) {
   const s = id ? get(id) : null;
-  const row = (c = {}) => `<div class="erow" data-id="${c.id || ''}"><input class="t" placeholder="Atama" aria-label="Atama" value="${esc(c.term)}"><input class="d" placeholder="Ta'rif" aria-label="Ta'rif" value="${esc(c.def)}"><button type="button" class="btn quiet" data-act="rm" aria-label="Qatorni o'chirish">✕</button></div>`;
+  let kind = s ? (s.kind || 'words') : 'words';   // chosen once, when the set is created
+  const row = (c = {}) => `<div class="erow" data-id="${c.id || ''}">${fieldsOf(kind).map(f => fieldInput(f, c[f[0]])).join('')}<button type="button" class="btn quiet" data-act="rm" aria-label="Qatorni o'chirish">✕</button></div>`;
+  const read = () => $$('.erow').map(r => { const c = { id: r.dataset.id }; $$('input', r).forEach(i => c[i.dataset.k] = i.value.trim()); return c; });
+  const blank = c => fieldsOf(kind).every(([k]) => !c[k]);
+  const pasteHelp = () => kind === 'verbs'
+    ? ["Har bir qatorga bitta fe'l yozing: <b>go - went - gone - bormoq</b>. Ajratuvchi sifatida tire, tab yoki vergul ishlatish mumkin.", 'go - went - gone - bormoq\nwork - worked - worked - ishlamoq']
+    : ["Har bir qatorga bitta juftlik yozing: <b>atama - ta'rif</b>. Ajratuvchi sifatida tire, tab, tenglik yoki vergul ishlatish mumkin.", 'apple - olma\nbook - kitob'];
+  const rowsHelp = () => "Enter — keyingi maydonga o'tadi, oxirgi qatorda yangi qator ochadi." + (kind === 'verbs' ? " V1 ni yozsangiz, V2 va V3 o'zi to'ldiriladi — noto'g'ri bo'lsa tuzating." : '');
+  // Everything that depends on the set kind is redrawn here, keeping what was already typed.
+  function drawRows(list) {
+    $('#rows').className = 'stack' + (kind === 'verbs' ? ' verbs' : '');
+    $('#rows').innerHTML = list.map(row).join('');
+    $('#rows-title').textContent = kind === 'verbs' ? "Fe'llar" : 'Atamalar';
+    $('#rows-help').textContent = rowsHelp();
+    const [help, sample] = pasteHelp(); $('#paste-help').innerHTML = help; $('#f-paste').placeholder = sample;
+  }
+
   show(`<form id="ef" class="stack">
       <div class="head" style="margin:0"><h1>${s ? "To'plamni tahrirlash" : "Yangi to'plam"}</h1>
         <div class="rowf"><button type="button" class="btn" data-act="cancel">Bekor qilish</button><button class="btn primary">Saqlash</button></div></div>
       <p class="err" id="err" hidden></p>
       <input id="f-title" placeholder="To'plam nomi, masalan: Ingliz tili, 5-dars" aria-label="To'plam nomi" value="${esc(s?.title)}">
       <input id="f-desc" placeholder="Qisqa izoh (ixtiyoriy)" aria-label="Izoh" value="${esc(s?.desc)}">
-      <div class="rowf" style="justify-content:space-between;margin-top:6px"><h2>Atamalar</h2><button type="button" class="btn quiet" data-act="paste">Tayyor ro'yxatdan qo'shish</button></div>
+      ${s ? '' : `<fieldset class="kinds"><legend class="label">To'plam turi</legend>
+        <label class="kind"><input type="radio" name="kind" id="k-words" value="words" checked><span><b>So'zlar</b><span class="small muted">Atama va tarjimasi</span></span></label>
+        <label class="kind"><input type="radio" name="kind" id="k-verbs" value="verbs"><span><b>Fe'llar</b><span class="small muted">Uch shakli bilan: go – went – gone</span></span></label>
+      </fieldset>`}
+      <div class="rowf" style="justify-content:space-between;margin-top:6px"><h2 id="rows-title"></h2><button type="button" class="btn quiet" data-act="paste">Tayyor ro'yxatdan qo'shish</button></div>
       <div class="panel stack" id="pastebox"${openPaste ? '' : ' hidden'}>
-        <p class="small muted">Har bir qatorga bitta juftlik yozing: <b>atama - ta'rif</b>. Ajratuvchi sifatida tire, tab, tenglik yoki vergul ishlatish mumkin.</p>
-        <textarea id="f-paste" aria-label="Ro'yxat" placeholder="apple - olma&#10;book - kitob"></textarea>
+        <p class="small muted" id="paste-help"></p>
+        <textarea id="f-paste" aria-label="Ro'yxat"></textarea>
         <div class="rowf end"><button type="button" class="btn primary" data-act="addPaste">Ro'yxatga qo'shish</button></div>
       </div>
-      <p class="small muted">Enter — keyingi maydonga o'tadi, oxirgi qatorda yangi qator ochadi.</p>
-      <div class="stack" id="rows" style="gap:8px">${(s ? s.cards : [{}, {}, {}]).map(row).join('')}</div>
+      <p class="small muted" id="rows-help"></p>
+      <div id="rows" style="gap:8px"></div>
       <div><button type="button" class="btn" data-act="add">+ Qator qo'shish</button></div>
     </form>`,
     {
       cancel: () => nav(s ? setView : home, id),
-      add: () => { $('#rows').insertAdjacentHTML('beforeend', row()); $('#rows').lastElementChild.querySelector('.t').focus(); },
+      add: () => { $('#rows').insertAdjacentHTML('beforeend', row()); $('#rows').lastElementChild.querySelector('input').focus(); },
       rm: b => b.closest('.erow').remove(),
       paste: () => { const p = $('#pastebox'); p.hidden = !p.hidden; if (!p.hidden) $('#f-paste').focus(); },
       addPaste: () => {
-        const found = [];
-        for (const line of $('#f-paste').value.split('\n')) {
-          const sep = ['\t', ' - ', ' – ', ' — ', '=', ';', ':', ',', '-'].find(x => line.includes(x));
-          if (!sep) continue;
-          const i = line.indexOf(sep), term = line.slice(0, i).trim(), def = line.slice(i + sep.length).trim();
-          if (term && def) found.push({ term, def });
-        }
-        if (!found.length) return fail("Ro'yxatdan juftlik topilmadi. Har qatorda atama va ta'rif orasiga tire qo'ying.");
-        $$('.erow').forEach(r => { if (!r.querySelector('.t').value.trim() && !r.querySelector('.d').value.trim()) r.remove(); });
-        $('#rows').insertAdjacentHTML('beforeend', found.map(row).join(''));
+        const found = $('#f-paste').value.split('\n').map(line => parseLine(line, kind)).filter(Boolean);
+        if (!found.length) return fail(kind === 'verbs'
+          ? "Ro'yxatdan fe'l topilmadi. Har qatorda to'rtta qism bo'lsin: go - went - gone - bormoq."
+          : "Ro'yxatdan juftlik topilmadi. Har qatorda atama va ta'rif orasiga tire qo'ying.");
+        drawRows([...read().filter(c => !blank(c)), ...found]);
         $('#f-paste').value = ''; $('#pastebox').hidden = true; $('#err').hidden = true;
       },
     });
+  drawRows(s ? s.cards : [{}, {}, {}]);
+  $$('input[name="kind"]').forEach(r => r.onchange = () => {
+    const typed = read().filter(c => !blank(c));
+    kind = r.value;
+    drawRows(typed.length ? typed : [{}, {}, {}]);
+  });
+
   function fail(msg) { const e = $('#err'); e.textContent = msg; e.hidden = false; e.scrollIntoView({ block: 'center' }); }
   $('#ef').onsubmit = async e => {
     e.preventDefault();
     const title = $('#f-title').value.trim();
     const old = new Map((s ? s.cards : []).map(c => [c.id, c]));
-    const list = $$('.erow').map(r => ({ id: r.dataset.id, term: r.querySelector('.t').value.trim(), def: r.querySelector('.d').value.trim() })).filter(c => c.term && c.def)
-      .map(c => { const o = old.get(c.id); return o && o.term === c.term && o.def === c.def ? o : { id: uid(), term: c.term, def: c.def, lvl: 0 }; });
+    // A card whose text did not change keeps its learning progress.
+    const list = read().filter(c => complete(c, kind))
+      .map(c => { const o = old.get(c.id); return o && fieldsOf(kind).every(([k]) => o[k] === c[k]) ? o : { ...c, id: uid(), lvl: 0 }; });
     if (!title) return fail("To'plamga nom bering.");
-    if (list.length < 2) return fail("Kamida 2 ta atama va ta'rifini to'ldiring.");
+    if (list.length < 2) return fail(kind === 'verbs' ? "Kamida 2 ta fe'lni uchala shakli va tarjimasi bilan to'ldiring." : "Kamida 2 ta atama va ta'rifini to'ldiring.");
     const desc = $('#f-desc').value.trim();
     const btn = $('#ef button.primary'); btn.disabled = true;
     try {
       if (s) { if (pending.has(s.id)) flush(s); await s.saving; Object.assign(s, await api('PUT', SETS + '/' + id, { title, desc, cards: list, best: s.best })); }
-      else { const made = await api('POST', SETS, { title, desc, cards: list }); S.sets.unshift(made); id = made.id; }
+      else { const made = await api('POST', SETS, { title, desc, kind, cards: list }); S.sets.unshift(made); id = made.id; }
       go('#/set/' + id);
     } catch (err) { btn.disabled = false; fail(err.message); }
   };
@@ -252,10 +334,13 @@ function editor(id, openPaste) {
   $('#rows').onkeydown = e => {
     if (e.key !== 'Enter') return;
     e.preventDefault();
-    const r = e.target.closest('.erow');
-    if (e.target.classList.contains('t')) return r.querySelector('.d').focus();
-    r.nextElementSibling ? r.nextElementSibling.querySelector('.t').focus() : acts.add();
+    const r = e.target.closest('.erow'), inputs = $$('input', r), i = inputs.indexOf(e.target);
+    if (e.target.dataset.k === 'term') suggestForms(r);
+    const next = inputs.slice(i + 1).find(x => !x.value.trim()) || inputs[i + 1];
+    if (next) return next.focus();
+    r.nextElementSibling ? r.nextElementSibling.querySelector('input').focus() : acts.add();
   };
+  $('#rows').addEventListener('focusout', e => { if (e.target.dataset?.k === 'term') suggestForms(e.target.closest('.erow')); });
   if (openPaste) $('#f-paste').focus(); else if (!s) $('#f-title').focus();
 }
 
@@ -274,7 +359,7 @@ function cards(id, only) {
     if (i >= order.length) return end();
     const c = order[i];
     show(`${shead(id, Math.round(i / order.length * 100), `${i + 1} / ${order.length}`)}
-      <button class="flip" id="flip" aria-label="Kartochkani aylantirish"><span class="flip-in"><span class="face" data-side="Atama">${esc(c.term)}</span><span class="face back" data-side="Ta'rif">${esc(c.def)}</span></span></button>
+      <button class="flip" id="flip" aria-label="Kartochkani aylantirish"><span class="flip-in"><span class="face" data-side="Atama">${esc(c.term)}</span><span class="face back" data-side="${isVerbs(s) ? "V2 · V3 va tarjima" : "Ta'rif"}">${isVerbs(s) ? `<span class="forms">${esc(c.v2)} · ${esc(c.v3)}</span>` : ''}${esc(c.def)}</span></span></button>
       <p class="hint small muted">Aylantirish uchun kartochkani bosing</p>
       <div class="controls"><button class="btn back" data-act="back" ${i ? '' : 'disabled'}>← Orqaga</button><button class="btn no" data-act="no">Hali bilmayman</button><button class="btn yes" data-act="yes">Bilaman</button></div>`,
       { back, no: () => step(no), yes: () => step(yes) },
@@ -355,18 +440,75 @@ function learn(id) {
   round();
 }
 
+/* ---------- Forms: given V1 and the translation, type V2 and V3; missed verbs come back until all are right ---------- */
+function forms(id) {
+  const s = get(id);
+  const total = s.cards.length;
+  let queue = shuffle(s.cards), cur, firstTry = 0, missed = new Set();
+  const head = () => { const done = total - queue.length; return shead(id, Math.round(done / total * 100), `${done} / ${total}`); };
+  const verb = () => `<div><div class="label">V2 va V3 shakllarini yozing</div><div class="prompt" style="margin-bottom:4px">${esc(cur.term)}</div><p class="muted">${esc(cur.def)}</p></div>`;
+  function ask() {
+    cur = queue[0];
+    show(`${head()}<form class="panel stack" id="ff">${verb()}
+      <div class="pairf">
+        <label class="field">V2 — o'tgan zamon<input id="f-v2" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
+        <label class="field">V3 — o'tgan zamon sifatdoshi<input id="f-v3" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
+      </div>
+      <div class="rowf end"><button type="button" class="btn quiet" data-act="skip">Bilmayman</button><button class="btn primary">Tekshirish</button></div></form>`,
+      { skip: () => check('', '') });
+    $('#ff').onsubmit = e => {
+      e.preventDefault();
+      const a = $('#f-v2').value.trim(), b = $('#f-v3').value.trim();
+      if (!a) return $('#f-v2').focus();
+      if (!b) return $('#f-v3').focus();   // Enter in V2 moves on to V3
+      check(a, b);
+    };
+    $('#f-v2').focus();
+  }
+  function check(a, b) {
+    const okA = isRight(a, cur.v2), okB = isRight(b, cur.v3);
+    const line = (name, given, right, ok) => ok
+      ? `<div class="note ok">${name}: ${esc(right)}</div>`
+      : `<div class="note bad"><div class="small">${name} — ${given ? 'siz yozdingiz: ' + esc(given) : 'javob berilmagan'}</div><div><b>To'g'ri javob:</b> ${esc(right)}</div></div>`;
+    queue.shift();
+    if (okA && okB) {
+      if (!missed.has(cur.id)) firstTry++;
+      show(`${head()}<div class="panel stack">${verb()}${line('V2', a, cur.v2, true)}${line('V3', b, cur.v3, true)}</div>`);
+      timers.push(setTimeout(next, 900));
+    } else {
+      missed.add(cur.id);
+      queue.splice(Math.min(3, queue.length), 0, cur);   // comes back a few verbs later
+      show(`${head()}<div class="panel stack">${verb()}${line('V2', a, cur.v2, okA)}${line('V3', b, cur.v3, okB)}
+        <div class="rowf end"><button class="btn primary" data-act="cont">Davom etish</button></div></div>`,
+        { cont: next }, e => { if (e.key === 'Enter') next(); });
+    }
+  }
+  function next() { queue.length ? ask() : done(); }
+  function done() {
+    const hard = s.cards.filter(c => missed.has(c.id));
+    show(`${shead(id, 100, `${total} / ${total}`)}<div class="panel stack"><h1>Mashq tugadi</h1>
+      <p>${total} ta fe'ldan <b>${firstTry}</b> tasini birinchi urinishda to'g'ri yozdingiz.</p>
+      ${hard.length ? `<div><div class="label" style="margin-bottom:6px">Qiynalgan fe'llaringiz</div>${hard.map(c => `<div><b>${esc(c.term)}</b> – ${esc(c.v2)} – ${esc(c.v3)}</div>`).join('')}</div>` : ''}
+      <div class="rowf"><button class="btn primary" data-act="again">Yana mashq qilish</button><button class="btn" data-act="open" data-id="${id}">To'plamga qaytish</button></div></div>`,
+      { again: () => nav(forms, id) });
+  }
+  ask();
+}
+
 /* ---------- Test: a mix of multiple choice, true/false and typed answers ---------- */
 function test(id) {
   const s = get(id);
   const qs = shuffle(s.cards).slice(0, 20).map((card, n) => {
     const opts = options(s, card);
-    let type = ['mc', 'tf', 'write'][n % 3];
-    if (opts.length < 2 && type !== 'write') type = 'write';
+    const kinds = isVerbs(s) ? ['mc', 'forms', 'tf', 'write'] : ['mc', 'tf', 'write'];   // verb sets also ask for V2 and V3
+    let type = kinds[n % kinds.length];
+    if (opts.length < 2 && (type === 'mc' || type === 'tf')) type = 'write';
     if (type === 'tf') { const truth = Math.random() < .5; return { type, card, truth, shown: truth ? card.def : opts.find(o => o !== card.def) }; }
     return { type, card, opts };
   });
   const body = (q, n) => q.type === 'mc' ? q.opts.map((o, j) => `<label class="choice"><input type="radio" name="q${n}" value="${j}">${esc(o)}</label>`).join('')
     : q.type === 'tf' ? `<p>Ta'rifi: <b>${esc(q.shown)}</b></p><label class="choice"><input type="radio" name="q${n}" value="1">To'g'ri</label><label class="choice"><input type="radio" name="q${n}" value="0">Noto'g'ri</label>`
+    : q.type === 'forms' ? `<p class="small muted">${esc(q.card.def)} — V2 va V3 shakllarini yozing</p><div class="pairf"><input name="q${n}a" id="t-${n}a" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="V2" aria-label="V2"><input name="q${n}b" id="t-${n}b" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="V3" aria-label="V3"></div>`
     : `<input name="q${n}" id="t-${n}" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Ta'rifini yozing" aria-label="Javob">`;
   show(`${shead(id, 0, `${qs.length} savol`)}<form id="tf" class="stack"><h1>Test</h1>
     ${qs.map((q, n) => `<div class="q" id="q${n}"><div class="label">${n + 1}-savol</div><div class="p">${esc(q.card.term)}</div>${body(q, n)}</div>`).join('')}
@@ -376,14 +518,19 @@ function test(id) {
     const f = new FormData(e.target); let score = 0;
     const out = qs.map((q, n) => {
       const v = f.get('q' + n);
-      let good, given;
+      let good, given, right = q.card.def;
       if (q.type === 'mc') { given = v == null ? '' : q.opts[+v]; good = given === q.card.def; }
       else if (q.type === 'tf') { given = v == null ? '' : v === '1' ? "To'g'ri" : "Noto'g'ri"; good = v != null && (v === '1') === q.truth; }
+      else if (q.type === 'forms') {
+        const a = (f.get(`q${n}a`) || '').trim(), b = (f.get(`q${n}b`) || '').trim();
+        given = [a, b].filter(Boolean).join(', '); right = `${q.card.v2}, ${q.card.v3}`;
+        good = isRight(a, q.card.v2) && isRight(b, q.card.v3);
+      }
       else { given = (v || '').trim(); good = isRight(given, q.card.def); }
       if (good) score++;
       return `<div class="q ${good ? 'ok' : 'bad'}"><div class="label">${n + 1}-savol · ${good ? "to'g'ri" : 'xato'}</div><div class="p">${esc(q.card.term)}</div>
         ${q.type === 'tf' ? `<p class="small muted">Ko'rsatilgan ta'rif: ${esc(q.shown)}</p>` : ''}
-        ${good ? `<div class="note ok">${esc(q.card.def)}</div>` : `<div class="note bad"><div class="small">Sizning javobingiz: ${given ? esc(given) : 'javob berilmagan'}</div><div><b>To'g'ri javob:</b> ${esc(q.card.def)}</div></div>`}</div>`;
+        ${good ? `<div class="note ok">${esc(right)}</div>` : `<div class="note bad"><div class="small">Sizning javobingiz: ${given ? esc(given) : 'javob berilmagan'}</div><div><b>To'g'ri javob:</b> ${esc(right)}</div></div>`}</div>`;
     });
     const pct = Math.round(score / qs.length * 100);
     show(`${shead(id, pct, pct + '%')}<div class="stack"><div class="panel stack"><div class="big">${pct}%</div>

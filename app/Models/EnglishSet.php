@@ -8,7 +8,14 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 /** "Ingliz tili" bo'limidagi kartochkalar to'plami; har bir to'plam bitta foydalanuvchiga tegishli. */
 class EnglishSet extends Model
 {
-    protected $fillable = ['title', 'description', 'cards', 'best_time'];
+    public const KIND_WORDS = 'words';
+
+    /** Fe'llar to'plami: har kartada uch shakl — term (V1), v2, v3. */
+    public const KIND_VERBS = 'verbs';
+
+    protected $fillable = ['title', 'description', 'kind', 'cards', 'best_time'];
+
+    protected $attributes = ['kind' => self::KIND_WORDS];
 
     protected function casts(): array
     {
@@ -30,6 +37,7 @@ class EnglishSet extends Model
             'id' => (string) $this->id,
             'title' => $this->title,
             'desc' => (string) $this->description,
+            'kind' => $this->kind,
             'cards' => $this->cards,
             'best' => $this->best_time,
         ];

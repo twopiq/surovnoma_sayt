@@ -87,6 +87,32 @@ class EnglishCardsTest extends TestCase
         $this->assertSame(0, EnglishSet::query()->count());
     }
 
+    public function test_verb_sets_keep_three_forms_and_their_kind(): void
+    {
+        $this->actingAs($this->owner());
+        $verbs = [
+            ['term' => 'go', 'v2' => 'went', 'v3' => 'gone', 'def' => 'bormoq'],
+            ['term' => 'work', 'v2' => 'worked', 'v3' => 'worked', 'def' => 'ishlamoq'],
+            ['term' => 'see', 'v2' => 'saw', 'v3' => '', 'def' => "ko'rmoq"], // chala qator tashlab yuboriladi
+        ];
+
+        $this->postJson(route('english.sets.store'), ['title' => 'x', 'kind' => 'boshqa', 'cards' => $verbs])->assertUnprocessable();
+        // Fe'lda uchala shakl ham shart: to'liq qator bitta qolsa, to'plam saqlanmaydi.
+        $this->postJson(route('english.sets.store'), ['title' => 'x', 'kind' => 'verbs', 'cards' => [$verbs[0], $verbs[2]]])->assertUnprocessable();
+
+        $id = $this->postJson(route('english.sets.store'), ['title' => "Fe'llar", 'kind' => 'verbs', 'cards' => $verbs])
+            ->assertOk()->assertJsonPath('kind', 'verbs')->assertJsonCount(2, 'cards')
+            ->assertJsonPath('cards.0.v2', 'went')->assertJsonPath('cards.0.v3', 'gone')->json('id');
+
+        // Turi keyin o'zgarmaydi, shakllar yangilanishda saqlanadi.
+        $this->putJson(route('english.sets.update', $id), ['title' => "Fe'llar", 'kind' => 'words', 'cards' => array_slice($verbs, 0, 2)])
+            ->assertOk()->assertJsonPath('kind', 'verbs')->assertJsonPath('cards.1.v2', 'worked');
+
+        // Oddiy to'plamda v2/v3 saqlanmaydi.
+        $this->postJson(route('english.sets.store'), ['title' => 'Oddiy', 'cards' => $verbs])
+            ->assertOk()->assertJsonPath('kind', 'words')->assertJsonMissingPath('cards.0.v2');
+    }
+
     public function test_sets_of_another_user_are_out_of_reach(): void
     {
         $owner = $this->owner();
