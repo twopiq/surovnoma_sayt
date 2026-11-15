@@ -52,7 +52,7 @@ const mastered = s => s.cards.filter(c => (c.lvl || 0) >= 2).length;
 const app = root;
 let acts = {}, keyFn = null, timers = [];
 function show(html, a, k) { app.innerHTML = html; acts = { open: b => go('#/set/' + b.dataset.id), home: () => go('#/'), ...a }; keyFn = k || null; }
-function nav(fn, ...args) { timers.forEach(t => { clearTimeout(t); clearInterval(t); }); timers = []; fn(...args); window.scrollTo(0, 0); }
+function nav(fn, ...args) { timers.forEach(t => { clearTimeout(t); clearInterval(t); }); timers = []; window.onbeforeunload = null; fn(...args); window.scrollTo(0, 0); }
 app.addEventListener('click', e => { const b = e.target.closest('[data-act]'); if (b && acts[b.dataset.act]) acts[b.dataset.act](b, e); });
 document.addEventListener('keydown', e => { if (/INPUT|TEXTAREA/.test(e.target.tagName)) return; if (keyFn) keyFn(e); });
 
@@ -394,7 +394,7 @@ function setView(id) {
   const inputs = (c, hints) => innerGrid(kind, fields.map(f => fieldInput(f, c[f[0]], hints)).join(''));
   const run = { cards, learn, forms, test, match };
   // [mode, name, description]; the position is also its number key
-  const modes = [['cards', 'Kartochkalar', "Aylantirib ko'rib chiqing"], ['learn', "O'rganish", 'Bosqichma-bosqich yodlang'],
+  const modes = [['cards', 'Kartochkalar', "Aylantirib ko'rib chiqing"], ['learn', "O'rganish", 'Variant bilan yoki faqat yozib'],
     ...(verbs ? [['forms', 'Shakllar', 'V2, V3 yoki ikkalasini yozing']] : []),
     ['test', 'Test', 'Bilimingizni tekshiring'], ['match', 'Juftlash', "Vaqtga qarshi o'yin"]];
 
@@ -556,6 +556,10 @@ function editor(id, openPaste) {
       <div class="head" style="margin:0"><h1>${s ? "To'plamni tahrirlash" : "Yangi to'plam"}</h1>
         <div class="rowf"><button type="button" class="btn" data-act="cancel">Bekor qilish</button><button class="btn primary" data-key="Ctrl + Enter">Saqlash</button></div></div>
       <p class="err" id="err" hidden></p>
+      <div class="panel stack leave" id="leavebox" hidden>
+        <p><b>Saqlanmagan o'zgarishlar bor.</b> <span id="leave-why"></span></p>
+        <div class="rowf"><button type="button" class="btn primary" data-act="saveNow">Saqlash</button><button type="button" class="btn danger" data-act="discard">Saqlamasdan chiqish</button><button type="button" class="btn" data-act="stay">Tahrirlashda qolish</button></div>
+      </div>
       <input id="f-title" placeholder="To'plam nomi, masalan: Ingliz tili, 5-dars" aria-label="To'plam nomi" value="${esc(s?.title)}">
       <input id="f-desc" placeholder="Qisqa izoh (ixtiyoriy)" aria-label="Izoh" value="${esc(s?.desc)}">
       ${s ? '' : `<fieldset class="kinds"><legend class="label">To'plam turi</legend>
@@ -573,7 +577,17 @@ function editor(id, openPaste) {
       <div><button type="button" class="btn" data-act="add" data-key="oxirgi maydonda Enter">+ Qator qo'shish</button></div>
     </form>`,
     {
-      cancel: () => nav(s ? setView : home, id),
+      // Leaving with unsaved work asks first; words still sitting in the paste box count as unsaved too.
+      cancel: () => {
+        if (!dirty()) return leave();
+        $('#leave-why').textContent = $('#f-paste').value.trim()
+          ? "Ro'yxat maydoniga yozgan so'zlaringiz hali to'plamga qo'shilmagan va saqlanmagan."
+          : "Kiritgan o'zgarishlaringiz hali saqlanmagan.";
+        $('#leavebox').hidden = false; $('#leavebox').scrollIntoView({ block: 'center' }); $('#leavebox .primary').focus();
+      },
+      stay: () => { $('#leavebox').hidden = true; },
+      discard: () => leave(),
+      saveNow: () => { $('#leavebox').hidden = true; if ($('#f-paste').value.trim()) acts.addPaste(); $('#ef').requestSubmit(); },
       add: () => { $('#rows').insertAdjacentHTML('beforeend', row()); $('#rows').lastElementChild.querySelector('input').focus(); },
       rm: b => b.closest('.erow').remove(),
       paste: () => { const p = $('#pastebox'); p.hidden = !p.hidden; if (!p.hidden) $('#f-paste').focus(); },
@@ -587,6 +601,12 @@ function editor(id, openPaste) {
       },
     });
   drawRows(s ? s.cards : [{}, {}, {}]);
+  const leave = () => nav(s ? setView : home, id);
+  // What would be saved right now, as text; compared with how the form looked when it opened.
+  const snapshot = () => JSON.stringify([$('#f-title').value.trim(), $('#f-desc').value.trim(), kind, read().filter(c => !blank(c)).map(c => fieldsOf(kind).map(([k]) => c[k] || ''))]);
+  const opened = snapshot();
+  const dirty = () => !!$('#ef') && (snapshot() !== opened || $('#f-paste').value.trim() !== '');
+  window.onbeforeunload = e => { if (dirty()) { e.preventDefault(); e.returnValue = ''; } };   // closing the tab or going back to the main site
   $$('input[name="kind"]').forEach(r => r.onchange = () => {
     const typed = read().filter(c => !blank(c));
     kind = r.value;
@@ -608,6 +628,7 @@ function editor(id, openPaste) {
     try {
       if (s) { if (pending.has(s.id)) flush(s); await s.saving; Object.assign(s, await api('PUT', SETS + '/' + id, { title, desc, cards: list, best: s.best })); }
       else { const made = await api('POST', SETS, { title, desc, kind, cards: list }); S.sets.unshift(made); id = made.id; }
+      window.onbeforeunload = null;
       go('#/set/' + id);
     } catch (err) { btn.disabled = false; fail(err.message); }
   };
@@ -663,15 +684,25 @@ function cards(id, only) {
 }
 
 /* ---------- Learn: multiple choice first, then typing; a card is mastered after both ---------- */
-function learn(id) {
-  const s = get(id); let queue = [], cur, type, ok = 0, bad = 0;
+function learn(id, how) {
+  const s = get(id);
+  if (!how) {   // first choose how to answer
+    const ways = [['mix', 'Variant va yozish', 'Avval variantdan tanlaysiz, keyin yozasiz'], ['write', 'Faqat yozish', "Har bir javobni o'zingiz yozasiz"]];
+    return show(`<button class="btn quiet" data-act="open" data-id="${id}">← To'plam</button>
+      <div class="panel stack" style="margin-top:10px"><div><h1>O'rganish</h1><p class="muted" style="margin-top:6px">Qanday o'rganasiz?</p></div>
+      <div class="modes two" style="margin:0">${ways.map(([w, name, about], i) => `<button class="mode" data-act="pick" data-w="${w}" data-key="${i + 1}"><b>${name}</b><span class="small muted">${about}</span></button>`).join('')}</div></div>`,
+      { pick: b => nav(learn, id, b.dataset.w) },
+      e => { const w = ways[+e.key - 1]; if (w) nav(learn, id, w[0]); });
+  }
+  const writeOnly = how === 'write';   // every question is typed; one right answer masters the card
+  let queue = [], cur, type, ok = 0, bad = 0;
   const left = () => s.cards.filter(c => (c.lvl || 0) < 2);
   const head = () => { const p = Math.round(s.cards.reduce((a, c) => a + (c.lvl || 0), 0) / (s.cards.length * 2) * 100); return shead(id, p, p + '%'); };
   function round() { ok = bad = 0; queue = shuffle(left()).slice(0, 7); queue.length ? ask() : done(); }
   function ask() {
     cur = queue[0];
     const opts = options(s, cur);
-    type = (cur.lvl || 0) >= 1 || opts.length < 2 ? 'write' : 'mc';
+    type = writeOnly || (cur.lvl || 0) >= 1 || opts.length < 2 ? 'write' : 'mc';
     if (type === 'mc') {
       const pick = n => {
         keyFn = null; acts.pick = null;
@@ -718,8 +749,8 @@ function learn(id) {
   function done() {
     show(`${shead(id, 100, '100%')}<div class="panel stack"><h1>Hamma atamalar o'zlashtirildi</h1>
       <p class="muted">Bilimingizni mustahkamlash uchun test topshirib ko'ring yoki o'rganishni qaytadan boshlang.</p>
-      <div class="rowf"><button class="btn primary" data-act="test">Test topshirish</button><button class="btn" data-act="reset">Qaytadan o'rganish</button><button class="btn" data-act="open" data-id="${id}">To'plamga qaytish</button></div></div>`,
-      { test: () => nav(test, id), reset: () => { s.cards.forEach(c => c.lvl = 0); save(s); round(); } });
+      <div class="rowf"><button class="btn primary" data-act="test">Test topshirish</button><button class="btn" data-act="reset">Qaytadan o'rganish</button><button class="btn" data-act="other">Boshqa usulni tanlash</button><button class="btn" data-act="open" data-id="${id}">To'plamga qaytish</button></div></div>`,
+      { test: () => nav(test, id), other: () => nav(learn, id), reset: () => { s.cards.forEach(c => c.lvl = 0); save(s); round(); } });
   }
   round();
 }

@@ -63,6 +63,7 @@
 .myen .modes { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-block: 22px; }
 .myen .modes.three { grid-template-columns: repeat(3, 1fr); }
 .myen .pairf.one { grid-template-columns: 1fr; }
+.myen .modes.two { grid-template-columns: repeat(2, 1fr); }
 .myen .modes.five { grid-template-columns: repeat(5, 1fr); }
 .myen .pairf { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .myen .field { display: flex; flex-direction: column; gap: 5px; font-size: .85rem; font-weight: 600; color: var(--muted); }
@@ -213,4 +214,16 @@
     content: "Klavish: " attr(data-key); position: absolute; left: 50%; bottom: calc(100% + 6px); transform: translateX(-50%); z-index: 30;
     padding: 4px 9px; border-radius: 6px; background: var(--ink); color: var(--bg); font: 500 .75rem/1.3 var(--body); letter-spacing: 0; text-transform: none; white-space: nowrap; pointer-events: none;
   }
+}
+
+/* unsaved-changes warning in the editor */
+.myen .leave { border-color: var(--mid); background: var(--mid-soft); }
+
+/* small floating link back to the main site, bottom right */
+.myen .backfab { position: fixed; right: max(16px, env(safe-area-inset-right, 0px)); bottom: max(16px, env(safe-area-inset-bottom, 0px)); z-index: 40; display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: 99px; background: var(--surface); border: 1px solid var(--line); color: var(--muted); font: 600 .8rem var(--body); text-decoration: none; box-shadow: 0 4px 14px rgb(0 0 0 / .14); }
+.myen .backfab:hover, .myen .backfab:focus-visible { color: var(--ink); border-color: var(--muted); }
+@media (max-width: 640px) {
+  .myen .backfab { padding: 9px; }
+  .myen .backfab span { display: none; }
+  .myen .modes.two { grid-template-columns: 1fr; }
 }
