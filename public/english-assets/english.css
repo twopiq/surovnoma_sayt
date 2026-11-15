@@ -15,6 +15,9 @@
   max-width: 860px; color: var(--ink); font: 16px/1.5 var(--body);
 }
 
+/* `hidden` must win over the display rules below (.stack, .panel, inputs), otherwise hidden boxes stay on screen */
+.myen [hidden] { display: none !important; }
+
 /* alohida sahifa qobig'i: yuqori panel (nom + asosiy saytga qaytish) */
 .myen.myen-page { margin: 0 auto; padding: 0 16px 72px; }
 .myen .top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding-block: 16px; margin-bottom: 20px; border-bottom: 1px solid var(--line); }
