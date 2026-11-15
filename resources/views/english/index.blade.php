@@ -23,13 +23,15 @@
         <div class="myen myen-page">
             <header class="top">
                 <a class="brand" href="#/"><i></i>{{ __('Ingliz tili') }}</a>
-                <div class="rowf">
-                    <a class="btn" href="{{ route('app.home') }}">← {{ __("So'rovnomaga qaytish") }}</a>
-                    <x-theme-toggle />
-                </div>
+                <x-theme-toggle />
             </header>
             <main id="english-app" data-sets-url="{{ route('english.sets.index') }}"></main>
             <div class="toast" id="english-toast" role="status" hidden></div>
+            {{-- Asosiy saytga qaytish: o'ng pastki burchakda doim ko'rinib turadigan kichik tugma --}}
+            <a class="backfab" href="{{ route('app.home') }}" title="{{ __("So'rovnomaga qaytish") }}" aria-label="{{ __("So'rovnomaga qaytish") }}">
+                <svg viewBox="0 0 20 20" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 5l-5 5 5 5M3 10h14"/></svg>
+                <span>{{ __("So'rovnoma") }}</span>
+            </a>
         </div>
 
         <script src="{{ asset('english-assets/english.js') }}?v={{ filemtime(public_path('english-assets/english.js')) }}" defer></script>
