@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Services\AuditService;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -49,6 +51,13 @@ class NewPasswordController extends Controller
                 ])->save();
 
                 event(new PasswordReset($user));
+
+                // Parol tiklangach eski sessiyalar (boshqa qurilmalardagi kirishlar) bekor qilinadi.
+                if (config('session.driver') === 'database') {
+                    DB::table(config('session.table', 'sessions'))->where('user_id', $user->id)->delete();
+                }
+
+                app(AuditService::class)->log($user->id, 'auth.password_reset', 'Parol tiklandi', $user, ['ip' => $request->ip()]);
             }
         );
 

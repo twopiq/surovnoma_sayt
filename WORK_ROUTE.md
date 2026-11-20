@@ -5,10 +5,11 @@
 
 ## Ochiq vazifalar
 
-### 1. Parolni tiklash qismini to'g'rilash
-- [ ] `PasswordResetTest` dagi 3 ta test yiqilyapti: test `Illuminate\Auth\Notifications\ResetPassword` ni kutadi, `User::sendPasswordResetNotification()` esa `App\Notifications\ResetPasswordNotification` yuboradi.
-- [ ] To'liq oqimni tekshirish: forgot-password → email (SMTP sozlamasi, memory: email keyinga qoldirilgan) → `reset-password/{token}` → yangi parol → login. Xabar matnlari o'zbekcha, token muddati, throttle.
-- [ ] Topilgan xatolarni tuzatish va testlarni yangi notification'ga moslash, ularni yashil holatga keltirish.
+### 1. Parolni tiklash qismini to'g'rilash — ✅ BAJARILDI (2026-11-20)
+Pochta orqali: "Email yoki login" qabul qilinadi, javob har doim bir xil (akkaunt borligi oshkor qilinmaydi), xat yuborilmasa tushunarli xato + jurnal, `throttle:10,1`. Telegram orqali: bog'langan chat(lar)ga 6 xonali kod (10 daqiqa, 5 urinish, akkauntga daqiqasiga 1 kod, IP bo'yicha cheklov), kod to'g'ri bo'lsa odatdagi `password.reset` sahifasiga Laravel tokeni bilan o'tiladi (`TelegramPasswordResetController`, `auth/telegram-reset-code`). Parol tiklangach foydalanuvchining barcha sessiyalari o'chiriladi va audit yoziladi. Pochtani tekshirish: `php artisan mail:test <email>`; institut SMTP sozlamalari `.env.example` dagi izohda. Testlar: `PasswordResetTest`, `TelegramPasswordResetTest`. Qoldi: serverda `.env` ga institut SMTP ma'lumotlarini kiritish va sinov xati yuborish.
+- [x] `PasswordResetTest` dagi 3 ta test yiqilyapti: test `Illuminate\Auth\Notifications\ResetPassword` ni kutadi, `User::sendPasswordResetNotification()` esa `App\Notifications\ResetPasswordNotification` yuboradi.
+- [x] To'liq oqimni tekshirish: forgot-password → email (SMTP sozlamasi, memory: email keyinga qoldirilgan) → `reset-password/{token}` → yangi parol → login. Xabar matnlari o'zbekcha, token muddati, throttle.
+- [x] Topilgan xatolarni tuzatish va testlarni yangi notification'ga moslash, ularni yashil holatga keltirish.
 - Fayllar: `app/Http/Controllers/Auth/PasswordResetLinkController.php`, `NewPasswordController.php`, `app/Notifications/ResetPasswordNotification.php`, `app/Models/User.php:165`, `resources/views/auth/{forgot,reset}-password.blade.php`, `tests/Feature/Auth/PasswordResetTest.php`.
 
 ### 2. Breadcrumb (Admin / Ticket management / Tickets) ni to'g'rilash — ✅ BAJARILDI (2026-10-08)
