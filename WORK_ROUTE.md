@@ -5,10 +5,11 @@
 
 ## Ochiq vazifalar
 
-### 1. Parolni tiklash qismini to'g'rilash
-- [ ] `PasswordResetTest` dagi 3 ta test yiqilyapti: test `Illuminate\Auth\Notifications\ResetPassword` ni kutadi, `User::sendPasswordResetNotification()` esa `App\Notifications\ResetPasswordNotification` yuboradi.
-- [ ] To'liq oqimni tekshirish: forgot-password → email (SMTP sozlamasi, memory: email keyinga qoldirilgan) → `reset-password/{token}` → yangi parol → login. Xabar matnlari o'zbekcha, token muddati, throttle.
-- [ ] Topilgan xatolarni tuzatish va testlarni yangi notification'ga moslash, ularni yashil holatga keltirish.
+### 1. Parolni tiklash qismini to'g'rilash — ✅ BAJARILDI (2026-11-20)
+Pochta orqali: "Email yoki login" qabul qilinadi, javob har doim bir xil (akkaunt borligi oshkor qilinmaydi), xat yuborilmasa tushunarli xato + jurnal, `throttle:10,1`. Telegram orqali: bog'langan chat(lar)ga 6 xonali kod (10 daqiqa, 5 urinish, akkauntga daqiqasiga 1 kod, IP bo'yicha cheklov), kod to'g'ri bo'lsa odatdagi `password.reset` sahifasiga Laravel tokeni bilan o'tiladi (`TelegramPasswordResetController`, `auth/telegram-reset-code`). Parol tiklangach foydalanuvchining barcha sessiyalari o'chiriladi va audit yoziladi. Pochtani tekshirish: `php artisan mail:test <email>`; institut SMTP sozlamalari `.env.example` dagi izohda. Testlar: `PasswordResetTest`, `TelegramPasswordResetTest`. Qoldi: serverda `.env` ga institut SMTP ma'lumotlarini kiritish va sinov xati yuborish.
+- [x] `PasswordResetTest` dagi 3 ta test yiqilyapti: test `Illuminate\Auth\Notifications\ResetPassword` ni kutadi, `User::sendPasswordResetNotification()` esa `App\Notifications\ResetPasswordNotification` yuboradi.
+- [x] To'liq oqimni tekshirish: forgot-password → email (SMTP sozlamasi, memory: email keyinga qoldirilgan) → `reset-password/{token}` → yangi parol → login. Xabar matnlari o'zbekcha, token muddati, throttle.
+- [x] Topilgan xatolarni tuzatish va testlarni yangi notification'ga moslash, ularni yashil holatga keltirish.
 - Fayllar: `app/Http/Controllers/Auth/PasswordResetLinkController.php`, `NewPasswordController.php`, `app/Notifications/ResetPasswordNotification.php`, `app/Models/User.php:165`, `resources/views/auth/{forgot,reset}-password.blade.php`, `tests/Feature/Auth/PasswordResetTest.php`.
 
 ### 2. Breadcrumb (Admin / Ticket management / Tickets) ni to'g'rilash — ✅ BAJARILDI (2026-10-08)
@@ -22,6 +23,7 @@ Fayl: `resources/views/partials/breadcrumbs.blade.php` (`layouts/app.blade.php:3
 
 ## Bajarilganlar jurnali
 <!-- 2026-10-08: fayl yaratildi. -->
+- [x] **(2026-11-18)** Sinov murojaatlarini tozalash uchun `php artisan tickets:purge-all`: barcha murojaatlarni izohlar, fayllar (diskdan ham), holat tarixi, biriktirishlar, qaytarish so'rovlari, dinamik maydon qiymatlari va murojaat bildirishnomalari bilan o'chiradi. Foydalanuvchilar, bo'limlar, kategoriyalar, SLA va sozlamalar qoladi; audit jurnali saqlanadi; ID raqamlari qayta boshlanmaydi (eski Telegram tugmalari yangi murojaatga tushmasin). O'chirishdan oldin sonlarni ko'rsatib tasdiq so'raydi va zahira nusxa oladi (`--no-backup`, `--force`). SQLite'da oxirida VACUUM. Test: `PurgeTicketsCommandTest`.
 - [x] **(2026-11-15)** "Ingliz tili" — xato tuzatildi: `hidden` atributi `.stack`/`.panel` uslublari ostida ishlamay, tahrirlash oynasida "Saqlanmagan o'zgarishlar bor" ogohlantirishi va ro'yxat (memo) maydoni doim ko'rinib turardi. `english.css` ga `.myen [hidden] { display: none !important; }` qo'shildi.
 - [x] **(2026-11-15)** "Ingliz tili" — (1) **O'rganish** boshida usul tanlanadi: *Variant va yozish* (avvalgidek) yoki *Faqat yozish* (har savol yozma, bitta to'g'ri javob kartani o'zlashtirilgan qiladi). (2) Tahrirlash oynasida **saqlanmagan o'zgarishlar ogohlantirishi**: "Bekor qilish" bosilganda o'zgarish yoki ro'yxat (memo) maydonida qo'shilmagan matn bo'lsa — Saqlash / Saqlamasdan chiqish / Tahrirlashda qolish; sahifani yopishda brauzerning o'z ogohlantirishi (`beforeunload`). (3) **"So'rovnomaga qaytish"** tepadan olib tashlanib, o'ng pastki burchakdagi kichik suzuvchi tugmaga aylantirildi (`.backfab`, telefonda faqat belgi).
 - [x] **(2026-11-12)** "Ingliz tili" — (1) **klavish ko'rsatmalari**: klaviaturadan ishlaydigan tugma ustida sichqoncha turganda "Klavish: …" yozuvi chiqadi (`data-key` atributi + CSS, faqat hover bor qurilmalarda). Yangi klavishlar: kutubxonada N (yangi to'plam), to'plam sahifasida 1–5 (rejimlar) va E (tahrirlash), tahrirlashda Ctrl+Enter (saqlash), kartochkalarda ↓ (hali bilmayman), yozma savollarda Esc (bilmayman). (2) "Shakllar" mashqi boshida tur tanlanadi: **V2 va V3 / faqat V2 / faqat V3**.
